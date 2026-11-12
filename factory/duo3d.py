@@ -64,7 +64,7 @@ def build(s, out, seed=0):
     VOICE = {"A": voice_for(nm[0], 0), "V": voice_for(nm[1], 1)}
     if VOICE["A"] == VOICE["V"]: VOICE["V"] = VOICE["V"][0] + "2"
     rng = np.random.default_rng(seed)
-    t = 2.8; segs = [dict(kind="hook", cam="wide", who="A", t0=0.0, t1=2.8)]
+    t = 0.15; segs = []   # no silent intro: the first line is heard at once, the hook stays on screen above it
     wavs = []
     for i, (who, cam, txt) in enumerate(s["lines"]):
         w = say(txt, VOICE[who]); vd = wav_len(w); wavs.append((t, w))
@@ -105,26 +105,28 @@ def build(s, out, seed=0):
             chip = rrect(nw, 62, 31, col + (255,)); tdraw(ImageDraw.Draw(chip), 22, 45, name, 40, (20, 24, 34))
             card = rrect(940, b.height + 24, 40, (16, 22, 34, 205)); card.alpha_composite(b, (20, 12)); caps[seg["txt"]] = (card, chip)
         return caps[seg["txt"]]
-    hook_im = fit_block(s["hook"], 70, (255, 214, 60), 940, 380, stroke=6, sfill=(30, 20, 10))
+    hook_im = fit_block(s["hook"], 70, (255, 214, 60), 940, 330, stroke=6, sfill=(30, 20, 10))
+    HOOK_T = next((x["t1"] for x in segs if x["t1"] >= 4.0), segs[-1]["t1"])   # end of the line that crosses 4 s
     END, PILL, (PX, PY) = end_card(s)
 
     def frame(tt):
         if tt >= t_end + 0.35:
             im = END.copy(); paste(im, PILL, PX, PY, scale=1 + 0.03 * math.sin((tt - t_end) * 5)); return im, None
-        seg = next(x for x in segs if x["t0"] <= tt < x["t1"]) if tt < t_end else segs[-1]
-        lt = tt - seg["t0"]; dur = seg["t1"] - seg["t0"]
+        seg = next((x for x in segs if x["t0"] <= tt < x["t1"]), segs[0]) if tt < t_end else segs[-1]
+        lt = max(0.0, tt - seg["t0"]); dur = seg["t1"] - seg["t0"]
         talk = seg["kind"] == "line" and 0.05 < lt < seg["vd"] - 0.05
         flap = talk and (math.sin(lt * 21) + 0.6 * math.sin(lt * 33 + 1.3)) > -0.15
         src = compose(seg["cam"], IMG[(seg["cam"], seg["who"] if flap else "rest")], tt)
         z = 1.0 + 0.045 * min(1.0, lt / max(dur, 0.1)) + (0.004 * abs(math.sin(lt * 10)) if talk else 0)
         cw, ch = W / z, H / z; cx, cy = W / 2, H * 0.47
         im = src.crop((int(cx - cw / 2), int(cy - ch * 0.47), int(cx + cw / 2), int(cy + ch * 0.53))).resize((W, H), Image.BILINEAR)
-        if seg["kind"] == "hook":
-            p = ease(lt / 0.3); paste(im, hook_im, (W - hook_im.width) // 2, 300 + (1 - p) * 30, alpha=p)
-        else:
-            card, chip = caption(seg); p = ease(lt / 0.2)
-            paste(im, card, (W - card.width) // 2, 300 + (1 - p) * 24, alpha=p, scale=0.94 + 0.06 * p)
-            paste(im, chip, (W - card.width) // 2 + 30, 260 + (1 - p) * 24, alpha=p)
+        # hook is visible from the very first frame and stays over the first lines (about 4 s), then cuts away
+        cy = 300
+        if tt < HOOK_T:   # clean cut when the next line starts
+            paste(im, hook_im, (W - hook_im.width) // 2, 170); cy = max(300, 170 + hook_im.height + 70)
+        card, chip = caption(seg); p = ease(lt / 0.2) if seg is not segs[0] else 1.0
+        paste(im, card, (W - card.width) // 2, cy + (1 - p) * 24, alpha=p, scale=0.94 + 0.06 * p)
+        paste(im, chip, (W - card.width) // 2 + 30, cy - 40 + (1 - p) * 24, alpha=p)
         if tt >= t_end: paste(im, END, 0, 0, alpha=ease((tt - t_end) / 0.35))
         return im, None
 

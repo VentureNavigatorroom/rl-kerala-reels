@@ -10,7 +10,7 @@ GOLD, NAVY, INK = (255, 184, 28), (13, 27, 48), (20, 28, 44)
 NUM = ["ഒന്ന്", "രണ്ട്", "മൂന്ന്", "നാല്", "അഞ്ച്"]
 
 def build(s, out, seed=0):
-    hw = say(s["hook"].replace("\n", " "), "NARRATOR"); t = 0.3; aud = [(t, hw)]; t += wav_len(hw) + 0.4
+    hw = say(s["hook"].replace("\n", " "), "NARRATOR"); t = 0.05; aud = [(t, hw)]; t += wav_len(hw) + 0.4
     hook_im = fit_block(s["hook"], 74, (255, 255, 255), 920, 300)
     cards = []; y = 640
     for i, (title, sub) in enumerate(s["items"]):

@@ -8,7 +8,7 @@ import cover
 
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
-VERSION = 2   # bump when voices/look change: unposted reels from older versions get rebuilt
+VERSION = 3   # bump when voices/look change: unposted reels from older versions get rebuilt
 
 def load_bank():
     S = []

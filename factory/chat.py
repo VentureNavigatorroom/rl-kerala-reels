@@ -16,9 +16,8 @@ def bg():
 def build(s, out, seed=0):
     names = s["names"]; vo = [voice_for(names[0], 0), voice_for(names[1], 1)]
     if vo[0][0] == vo[1][0]: vo[1] = vo[1][0] + "2"; vo[0] = vo[0][0] + "1"
-    t = 0.3; ev = []; aud = []
+    t = 0.05; ev = []; aud = []   # first message starts typing at once; the hook is pinned at the top
     hook_im = fit_block(s["hook"], 68, (255, 255, 255), 920, 300)
-    t += 2.2
     for i, (who, txt) in enumerate(s["lines"]):
         w = say(txt, vo[who]); d = wav_len(w)
         lines = wrap(txt, 44, 600, 700); tw = int(max(tlen(l, 44, 700) for l in lines))
