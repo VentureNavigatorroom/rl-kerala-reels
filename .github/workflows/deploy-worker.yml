@@ -34,5 +34,3 @@ jobs:
           printf '%s' "$DISCORD_WEBHOOK" | wrangler secret put DISCORD_WEBHOOK
           KEY="rlk-$(echo -n "admin$IG_TOKEN" | sha256sum | cut -c1-32)"
           printf '%s' "$KEY" | wrangler secret put ADMIN_KEY
-          URL=$(wrangler deployments list 2>/dev/null | grep -oE 'https://[^ ]+workers.dev' | head -1)
-          curl -s -X POST -H "content-type: application/json" -d "{\"content\":\"✅ Autopilot deployed. Private status page: ${URL:-<worker url>}/status?key=$KEY\"}" "$DISCORD_WEBHOOK" >/dev/null || true

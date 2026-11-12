@@ -21,9 +21,10 @@ async function kvPut(env, k, v) { await env.STATE.put(k, JSON.stringify(v)); }
 async function log(env, msg) {
   const l = await kv(env, "log", []); l.unshift(`${IST().toISOString().slice(0, 16)} ${msg}`); await kvPut(env, "log", l.slice(0, 300));
 }
-async function discord(env, content) {
+async function discord(env, content, ping = false) {   // ping = @everyone, so the phone shows a notification
   if (!env.DISCORD_WEBHOOK) return;
-  try { await fetch(env.DISCORD_WEBHOOK, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: content.slice(0, 1900) }) }); } catch {}
+  const body = ping ? { content: ("@everyone " + content).slice(0, 1900), allowed_mentions: { parse: ["everyone"] } } : { content: content.slice(0, 1900) };
+  try { await fetch(env.DISCORD_WEBHOOK, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); } catch {}
 }
 async function alertOnce(env, tag, content) {   // at most one Discord alert per tag per IST day
   const k = `alert:${tag}:${IST().toISOString().slice(0, 10)}`;
@@ -202,11 +203,17 @@ async function botReply(env, thread) {
   } catch (e) { await log(env, `AI unavailable, using fallback: ${String(e.message).slice(0, 80)}`); }
   return fallbackReply(thread);
 }
-function regexLead(thread) {
-  const all = thread.filter(m => m.role === "user").map(m => m.content).join(" \n ");
+const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed)/i;
+function regexLead(thread) {   // no AI: read each answer that follows our question
+  const users = thread.filter(m => m.role === "user" && !BTN.test(m.content.trim()));
+  const all = users.map(m => m.content).join(" \n ");
   const phone = (all.replace(/[\s-]/g, "").match(/(?:\+?91)?[6-9]\d{9}/) || [""])[0];
-  return { business: thread.find(m => m.role === "user")?.content?.slice(0, 120) || "", founders: "", nri: /nri|gulf|dubai|ഗൾഫ്|ദുബായ്|സൗദി|ഖത്തർ|മസ്കറ്റ്/i.test(all), traction: "", timeline: "",
-    phone, language: /english|ഇംഗ്ലീഷ്/i.test(all) ? "English" : /malayalam|മലയാളം/i.test(all) ? "Malayalam" : "", intent: phone ? "medium" : "low", can_afford_30k: "unclear", reason: "AI unavailable: basic extraction, read the chat" };
+  const ans = re => { for (let i = 0; i < thread.length - 1; i++) if (thread[i].role === "assistant" && re.test(thread[i].content)) { const n = thread.slice(i + 1).find(m => m.role === "user"); if (n && !BTN.test(n.content.trim()) && !/^\+?\d[\d\s-]{8,}$/.test(n.content.trim())) return n.content.slice(0, 120); } return ""; };
+  const business = ans(/what does your business do|business do\?/i) || users[0]?.content?.slice(0, 120) || "";
+  const traction = ans(/income|clients|funding/i), timeline = ans(/how soon|when .*register|timeline/i);
+  const strong = traction && !/^(no|not|nothing|illa|ഇല്ല)/i.test(traction.trim()), soon = /asap|soon|immediately|this (week|month)|now|urgent|ഉടൻ/i.test(timeline);
+  return { business, founders: ans(/how many founders|founders/i), nri: /nri|gulf|dubai|saudi|qatar|ഗൾഫ്|ദുബായ്|സൗദി|ഖത്തർ|മസ്കറ്റ്/i.test(all), traction, timeline,
+    phone, language: /english|ഇംഗ്ലീഷ്/i.test(all) ? "English" : /malayalam|മലയാളം/i.test(all) ? "Malayalam" : "", intent: !phone ? "low" : strong && soon ? "high" : "medium", can_afford_30k: strong ? "likely" : "unclear", reason: "Summary made without AI; open the chat for details" };
 }
 async function extractLead(env, thread) {
   let r;
@@ -214,7 +221,8 @@ async function extractLead(env, thread) {
     { role: "system", content: `From this conversation, output JSON only: {"business":"","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}. "can_afford_30k" judges from traction, funding, urgency and team, never from asking about money.` },
     { role: "user", content: thread.map(m => `${m.role}: ${m.content}`).join("\n") }], max_tokens: 300 }); }
   catch (e) { return regexLead(thread); }
-  try { return JSON.parse((r.response || "").match(/\{[\s\S]*\}/)[0]); } catch { return regexLead(thread); }
+  try { const j = typeof r.response === "object" && r.response ? r.response : JSON.parse(String(r.response || "").match(/\{[\s\S]*\}/)[0]); const rx = regexLead(thread);
+    return { ...j, phone: j.phone || rx.phone, language: j.language || rx.language }; } catch { return regexLead(thread); }
 }
 async function igProfile(env, igsid) {
   try { const p = await graph(env, igsid, { fields: "username,is_user_follow_business" }, "GET"); return { username: p.username || null, follows: typeof p.is_user_follow_business === "boolean" ? p.is_user_follow_business : null }; }
@@ -349,7 +357,7 @@ async function handleWebhook(env, body) {
       let reply, buttons = [];
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {
         // soft follow gate: ask to follow, re-check when they say they did, and after two tries send it anyway (never block a lead)
-        if (prof.follows === false && (meta.follow_asks || 0) < 2) {
+        if (prof.follows === false && (meta.follow_asks || 0) < 2 && !meta.served) {
           meta.follow_asks = (meta.follow_asks || 0) + 1;
           reply = meta.follow_asks === 1 ? FOLLOW_ASK : FOLLOW_RECHECK; buttons = ["I've followed ✅"];
           await log(env, `follow check @${meta.username || uid}: not following (ask ${meta.follow_asks})`);
@@ -360,23 +368,26 @@ async function handleWebhook(env, body) {
           delete meta.pending_more;
           buttons = NEXT_BUTTONS;
           await log(env, `sent ${meta.pending_kw} resource to @${meta.username || uid} (follows: ${prof.follows})`);
-          delete meta.pending_kw; meta.follow_asks = 0;
+          delete meta.pending_kw; meta.follow_asks = 0; meta.served = true;
         }
         await kvPut(env, `m:${uid}`, meta);
       } else { await kvPut(env, `m:${uid}`, meta); reply = await botReply(env, thread); }
       thread.push({ role: "assistant", content: reply });
       await kvPut(env, key, thread); await sendDM(env, uid, reply, buttons);
-      if (/\d{10}/.test(ev.message.text.replace(/\D/g, "")) || thread.length >= 12) {
+      const uMsgs = thread.filter(m => m.role === "user"); const pIdx = uMsgs.findIndex(m => /\d{10}/.test(m.content.replace(/\D/g, "")));
+      if (pIdx >= 0 || thread.length >= 12) {
         const lead = await extractLead(env, thread);
         if (lead) {
           const leads = await kv(env, "leads", {}); const prev = leads[uid];
           const meta2 = await kv(env, `m:${uid}`, { sources: [] }); const s0 = meta2.sources[0] || {};
           const fromItem = s0.media ? await mediaToItem(env, s0.media) : "direct";
-          leads[uid] = { ...lead, ig_user: uid, source_item: fromItem, source_keyword: s0.keyword || null, source_via: s0.via || "dm", status: prev?.status || "new", updated: IST().toISOString().slice(0, 16) };
+          const ready = lead.phone && (lead.language || uMsgs.length - 1 - pIdx >= 2);   // wait for the call language (or two more messages) so the alert is complete
+          leads[uid] = { ...lead, alerted: prev?.alerted || false, ig_user: uid, source_item: fromItem, source_keyword: s0.keyword || null, source_via: s0.via || "dm", status: prev?.status || "new", updated: IST().toISOString().slice(0, 16) };
           await kvPut(env, "leads", leads); await log(env, `lead ${uid}: ${lead.intent}/${lead.can_afford_30k} from ${fromItem}`);
           if (!prev) await bumpPost(env, fromItem, "leads");
-          if (lead.phone && (!prev || !prev.phone) && lead.intent !== "low") {
-            await discord(env, `🔔 **New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`);
+          if (ready && !prev?.alerted && lead.intent !== "low") {
+            leads[uid].alerted = true; await kvPut(env, "leads", leads);
+            await discord(env, `🔔 **New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`, true);
           }
         }
       }
@@ -473,7 +484,7 @@ async function talkSubmit(env, f) {
     source_item: item, source_keyword: kw, source_via: "form", status: "new", updated: IST().toISOString().slice(0, 16) };
   const leads = await kv(env, "leads", {}); leads[id] = lead; await kvPut(env, "leads", leads); await bumpPost(env, item, "leads");
   await log(env, `form lead ${id}: ${intent}/${fit} from ${item}`);
-  await discord(env, `🔔 **New ${intent.toUpperCase()}-intent lead** (budget fit: ${fit})\n👤 ${lead.name}\n📞 ${phone}  ·  🗣 ${lead.language}\n🏢 ${lead.business}\n📈 ${lead.traction}\n👥 ${lead.founders} · ${lead.where}\n⏱ ${lead.timeline}\n📍 Came from: ${item}${kw ? " (" + kw + ")" : ""}\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`);
+  await discord(env, `🔔 **New ${intent.toUpperCase()}-intent lead** (budget fit: ${fit})\n👤 ${lead.name}\n📞 ${phone}  ·  🗣 ${lead.language}\n🏢 ${lead.business}\n📈 ${lead.traction}\n👥 ${lead.founders} · ${lead.where}\n⏱ ${lead.timeline}\n📍 Came from: ${item}${kw ? " (" + kw + ")" : ""}\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
 }
 const KEYWORD_OPENER = {
   START: "Hi! 👋 Thanks for your comment. Want a quick guide on which company type suits you: OPC, Private Limited or LLP? Tap the button below.",
@@ -496,7 +507,7 @@ export default {
     const now = IST(); const h = now.getUTCHours(), mi = now.getUTCMinutes();
     const slot = SLOTS_IST.find(([sh, sm]) => sh === h && Math.abs(sm - mi) < 5);
     const day = now.toISOString().slice(0, 10);
-    ctx.waitUntil((async () => {                                    // check the inbox every 10 s so replies feel instant
+    if (await env.STATE.get("poll_inbox")) ctx.waitUntil((async () => {   // backup route, off while Meta delivers DMs by webhook                                    // check the inbox every 10 s so replies feel instant
       const t0 = Date.now();
       for (let k = 0; k < 6; k++) {
         try { await pollInbox(env); } catch (e) { await alertOnce(env, "pollerr", `⚠️ Inbox check failing: ${e.message}`); }
@@ -566,6 +577,7 @@ export default {
         const { token } = await req.json(); const r = await (await fetch(`https://graph.instagram.com/v24.0/me?fields=user_id,username&access_token=${encodeURIComponent(token)}`)).json();
         if (r.error) return json({ ok: false, error: r.error.message }); await env.STATE.put("ig_login_token", token); await env.STATE.put("ig_login_token_set", String(Date.now())); return json({ ok: true, username: r.username, user_id: r.user_id });
       }
+      if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (!["dm_inbound", "poll_inbox"].includes(k)) return json({ ok: false }); v ? await env.STATE.put(k, "1") : await env.STATE.delete(k); return json({ ok: true, k, v: !!v }); }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
     }
     if (u.pathname === "/talk" && req.method === "GET") return new Response(talkPage(u.searchParams.get("k"), u.searchParams.get("i"), u.searchParams.get("done")), { headers: { "content-type": "text/html; charset=utf-8" } });
