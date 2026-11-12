@@ -255,6 +255,13 @@ async function igMsg(env, body) {
   const r = await fetch("https://graph.instagram.com/v24.0/me/messages", { method: "POST", body: new URLSearchParams({ ...body, access_token: tok }) });
   const j = await r.json(); if (j.error) throw new Error(`ig messages: ${j.error.message}`); return j;
 }
+async function refreshIgToken(env) {   // Instagram-login tokens last 60 days; refresh weekly
+  const tok = await env.STATE.get("ig_login_token"); const at = +(await env.STATE.get("ig_login_token_set") || 0);
+  if (!tok || Date.now() - at < 7 * 864e5) return;
+  const r = await (await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(tok)}`)).json();
+  if (r.access_token) { await env.STATE.put("ig_login_token", r.access_token); await env.STATE.put("ig_login_token_set", String(Date.now())); await log(env, "instagram DM token refreshed"); }
+  else { await log(env, `ERROR token refresh: ${r.error?.message}`); await discord(env, `⚠️ Instagram DM token refresh failed: ${r.error?.message}. Generate a new token in the Rejectionlist app.`); }
+}
 async function sendMsg(env, recipient, text, buttons = []) {
   const msg = buttons.length ? { text, quick_replies: qr(buttons) } : { text };
   try { return await igMsg(env, { recipient: JSON.stringify(recipient), message: JSON.stringify(msg) }); }
@@ -433,7 +440,7 @@ export default {
         try { await postKind(env, retry.what); await log(env, `retry of ${retry.what} succeeded`); }
         catch (e) { throw new Error(`${retry.what} retry also failed: ${e.message}`); }
       }
-      if (h === 3 && mi < 5) { await snapshot(env); await optimise(env); }
+      if (h === 3 && mi < 5) { await snapshot(env); await optimise(env); await refreshIgToken(env); }
       if (h === 21 && mi >= 40 && mi < 45) {
         const posted = await kv(env, "posted", {}); const today = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day).length;
         const leads = Object.values(await kv(env, "leads", {})).filter(l => (l.updated || "").startsWith(day));
