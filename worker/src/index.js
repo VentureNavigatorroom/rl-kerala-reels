@@ -723,7 +723,8 @@ export default {
         const { token } = await req.json(); const r = await (await fetch(`https://graph.instagram.com/v24.0/me?fields=user_id,username&access_token=${encodeURIComponent(token)}`)).json();
         if (r.error) return json({ ok: false, error: r.error.message }); await env.STATE.put("ig_login_token", token); await env.STATE.put("ig_login_token_set", String(Date.now())); return json({ ok: true, username: r.username, user_id: r.user_id });
       }
-      if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (!["dm_inbound", "poll_inbox"].includes(k)) return json({ ok: false }); v ? await env.STATE.put(k, "1") : await env.STATE.delete(k); return json({ ok: true, k, v: !!v }); }
+      if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (["stage_hold", "stage_force"].includes(k)) { v === null || v === undefined || v === "" ? await env.STATE.delete(k) : await env.STATE.put(k, String(+v)); return json({ ok: true, k, v }); }
+        if (!["dm_inbound", "poll_inbox"].includes(k)) return json({ ok: false }); v ? await env.STATE.put(k, "1") : await env.STATE.delete(k); return json({ ok: true, k, v: !!v }); }
       if (u.pathname === "/ops/extra" && req.method === "POST") { const { carousels } = await req.json(); await kvPut(env, "extra_carousels", carousels || []); return json({ ok: true, n: (carousels || []).length }); }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
     }
