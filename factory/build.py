@@ -8,6 +8,7 @@ import cover
 
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
+VERSION = 2   # bump when voices/look change: unposted reels from older versions get rebuilt
 
 def load_bank():
     S = []
@@ -57,7 +58,13 @@ def main():
     target = int(os.environ.get("STOCK_TARGET", "40")); budget = float(os.environ.get("TIME_BUDGET_MIN", "300")) * 60
     only = [a for a in sys.argv[1:] if not a.startswith("-")]
     bank, man = load_bank(), manifest()
-    sync_posted(man); json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+    sync_posted(man)
+    old = {i["id"] for i in man["items"] if not i.get("posted") and i.get("v", 1) < VERSION}
+    if old:
+        print("rebuilding older-version reels:", len(old))
+        man["items"] = [i for i in man["items"] if i["id"] not in old]
+        man["stories"] = [x for x in man.get("stories", []) if x.get("reel") not in old]
+    json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
     stock = sum(1 for i in man["items"] if not i.get("posted"))
     if only: todo = [s for s in bank if s["id"] in only]
     else: todo = pick(bank, man, max(0, target - stock))
@@ -75,7 +82,7 @@ def main():
         man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"])]
         cap = s["hook"].replace("\n", " ") + "\n\n" + s["cta"][0] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #business #entrepreneur #pvtltd #keralabusiness"
         man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"],
-            video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None)]
+            video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)
     left = len([s for s in bank if s["id"] not in {i["id"] for i in man["items"]}])
