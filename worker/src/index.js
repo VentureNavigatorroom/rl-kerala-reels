@@ -236,6 +236,8 @@ async function bumpPost(env, item, field, n = 1) {        // live engagement cou
 }
 
 async function handleWebhook(env, body) {
+  const n = (body.entry || []).reduce((t, e) => [t[0] + (e.messaging || []).length, t[1] + (e.changes || []).length], [0, 0]);
+  await log(env, `webhook in: ${body.object || "?"} ${n[0]} message(s), ${n[1]} change(s) ${(body.entry || []).flatMap(e => (e.changes || []).map(c => c.field)).join(",")}`);
   for (const entry of body.entry || []) {
     for (const ev of entry.messaging || []) {
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
