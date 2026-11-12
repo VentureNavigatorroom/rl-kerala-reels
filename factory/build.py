@@ -48,7 +48,7 @@ def build_carousels(man, target):
         c = with_kw(c, man)
         files = carousel.make(c, f"{LIB}/media", seed=abs(hash(c["id"])) % 3)
         cap = c["hook"].replace("\n", " ") + "\n\n" + c["cta_caption"] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #keralabusiness #entrepreneur"
-        man["carousels"].append(dict(id=c["id"], segment=c["segment"], images=[f"media/{os.path.basename(p)}" for p in files], caption=cap, kw=c["kw"], base=c["base"], posted=None))
+        man["carousels"].append(dict(id=c["id"], segment=c["segment"], images=[f"media/{os.path.basename(p)}" for p in files], caption=cap, kw=c["kw"], base=c["base"], point=c["end"].replace("\n", " "), posted=None))
         print("carousel", c["id"], len(files), flush=True)
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
 
@@ -172,7 +172,7 @@ def main():
         man.setdefault("stories", [])
         man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"])]
         cap = s["hook"].replace("\n", " ") + "\n\n" + s["cta_caption"] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #business #entrepreneur #pvtltd #keralabusiness"
-        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None, kw=s["kw"], base=s["base"],
+        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
             video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)
