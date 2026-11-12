@@ -10,7 +10,7 @@ def chat(id, segment, bucket, hook, names, lines, end, cta): S.append(dict(id=id
 def lst(id, segment, bucket, hook, items, end, cta): S.append(dict(id=id, kind="list", segment=segment, bucket=bucket, hook=hook, items=items, end=end, cta=cta))
 
 # ---------- office (Kochi co-working): Neha + Rahul ----------
-duo("d101", "freelancer", "A", "office", "ക്ലയന്റ് പറഞ്ഞു:\n\"GST ഇൻവോയ്സ് വേണം\"", [
+duo("d101", "freelancer", "A", "office", "ക്ലയന്റ് ചോദിച്ചു:\n\"കമ്പനി ഡീറ്റെയിൽസ് അയക്കാമോ?\"", [
  ("A","wide","രാഹുൽ, ബാംഗ്ലൂരിലെ ക്ലയന്റ് പ്രോജക്ട് ഓക്കെ ആക്കി!"),
  ("V","V","പൊളി! അപ്പോ ഇന്ന് ലഞ്ച് നിന്റെ വക."),
  ("A","A","പക്ഷേ അവരുടെ ഫിനാൻസ് ടീം ഒരു ലിസ്റ്റ് അയച്ചു."),
