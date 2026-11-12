@@ -1,0 +1,23 @@
+name: post-now
+# Posts one item immediately (outside the slot schedule) and prints the autopilot's recent log.
+on:
+  workflow_dispatch:
+    inputs:
+      what: { description: "reel, carousel or story", default: "reel" }
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post and show result
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          WHAT: ${{ inputs.what }}
+          BASE: https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev
+        run: |
+          KEY="rlk-$(echo -n "admin$IG_TOKEN" | sha256sum | cut -c1-32)"; echo "::add-mask::$KEY"
+          case "$WHAT" in reel|carousel|story) ;; *) echo "what must be reel, carousel or story"; exit 1;; esac
+          echo "== posting one $WHAT"
+          OUT=$(curl -s -m 600 "$BASE/run/$WHAT?key=$KEY"); echo "$OUT"
+          echo "== status"
+          curl -s "$BASE/status?key=$KEY" | python3 -c "import json,sys; d=json.load(sys.stdin); print('posted total:', d['posted']); print('\n'.join(d['log'][:15]))"
+          echo "$OUT" | grep -q '"ok": true' || { echo "POST FAILED"; exit 1; }
