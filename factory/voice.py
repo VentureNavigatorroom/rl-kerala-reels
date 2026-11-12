@@ -4,7 +4,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.environ.get("VOICE_CACHE", f"{ROOT}/.voice_cache")
 os.makedirs(CACHE, exist_ok=True)
 
-FEMALE = {"അനു", "ഫാത്തിമ", "അഞ്ജലി", "മീര", "ലക്ഷ്മി", "അമ്മ", "നിമ്മി", "ഗ്രീഷ്മ", "സാറ", "ദിവ്യ", "റിയ", "ആതിര", "നേഹ", "സ്നേഹ", "ഷബ്ന", "ജിഷ", "ആൻസി", "നസ്രിൻ", "ഉമ്മ", "ചേച്ചി"}
+FEMALE_V4 = {"അനു", "ഫാത്തിമ", "അഞ്ജലി", "മീര", "ലക്ഷ്മി", "അമ്മ", "നിമ്മി", "ഗ്രീഷ്മ", "സാറ", "ദിവ്യ", "റിയ", "ആതിര", "നേഹ", "സ്നേഹ", "ഷബ്ന", "ജിഷ", "ആൻസി", "നസ്രിൻ", "ഉമ്മ", "ചേച്ചി"}
+# v5: every woman's name used by a location or a script, plus relation words; checked word by word ("ഡോ. ആൻസി", "മകൾ ടീന")
+FEMALE = FEMALE_V4 | {"അനഘ", "അമ്മു", "അമ്മൂമ്മ", "അലീന", "അശ്വതി", "ആരതി", "ആര്യ", "ഉഷ", "ഐശ്വര്യ", "കാവ്യ", "ഗായത്രി", "ജയ", "ടീന", "ഡെയ്സി",
+    "ഡെൽന", "ദീപ്തി", "ദേവിക", "നിള", "നീതു", "ബിന്ദു", "മരിയ", "രമ്യ", "റസിയ", "ലീല", "ശരണ്യ", "ശാന്ത", "ശ്രുതി", "ശ്വേത", "ഷഹാന", "ഷീബ",
+    "ഷൈനി", "സിനി", "സുധ", "സുമ", "സുമയ്യ", "സെലിൻ", "സോണിയ", "ഹന്ന", "മകൾ", "ഭാര്യ", "അനിയത്തി", "അമ്മായി", "ഇത്ത"}
 STYLE = "speaks in a very lively, animated and expressive way at a fast pace, with natural rises and falls in pitch, like excitedly chatting with a close friend. The audio is very clear and close-sounding with no background noise."
 VOICES = {
     "F1": f"Anjali {STYLE} Her pitch is moderate.",
@@ -14,8 +18,12 @@ VOICES = {
     "NARRATOR": "Anjali speaks clearly and confidently at a moderate pace, like explaining something useful to a friend. The recording is close-sounding with very little background noise.",
 }
 
-def voice_for(name, slot):
-    g = "F" if name in FEMALE else "M"
+def is_female(name, names=None):
+    names = FEMALE if names is None else names
+    return name in names or any(w in names for w in name.replace(".", " ").split())
+
+def voice_for(name, slot, names=None):
+    g = "F" if is_female(name, names) else "M"
     return f"{g}{1 + slot % 2}"
 
 _model = None

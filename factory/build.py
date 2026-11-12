@@ -8,7 +8,7 @@ import cover
 
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
-VERSION = 4   # bump when voices/look change: unposted reels from older versions get rebuilt
+VERSION = 5   # bump when voices/look change: unposted reels from older versions get rebuilt
 
 def load_bank():
     S = []
@@ -166,11 +166,21 @@ def main():
     bank, man = load_bank(), manifest()
     sync_posted(man)
     # v4 changed only how acronyms are spoken: rebuild just the unposted reels whose lines contain one, re-tag the rest
-    from voice import HAS_ACR
+    # v5 fixed voice gender (many women's names were voiced male): rebuild just the unposted reels whose voices change
+    from voice import HAS_ACR, FEMALE_V4, voice_for
+    import duo3d
     byid = {s["id"]: s for s in bank}
+    def voice_changed(i, sc):
+        if sc.get("kind") == "chat": nm = sc.get("names") or ()
+        elif sc.get("kind") == "duo3d": nm = sc.get("names") or duo3d.SCENES.get(i.get("scene") or "", {}).get("names") or ()
+        else: return False
+        return any(voice_for(n, k) != ("F" if n in FEMALE_V4 else "M") + str(1 + k % 2) for k, n in enumerate(nm))
     def needs(i):
         if i.get("v", 1) < 3: return True
-        sc = byid.get(i["id"]); return bool(sc) and HAS_ACR(json.dumps([sc.get("lines"), sc.get("items"), sc.get("end")], ensure_ascii=False))
+        sc = byid.get(i["id"])
+        if not sc: return False
+        if i.get("v", 1) < 4 and HAS_ACR(json.dumps([sc.get("lines"), sc.get("items"), sc.get("end")], ensure_ascii=False)): return True
+        return voice_changed(i, sc)
     old = set()
     for i in man["items"]:
         if not i.get("posted") and i.get("v", 1) < VERSION:
