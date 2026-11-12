@@ -13,7 +13,7 @@
 #  - a solo founder can form a One Person Company (OPC)
 #  - a home address can be the registered office, with owner's NOC and a recent utility bill
 CTA_START = ("START എന്ന് കമന്റ് ചെയ്യൂ", "നിങ്ങളുടെ ബിസിനസിന് പറ്റിയ\nസ്ട്രക്ചർ ഞങ്ങൾ പറഞ്ഞുതരാം")
-CTA_NAME = ("NAME എന്ന് കമന്റ് ചെയ്യൂ", "നിങ്ങളുടെ കമ്പനി പേര്\nഞങ്ങൾ ചെക്ക് ചെയ്തുതരാം")
+CTA_NAME = ("NAME എന്ന് കമന്റ് ചെയ്യൂ", "പേര് റിജക്ട് ആകാതിരിക്കാനുള്ള\nടിപ്സ് അയച്ചുതരാം")
 CTA_AFTER = ("AFTER എന്ന് കമന്റ് ചെയ്യൂ", "ആദ്യ 180 ദിവസത്തെ\nചെക്ക്‌ലിസ്റ്റ് അയച്ചുതരാം")
 CTA_DOCS = ("CHECKLIST എന്ന് കമന്റ് ചെയ്യൂ", "ആവശ്യമുള്ള ഡോക്യുമെന്റ്സ്\nലിസ്റ്റ് അയച്ചുതരാം")
 

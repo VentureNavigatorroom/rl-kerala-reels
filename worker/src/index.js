@@ -130,7 +130,8 @@ async function optimise(env) {
 const BOT_SYSTEM = `You are the automated assistant of rejectionlist.kerala, a company-registration service in Kerala, India.
 Rules: Reply in the user's language (Malayalam or English), short and friendly, max 3 sentences. Say you are an automated assistant if asked.
 NEVER state any price, fee, cost, discount or government fee; if asked, say the team will share the exact quote on a call after understanding the business.
-Never give legal advice beyond general facts. Goal: qualify the lead by asking, one at a time:
+Never give legal advice beyond general facts. If someone sends a proposed company name, give a first review using only these rules: not similar (even in sound) to an existing company or LLP, no clash with a registered trademark, words like Bank or Insurance need special approval, keep 2-3 backups. Say clearly that you cannot confirm availability and that final availability is confirmed when the application is filed. Then continue qualifying.
+Goal: qualify the lead by asking, one at a time:
 1) what the business does, 2) how many founders and whether any are NRIs, 3) whether the business already has income, clients or funding,
 4) how soon they want to register, 5) their phone number, 6) preferred language for the call: Malayalam or English.
 When you have all six, thank them and say a team member will call. Output only the reply text.`;
@@ -170,15 +171,21 @@ async function handleWebhook(env, body) {
     for (const ch of entry.changes || []) { // keyword comments -> one private reply opens the DM
       if (ch.field !== "comments" || !ch.value?.text) continue;
       const m = ch.value.text.match(/\b(START|NAME|AFTER|CHECKLIST)\b/i); if (!m) continue;
-      const text = { START: "ഹായ്! 👋 നിങ്ങളുടെ ബിസിനസിന് പറ്റിയ സ്ട്രക്ചർ പറഞ്ഞുതരാം. ആദ്യം, നിങ്ങളുടെ ബിസിനസ് എന്താണ്?",
-        NAME: "ഹായ്! 👋 നിങ്ങൾ ആലോചിക്കുന്ന കമ്പനി പേര് ഇവിടെ അയക്കൂ, ഞങ്ങൾ ചെക്ക് ചെയ്യാം.",
-        AFTER: "ഹായ്! 👋 ആദ്യ 180 ദിവസത്തെ ചെക്ക്‌ലിസ്റ്റ് അയക്കാം. നിങ്ങളുടെ കമ്പനി രജിസ്റ്റർ ചെയ്തിട്ട് എത്ര നാളായി?",
-        CHECKLIST: "ഹായ്! 👋 ഡോക്യുമെന്റ് ലിസ്റ്റ് അയക്കാം. എത്ര ഫൗണ്ടർമാർ ഉണ്ട്?" }[m[1].toUpperCase()];
+      const text = KEYWORD_REPLY[m[1].toUpperCase()];
       try { await graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ comment_id: ch.value.id }), message: JSON.stringify({ text }) }); await log(env, `private reply to ${m[1]} comment`); }
       catch (e) { await log(env, `comment reply failed: ${e.message}`); }
     }
   }
 }
+
+// Fixed, fully automatic first replies. Each keyword delivers what the post promised, with no human work.
+// Legal content only from the checked fact list; no prices; no promise of a manual availability check.
+const KEYWORD_REPLY = {
+  START: "ഹായ്! 👋 ഞാൻ rejectionlist.kerala-യുടെ ഓട്ടോമേറ്റഡ് അസിസ്റ്റന്റ് ആണ്.\n\nചുരുക്കത്തിൽ:\n• ഒറ്റയ്ക്കാണെങ്കിൽ: OPC (വൺ പേഴ്സൺ കമ്പനി)\n• 2+ പേർ, ഭാവിയിൽ ഫണ്ടിംഗ്: പ്രൈവറ്റ് ലിമിറ്റഡ്\n• പാർട്ണർമാർ, ഫണ്ടിംഗ് പ്ലാൻ ഇല്ല: LLP-യും നോക്കാം\n\nനിങ്ങൾക്ക് ഏതാണ് ശരി എന്ന് പറഞ്ഞുതരാം. നിങ്ങളുടെ ബിസിനസ് എന്താണ്?",
+  NAME: "ഹായ്! 👋 പേര് റിജക്ട് ആകാതിരിക്കാൻ:\n\n1. നിലവിലുള്ള കമ്പനിയുടെയോ LLP-യുടെയോ പേരിനോട് സാമ്യം (ഉച്ചാരണത്തിൽ പോലും) പാടില്ല\n2. രജിസ്റ്റേർഡ് ട്രേഡ്മാർക്കുമായി ക്ലാഷ് പാടില്ല\n3. Bank, Insurance പോലുള്ള വാക്കുകൾക്ക് പ്രത്യേക അനുമതി വേണം\n4. 2–3 ബാക്കപ്പ് പേരുകൾ കരുതുക\n\nമനസ്സിലുള്ള പേര് അയച്ചാൽ ഈ നിയമങ്ങൾ വെച്ച് ഒരു ആദ്യ റിവ്യൂ തരാം. അന്തിമ ലഭ്യത അപേക്ഷയുടെ സമയത്ത് ഉറപ്പാകും.",
+  AFTER: "ഹായ്! 👋 രജിസ്ട്രേഷന് ശേഷമുള്ള ചെക്ക്‌ലിസ്റ്റ്:\n\n✅ 30 ദിവസത്തിനുള്ളിൽ: ആദ്യ ഓഡിറ്ററെ നിയമിക്കുക\n✅ കമ്പനി പേരിൽ കറന്റ് അക്കൗണ്ട് തുറക്കുക\n✅ 180 ദിവസത്തിനുള്ളിൽ: ബിസിനസ് തുടങ്ങിയ ഡിക്ലറേഷൻ (INC-20A). മിസ്സ് ആയാൽ കമ്പനിക്ക് 50,000 രൂപ പിഴ\n✅ എല്ലാ വർഷവും ആനുവൽ ഫയലിംഗ്, വരുമാനം ഇല്ലെങ്കിലും. താമസിച്ചാൽ ഓരോ ഫോമിനും ദിവസം 100 രൂപ\n\nനിങ്ങളുടെ കമ്പനി രജിസ്റ്റർ ചെയ്തിട്ട് എത്ര നാളായി?",
+  CHECKLIST: "ഹായ്! 👋 രജിസ്ട്രേഷന് വേണ്ട ഡോക്യുമെന്റ്സ്:\n\n📄 ഓരോ ഡയറക്ടർക്കും: പാൻ, ആധാർ/ഐഡി, അഡ്രസ്സ് പ്രൂഫ് (ബാങ്ക് സ്റ്റേറ്റ്‌മെന്റ്/ബിൽ), ഫോട്ടോ\n🏠 ഓഫീസിന്: പുതിയ കറന്റ്/വാട്ടർ ബിൽ + ഉടമയുടെ NOC (വീടായാലും മതി)\n📝 2–3 കമ്പനി പേരുകൾ\n\nപ്രൈവറ്റ് ലിമിറ്റഡിന് കുറഞ്ഞത് 2 ഡയറക്ടർമാർ (ഒരാൾ ഇന്ത്യയിൽ താമസിക്കുന്നയാൾ). എത്ര ഫൗണ്ടർമാർ ഉണ്ട്?",
+};
 
 // ---------------- entry points ----------------
 export default {
