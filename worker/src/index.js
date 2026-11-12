@@ -404,6 +404,7 @@ async function handleWebhook(env, body) {
         let hook = "", point = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); point = it?.point || ""; } catch (e0) {}
         const r = inbound ? await sendMsg(env, { comment_id: ch.value.id }, KEYWORD_OPENER[kw], ["Yes, send it 👍"])
           : await sendMsg(env, { comment_id: ch.value.id }, directReply(env, kw, item, hook, point));
+        if (!inbound && r.recipient_id) { const tk = `t:${r.recipient_id}`; const th = await kv(env, tk, []); th.push({ role: "assistant", content: directReply(env, kw, item, hook, point) }); await kvPut(env, tk, th); }   // so the AI knows what was already sent
         if (r.recipient_id) { const mk = `m:${r.recipient_id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
           if (inbound && meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); if (inbound) meta.pending_kw = kw; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
         await log(env, `private reply to ${kw} comment`);
@@ -435,13 +436,11 @@ const NEXT_BUTTONS = ["Talk to our team", "Which type suits me?", "Documents nee
 // First private reply is short and asks for a reply: a reply moves the chat into their main inbox,
 // then the full resource (KEYWORD_REPLY) follows.
 const BASE = "https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev";
-function directReply(env, kw, item, hook, point) {
-  const parts = KEYWORD_REPLY[kw].split("\n\n"); const last = parts[parts.length - 1];
-  if (/\?\s*$/.test(last) || /^Send us/.test(last) || /What does your business do\?/.test(last)) parts.pop();
-  let body = parts.join("\n\n").replace(/^Here you go!\s*/, "");
+function directReply(env, kw, item, hook, point) {   // one DM: the post's takeaway + the full resource, ending with the first question (details are collected in DM)
+  let body = KEYWORD_REPLY[kw].replace(/^Here you go!\s*/, "");
   const head = hook ? `Hi! 👋 You commented on our post “${hook.slice(0, 70)}”. Here's what you asked for:` : "Hi! 👋 Thanks for your comment. Here's what you asked for:";
-  if (point) body = `📌 From this post: ${point.slice(0, 160)}\n\n${body}`;      // each post's reply carries that post's own takeaway
-  return `${head}\n\n${body}\n\nWant our team to call you and guide you personally? Share your details here (30 seconds):\n${BASE}/talk?k=${kw}&i=${encodeURIComponent(item)}`.slice(0, 990);
+  if (point) body = `📌 From this post: ${point.slice(0, 160)}\n\n${body}`;
+  return `${head}\n\n${body}`.slice(0, 990);
 }
 const esc = v => String(v || "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c])).slice(0, 300);
 function talkPage(k, i, done) {
