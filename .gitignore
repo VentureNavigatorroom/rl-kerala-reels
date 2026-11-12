@@ -1,0 +1,4 @@
+library/
+.voice_cache/
+__pycache__/
+*.tmp.mp4

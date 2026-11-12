@@ -1,0 +1,49 @@
+name: reel-factory
+# Builds new reels every night so the library always holds ~8 days of unposted stock.
+on:
+  schedule: [{ cron: "30 19 * * *" }]   # 01:00 IST
+  workflow_dispatch: {}
+permissions: { contents: write, pages: write, id-token: write }
+concurrency: { group: factory, cancel-in-progress: false }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore library (kept on its own branch, history squashed so the repo never grows)
+        run: |
+          git fetch origin library:library 2>/dev/null && git --work-tree=library checkout library -- . 2>/dev/null || true
+          git reset -q; ls library | head
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Cache voice model and voice lines
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            .voice_cache
+          key: voice-${{ github.run_id }}
+          restore-keys: voice-
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg libraqm0
+          pip install -q torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -q "git+https://github.com/huggingface/parler-tts.git" soundfile pillow numpy protobuf sentencepiece
+      - name: Build reels
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          POSTED_URL: ${{ vars.POSTED_URL }}
+          STOCK_TARGET: "40"
+          TIME_BUDGET_MIN: "300"
+          TTS_THREADS: "4"
+        run: python factory/build.py
+      - name: Save library (single squashed commit on branch "library")
+        run: |
+          cd library && git init -q -b library && git config user.name "reel-factory" && git config user.email "reel-factory@users.noreply.github.com"
+          git add -A && git commit -q -m "library $(date -u +%F)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" library:library
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: library }
+      - uses: actions/deploy-pages@v4
