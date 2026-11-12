@@ -288,6 +288,25 @@ async function bumpPost(env, item, field, n = 1) {        // live engagement cou
   await kvPut(env, k, e);
 }
 
+async function pollInbox(env) {
+  const tok = await env.STATE.get("ig_login_token"); if (!tok) return;
+  const since = +(await env.STATE.get("poll_since") || (Date.now() - 10 * 60e3));
+  const url = `https://graph.instagram.com/v24.0/me/conversations?platform=instagram&limit=15&fields=updated_time,messages.limit(6){id,message,from,created_time}&access_token=${encodeURIComponent(tok)}`;
+  const j = await (await fetch(url)).json(); if (j.error) { await log(env, `ERROR inbox poll: ${j.error.message}`); return; }
+  const evs = [];
+  for (const c of j.data || []) {
+    if (Date.parse(c.updated_time) < since - 120e3) continue;
+    for (const m of c.messages?.data || []) {
+      if (!m.message || !m.from || m.from.id === env.IG_USER_ID || (m.from.username || "").toLowerCase() === OWN_USERNAME) continue;
+      if (Date.parse(m.created_time) < since - 120e3) continue;
+      if (await env.STATE.get(`dup:${m.id}`)) continue;
+      evs.push({ t: Date.parse(m.created_time), ev: { sender: { id: m.from.id }, message: { mid: m.id, text: m.message } } });
+    }
+  }
+  await env.STATE.put("poll_since", String(Date.now()));
+  evs.sort((a, b) => a.t - b.t);
+  if (evs.length) { await log(env, `inbox poll: ${evs.length} new message(s)`); await handleWebhook(env, { object: "instagram(poll)", entry: [{ messaging: evs.map(e => e.ev) }] }); }
+}
 async function handleWebhook(env, body) {
   const n = (body.entry || []).reduce((t, e) => [t[0] + (e.messaging || []).length, t[1] + (e.changes || []).length], [0, 0]);
   await log(env, `webhook in: ${body.object || "?"} ${n[0]} message(s), ${n[1]} change(s) ${(body.entry || []).flatMap(e => (e.changes || []).map(c => c.field)).join(",")}`);
@@ -330,6 +349,8 @@ async function handleWebhook(env, body) {
         } else {
           const pre = prof.follows === false ? "No worries, here it is anyway! 😊" : prof.follows && meta.follow_asks ? "Thanks for following! 🙌 Here you go!" : "";
           reply = pre ? KEYWORD_REPLY[meta.pending_kw].replace(/^Here you go!/, pre) : KEYWORD_REPLY[meta.pending_kw];
+          for (const k2 of meta.pending_more || []) if (KEYWORD_REPLY[k2]) reply += "\n\n———\n\nYou also asked on another post:\n\n" + KEYWORD_REPLY[k2].replace(/^Here you go!\s*/, "");
+          delete meta.pending_more;
           buttons = NEXT_BUTTONS;
           await log(env, `sent ${meta.pending_kw} resource to @${meta.username || uid} (follows: ${prof.follows})`);
           delete meta.pending_kw; meta.follow_asks = 0;
@@ -371,7 +392,7 @@ async function handleWebhook(env, body) {
       try {
         const r = await sendMsg(env, { comment_id: ch.value.id }, KEYWORD_OPENER[kw], ["Yes, send it 👍"]);
         if (r.recipient_id) { const mk = `m:${r.recipient_id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
-          meta.pending_kw = kw; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
+          if (meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); meta.pending_kw = kw; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
         await log(env, `private reply to ${kw} comment`);
         try { await graph(env, `${ch.value.id}/replies`, { message: PUBLIC_DONE[Math.floor(Math.random() * PUBLIC_DONE.length)] }); } catch (e3) { await log(env, `public note failed: ${e3.message}`); }
       }
@@ -421,6 +442,7 @@ export default {
     const now = IST(); const h = now.getUTCHours(), mi = now.getUTCMinutes();
     const slot = SLOTS_IST.find(([sh, sm]) => sh === h && Math.abs(sm - mi) < 5);
     const day = now.toISOString().slice(0, 10);
+    try { await pollInbox(env); } catch (e) { await log(env, `ERROR poll ${e.message}`); }
     try {
       if (slot) {
         const k = `slot:${day}:${slot[0]}:${slot[1]}`;
@@ -440,8 +462,8 @@ export default {
         try { await postKind(env, retry.what); await log(env, `retry of ${retry.what} succeeded`); }
         catch (e) { throw new Error(`${retry.what} retry also failed: ${e.message}`); }
       }
-      if (h === 3 && mi < 5) { await snapshot(env); await optimise(env); await refreshIgToken(env); }
-      if (h === 21 && mi >= 40 && mi < 45) {
+      if (h === 3 && mi === 1) { await snapshot(env); await optimise(env); await refreshIgToken(env); }
+      if (h === 21 && mi === 41) {
         const posted = await kv(env, "posted", {}); const today = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day).length;
         const leads = Object.values(await kv(env, "leads", {})).filter(l => (l.updated || "").startsWith(day));
         const errs = (await kv(env, "log", [])).filter(l => l.startsWith(day) && /ERROR|NO .*STOCK/.test(l)).length;
