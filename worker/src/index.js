@@ -253,7 +253,9 @@ async function igMsg(env, body) {
   const tok = await env.STATE.get("ig_login_token");
   if (!tok) return graph(env, `${env.IG_USER_ID}/messages`, body);
   const r = await fetch("https://graph.instagram.com/v24.0/me/messages", { method: "POST", body: new URLSearchParams({ ...body, access_token: tok }) });
-  const j = await r.json(); if (j.error) throw new Error(`ig messages: ${j.error.message}`); return j;
+  const j = await r.json(); if (!j.error) return j;
+  await log(env, `ig-login send failed (${j.error.message}); using publisher app`);
+  return graph(env, `${env.IG_USER_ID}/messages`, body);
 }
 async function refreshIgToken(env) {   // Instagram-login tokens last 60 days; refresh weekly
   const tok = await env.STATE.get("ig_login_token"); const at = +(await env.STATE.get("ig_login_token_set") || 0);
