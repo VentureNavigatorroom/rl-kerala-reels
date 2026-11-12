@@ -281,7 +281,13 @@ async function handleWebhook(env, body) {
     for (const ev of entry.messaging || []) {
       if (ev.postback && !ev.message) ev.message = { text: ev.postback.title || ev.postback.payload || "" };   // button taps of other kinds
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
-      const uid = ev.sender.id; const key = `t:${uid}`; const thread = await kv(env, key, []);
+      const uid = ev.sender.id; const key = `t:${uid}`;
+      if (/^\s*delete\s*$/i.test(ev.message.text)) {                  // data deletion request (see /privacy)
+        await env.STATE.delete(key); await env.STATE.delete(`m:${uid}`);
+        const leads = await kv(env, "leads", {}); if (leads[uid]) { delete leads[uid]; await kvPut(env, "leads", leads); }
+        await sendDM(env, uid, "Done. We have deleted your conversation and details from our system."); await log(env, `data deleted for ${uid}`); continue;
+      }
+      const thread = await kv(env, key, []);
       const meta = await kv(env, `m:${uid}`, { first: Date.now(), sources: [] });
       meta.last_in = Date.now();                                     // 24h window starts from their last message
       if (ev.message.reply_to?.story?.id) meta.sources.push({ via: "story_reply", media: ev.message.reply_to.story.id, t: Date.now() });
@@ -455,6 +461,14 @@ export default {
         if (what === "reel") await postReel(env); if (what === "story") await postStory(env); if (what === "carousel") await postCarousel(env); return json({ ok: true }); }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
     }
+    if (u.pathname === "/privacy" || u.pathname === "/data-deletion" || u.pathname === "/terms") return new Response(`<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width"><title>Rejection List Kerala - ${u.pathname.slice(1)}</title><body style="font-family:sans-serif;max-width:720px;margin:40px auto;padding:0 16px;line-height:1.6"><h1>Rejection List Kerala</h1>
+<h2>Privacy policy</h2><p>This app is used only by the Instagram account @rejectionlist.kerala (Rejection List - India) to publish its own posts and to reply to people who comment on its posts or send it a direct message.</p>
+<p><b>What we collect:</b> your Instagram user ID and username, the comments and messages you send to @rejectionlist.kerala, and any details you choose to share in that conversation (for example your name, phone number, preferred language and business plans).</p>
+<p><b>Why:</b> only to answer your questions about company registration and to let our team contact you if you ask us to. We do not sell or share your data with advertisers or other third parties.</p>
+<p><b>Where it is stored:</b> on Cloudflare (our hosting provider). Conversation data is kept for up to 12 months and then deleted.</p>
+<h2>Data deletion</h2><p>To delete your data, send the word <b>DELETE</b> as a direct message to @rejectionlist.kerala on Instagram, or ask us in any message. We remove your conversation and details within 7 days and confirm when done.</p>
+<h2>Terms</h2><p>Information shared in replies is general guidance about company registration, not legal advice.</p>
+<p>Contact: send a direct message to @rejectionlist.kerala on Instagram.</p></body>`, { headers: { "content-type": "text/html; charset=utf-8" } });
     if (u.pathname === "/public/posted") return json([...Object.keys(await kv(env, "posted", {})), ...Object.keys(await kv(env, "stories", {}))]); // builder reads this to know stock (reels, carousels, stories)
     if (u.searchParams.get("key") !== env.ADMIN_KEY) return new Response("rl-kerala autopilot", { status: 200 });
     if (u.pathname === "/status") return json({ weights: await kv(env, "weights", null), posted: Object.keys(await kv(env, "posted", {})).length, log: (await kv(env, "log", [])).slice(0, 60) });
