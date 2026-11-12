@@ -459,6 +459,11 @@ export default {
       }
       if (u.pathname === "/ops/run" && req.method === "POST") { const { what } = await req.json(); if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env);
         if (what === "reel") await postReel(env); if (what === "story") await postStory(env); if (what === "carousel") await postCarousel(env); return json({ ok: true }); }
+      if (u.pathname === "/ops/graph" && req.method === "POST") {      // diagnostics: one Graph API call with the app's token
+        const { path, params, method } = await req.json();
+        const g = new URL(`${env.GRAPH}/${path}`); const b = new URLSearchParams({ ...(params || {}), access_token: env.IG_TOKEN });
+        const r = (method || "GET") === "GET" ? await fetch(`${g}?${b}`) : await fetch(g, { method, body: b }); return json(await r.json());
+      }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
     }
     if (u.pathname === "/privacy" || u.pathname === "/data-deletion" || u.pathname === "/terms") return new Response(`<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width"><title>Rejection List Kerala - ${u.pathname.slice(1)}</title><body style="font-family:sans-serif;max-width:720px;margin:40px auto;padding:0 16px;line-height:1.6"><h1>Rejection List Kerala</h1>
