@@ -150,6 +150,15 @@ def main():
     left = len([s for s in bank if s["id"] not in {i["id"] for i in man["items"]}])
     cl = len([c for c in load_carousels() if c["id"] not in {c["id"] for c in man.get("carousels", [])}])
     man["bank_left"] = dict(reel_scripts=left, carousels=cl); json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+    # delete media no longer referenced by the manifest (old-version reels, pruned posts)
+    keep = set()
+    def walk(o):
+        if isinstance(o, dict): [walk(v) for v in o.values()]
+        elif isinstance(o, list): [walk(v) for v in o]
+        elif isinstance(o, str) and o.startswith("media/"): keep.add(o.split("/")[-1])
+    walk(man)
+    for f in os.listdir(f"{LIB}/media"):
+        if f not in keep and not f.startswith("."): os.remove(f"{LIB}/media/{f}")
     print(f"unbuilt scripts left in bank: {left}, carousels left: {cl}")
 
 if __name__ == "__main__":
