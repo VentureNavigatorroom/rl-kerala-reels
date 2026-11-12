@@ -168,15 +168,48 @@ Goal: qualify the lead by asking, one at a time:
 4) how soon they want to register, 5) their phone number, 6) preferred language for the call: Malayalam or English.
 When you have all six, thank them and say a team member will call. Output only the reply text.`;
 
+// Fallback when Cloudflare's free AI allowance is used up or the model errors: fixed rules + fixed question order.
+const FALLBACK_Q = [
+  "നിങ്ങളുടെ ബിസിനസ് എന്താണ്? ചുരുക്കി പറയാമോ?",
+  "എത്ര ഫൗണ്ടർമാർ ഉണ്ട്? ആരെങ്കിലും NRI ആണോ?",
+  "ബിസിനസിന് ഇപ്പോൾ വരുമാനമോ ക്ലയന്റുകളോ ഫണ്ടിംഗോ ഉണ്ടോ?",
+  "എത്ര പെട്ടെന്ന് രജിസ്റ്റർ ചെയ്യണം?",
+  "ഞങ്ങളുടെ ടീം വിളിക്കാൻ ഫോൺ നമ്പർ തരാമോ?",
+  "കോൾ മലയാളത്തിലോ ഇംഗ്ലീഷിലോ?",
+  "നന്ദി! 🙏 ഞങ്ങളുടെ ടീം ഉടൻ വിളിക്കും.",
+];
+function fallbackReply(thread) {
+  const last = thread[thread.length - 1]?.content || "";
+  const asked = thread.filter(m => m.role === "assistant" && FALLBACK_Q.includes(m.content)).length;
+  let pre = "";
+  if (/\b(pvt|ltd|private|limited|llp|opc)\b/i.test(last) || /പ്രൈവറ്റ്|ലിമിറ്റഡ്/.test(last)) {
+    const hits = ["bank", "insurance", "ബാങ്ക്", "ഇൻഷുറൻസ്"].filter(x => last.toLowerCase().includes(x));
+    pre = hits.length ? `"${hits[0]}" പോലുള്ള വാക്കുകൾക്ക് പ്രത്യേക അനുമതി വേണം, അതുകൊണ്ട് റിജക്ട് ആകാൻ സാധ്യതയുണ്ട്. ` : "ഈ പേരിൽ നിയന്ത്രിത വാക്കുകൾ കാണുന്നില്ല. നിലവിലുള്ള കമ്പനികളുമായോ ട്രേഡ്മാർക്കുമായോ സാമ്യമില്ലെന്ന് ഉറപ്പാക്കണം. ";
+    pre += "അന്തിമ ലഭ്യത അപേക്ഷിക്കുമ്പോൾ ഉറപ്പാകും.\n\n";
+  }
+  if (/price|fee|cost|charge|rate|എത്ര രൂപ|ചാർജ്|ഫീസ്/i.test(last)) pre = "ബിസിനസ് മനസ്സിലാക്കിയ ശേഷം ഞങ്ങളുടെ ടീം കോളിൽ കൃത്യമായ ക്വോട്ട് പറയും. ";
+  return pre + FALLBACK_Q[Math.min(asked, FALLBACK_Q.length - 1)];
+}
 async function botReply(env, thread) {
-  const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: BOT_SYSTEM }, ...thread.slice(-12)], max_tokens: 220 });
-  return (r.response || "").trim();
+  try {
+    const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: BOT_SYSTEM }, ...thread.slice(-12)], max_tokens: 220 });
+    const t = (r.response || "").trim(); if (t) return t;
+  } catch (e) { await log(env, `AI unavailable, using fallback: ${String(e.message).slice(0, 80)}`); }
+  return fallbackReply(thread);
+}
+function regexLead(thread) {
+  const all = thread.filter(m => m.role === "user").map(m => m.content).join(" \n ");
+  const phone = (all.replace(/[\s-]/g, "").match(/(?:\+?91)?[6-9]\d{9}/) || [""])[0];
+  return { business: thread.find(m => m.role === "user")?.content?.slice(0, 120) || "", founders: "", nri: /nri|gulf|dubai|ഗൾഫ്|ദുബായ്|സൗദി|ഖത്തർ|മസ്കറ്റ്/i.test(all), traction: "", timeline: "",
+    phone, language: /english|ഇംഗ്ലീഷ്/i.test(all) ? "English" : /malayalam|മലയാളം/i.test(all) ? "Malayalam" : "", intent: phone ? "medium" : "low", can_afford_30k: "unclear", reason: "AI unavailable: basic extraction, read the chat" };
 }
 async function extractLead(env, thread) {
-  const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
+  let r;
+  try { r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
     { role: "system", content: `From this conversation, output JSON only: {"business":"","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}. "can_afford_30k" judges from traction, funding, urgency and team, never from asking about money.` },
-    { role: "user", content: thread.map(m => `${m.role}: ${m.content}`).join("\n") }], max_tokens: 300 });
-  try { return JSON.parse((r.response || "").match(/\{[\s\S]*\}/)[0]); } catch { return null; }
+    { role: "user", content: thread.map(m => `${m.role}: ${m.content}`).join("\n") }], max_tokens: 300 }); }
+  catch (e) { return regexLead(thread); }
+  try { return JSON.parse((r.response || "").match(/\{[\s\S]*\}/)[0]); } catch { return regexLead(thread); }
 }
 async function sendDM(env, to, text) {
   return graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ id: to }), message: JSON.stringify({ text }) });
