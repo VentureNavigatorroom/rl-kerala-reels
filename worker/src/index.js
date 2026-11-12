@@ -95,12 +95,13 @@ async function postStory(env) {
 
 async function postCarousel(env) {
   const m = await manifest(env); const posted = await kv(env, "posted", {});
-  const avail = (m.carousels || []).filter(c => !posted[c.id]);
+  const extra = await kv(env, "extra_carousels", []);              // stop-gap stock pushed by Claude when the library has none
+  const avail = [...(m.carousels || []), ...extra.filter(e => !(m.carousels || []).some(c => c.id === e.id))].filter(c => !posted[c.id]);
   if (!avail.length) { await log(env, "NO CAROUSEL STOCK"); await alertOnce(env, "nocarousel", "⚠️ Carousel library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
   const recent = Object.values(posted).filter(p => p.kind === "carousel").sort((a, b) => b.t - a.t)[0];
   const c = avail.find(x => !recent || x.segment !== recent.segment) || avail[0];
   const kids = [];
-  for (const img of c.images.slice(0, 10)) kids.push((await graph(env, `${env.IG_USER_ID}/media`, { image_url: `${env.LIB_BASE}/${img}`, is_carousel_item: "true" })).id);
+  for (const img of c.images.slice(0, 10)) kids.push((await graph(env, `${env.IG_USER_ID}/media`, { image_url: img.startsWith("http") ? img : `${env.LIB_BASE}/${img}`, is_carousel_item: "true" })).id);
   const box = await graph(env, `${env.IG_USER_ID}/media`, { media_type: "CAROUSEL", children: kids.join(","), caption: c.caption });
   await waitReady(env, box.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: box.id });
@@ -578,6 +579,7 @@ export default {
         if (r.error) return json({ ok: false, error: r.error.message }); await env.STATE.put("ig_login_token", token); await env.STATE.put("ig_login_token_set", String(Date.now())); return json({ ok: true, username: r.username, user_id: r.user_id });
       }
       if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (!["dm_inbound", "poll_inbox"].includes(k)) return json({ ok: false }); v ? await env.STATE.put(k, "1") : await env.STATE.delete(k); return json({ ok: true, k, v: !!v }); }
+      if (u.pathname === "/ops/extra" && req.method === "POST") { const { carousels } = await req.json(); await kvPut(env, "extra_carousels", carousels || []); return json({ ok: true, n: (carousels || []).length }); }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
     }
     if (u.pathname === "/talk" && req.method === "GET") return new Response(talkPage(u.searchParams.get("k"), u.searchParams.get("i"), u.searchParams.get("done")), { headers: { "content-type": "text/html; charset=utf-8" } });
