@@ -291,7 +291,7 @@ async function bumpPost(env, item, field, n = 1) {        // live engagement cou
 }
 
 async function pollInbox(env) {
-  const since = +(await env.STATE.get("poll_since") || (Date.now() - 15 * 60e3));
+  const since = Date.now() - 15 * 60e3;   // look-back window; dup: keys stop double handling
   let j;   // the publisher app's token can read the inbox
   try { j = await graph(env, `${env.IG_USER_ID}/conversations`, { platform: "instagram", limit: "15", fields: "updated_time,messages.limit(6){id,message,from,created_time}" }, "GET"); }
   catch (e) { await log(env, `ERROR inbox poll: ${e.message}`); return; }
@@ -305,7 +305,6 @@ async function pollInbox(env) {
       evs.push({ t: Date.parse(m.created_time), ev: { sender: { id: m.from.id }, message: { mid: m.id, text: m.message } } });
     }
   }
-  await env.STATE.put("poll_since", String(Date.now()));
   evs.sort((a, b) => a.t - b.t);
   if (evs.length) { await log(env, `inbox poll: ${evs.length} new message(s)`); await handleWebhook(env, { object: "instagram(poll)", entry: [{ messaging: evs.map(e => e.ev) }] }); }
 }
@@ -392,9 +391,13 @@ async function handleWebhook(env, body) {
       }
       const kw = m[1].toUpperCase();
       try {
-        const r = await sendMsg(env, { comment_id: ch.value.id }, KEYWORD_OPENER[kw], ["Yes, send it 👍"]);
+        // Until Meta lets the app read incoming DMs (flag dm_inbound), the one private reply carries the whole resource + the callback form.
+        const inbound = await env.STATE.get("dm_inbound");
+        let hook = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); } catch (e0) {}
+        const r = inbound ? await sendMsg(env, { comment_id: ch.value.id }, KEYWORD_OPENER[kw], ["Yes, send it 👍"])
+          : await sendMsg(env, { comment_id: ch.value.id }, directReply(env, kw, item, hook));
         if (r.recipient_id) { const mk = `m:${r.recipient_id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
-          if (meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); meta.pending_kw = kw; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
+          if (inbound && meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); if (inbound) meta.pending_kw = kw; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
         await log(env, `private reply to ${kw} comment`);
         try { await graph(env, `${ch.value.id}/replies`, { message: PUBLIC_DONE[Math.floor(Math.random() * PUBLIC_DONE.length)] }); } catch (e3) { await log(env, `public note failed: ${e3.message}`); }
       }
@@ -423,6 +426,47 @@ const FOLLOW_RECHECK = "Hmm, we can't see your follow yet 🤔 Open our profile,
 const NEXT_BUTTONS = ["Talk to our team", "Which type suits me?", "Documents needed"];
 // First private reply is short and asks for a reply: a reply moves the chat into their main inbox,
 // then the full resource (KEYWORD_REPLY) follows.
+const BASE = "https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev";
+function directReply(env, kw, item, hook) {
+  const parts = KEYWORD_REPLY[kw].split("\n\n"); const last = parts[parts.length - 1];
+  if (/\?\s*$/.test(last) || /^Send us/.test(last) || /What does your business do\?/.test(last)) parts.pop();
+  let body = parts.join("\n\n").replace(/^Here you go!\s*/, "");
+  const head = hook ? `Hi! 👋 You commented on our post “${hook.slice(0, 70)}”. Here's what you asked for:` : "Hi! 👋 Thanks for your comment. Here's what you asked for:";
+  return `${head}\n\n${body}\n\nWant our team to call you and guide you personally? Share your details here (30 seconds):\n${BASE}/talk?k=${kw}&i=${encodeURIComponent(item)}`.slice(0, 990);
+}
+const esc = v => String(v || "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c])).slice(0, 300);
+function talkPage(k, i, done) {
+  const css = "font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:20px;line-height:1.5;color:#1a1a1a";
+  if (done) return `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Thank you</title><body style="${css}"><h2>Thank you! 🙌</h2><p>Our team will call you soon in the language you chose.</p><p>നന്ദി! ഞങ്ങളുടെ ടീം ഉടൻ നിങ്ങളെ വിളിക്കും.</p><p>@rejectionlist.kerala</p></body>`;
+  const sel = (n, label, opts) => `<label>${label}<select name=${n} required style="width:100%;padding:10px;margin:4px 0 14px;font-size:16px"><option value="">Select</option>${opts.map(o => `<option>${o}</option>`).join("")}</select></label>`;
+  const inp = (n, label, extra = "") => `<label>${label}<input name=${n} ${extra} style="width:100%;padding:10px;margin:4px 0 14px;font-size:16px;box-sizing:border-box"></label>`;
+  return `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Rejection List Kerala</title><body style="${css}">
+<h2>Company registration: get a call from our team</h2><p>കമ്പനി രജിസ്ട്രേഷനെക്കുറിച്ച് ഞങ്ങളുടെ ടീം നിങ്ങളെ വിളിക്കും. 30 സെക്കൻഡ് മതി.</p>
+<form method=post action="/talk"><input type=hidden name=k value="${esc(k)}"><input type=hidden name=i value="${esc(i)}"><input name=website style="display:none" tabindex=-1 autocomplete=off>
+${inp("name", "Your name / പേര്", "required maxlength=60")}${inp("phone", "Phone (WhatsApp) / ഫോൺ നമ്പർ", "required type=tel pattern='[0-9+ ]{10,15}' maxlength=15")}
+${sel("language", "Call me in / ഏത് ഭാഷയിൽ സംസാരിക്കണം", ["Malayalam", "English"])}
+${inp("business", "What is your business? / എന്താണ് ബിസിനസ്?", "required maxlength=200")}
+${sel("stage", "Where are you now? / ഇപ്പോൾ എവിടെയാണ്?", ["Already running, getting income", "Have clients / orders waiting", "Just starting", "Only an idea for now", "Company registered, need help after"])}
+${sel("founders", "Who is starting it? / ആരൊക്കെ?", ["Just me", "Me with partners", "Family business"])}
+${sel("where", "Where do you live? / താമസം", ["Kerala", "Gulf / abroad (NRI)", "Other state in India"])}
+${sel("when", "When do you want to register? / എപ്പോൾ?", ["This week", "This month", "In 1 to 3 months", "Not sure yet"])}
+<button style="width:100%;padding:14px;font-size:17px;background:#e8590c;color:#fff;border:0;border-radius:8px">Request a call / കോൾ വേണം</button></form>
+<p style="font-size:12px;color:#666">We use these details only to call you. <a href="/privacy">Privacy</a></p></body>`;
+}
+async function talkSubmit(env, f) {
+  if (f.get("website")) return;                                     // bots fill the hidden field
+  const phone = String(f.get("phone") || "").replace(/[^0-9+]/g, ""); if (phone.replace(/\D/g, "").length < 10) return;
+  const stage = String(f.get("stage") || ""), when = String(f.get("when") || "");
+  const strong = /running|clients|registered/i.test(stage), soon = /week|month$/i.test(when) || when === "This month";
+  const intent = strong && soon ? "high" : strong || soon ? "medium" : "low";
+  const fit = strong ? "likely" : /starting/i.test(stage) ? "unclear" : "unlikely";
+  const id = "f" + Date.now().toString(36); const item = String(f.get("i") || "direct").slice(0, 60), kw = String(f.get("k") || "").slice(0, 20);
+  const lead = { name: esc(f.get("name")), phone, language: esc(f.get("language")), business: esc(f.get("business")), traction: esc(stage), founders: esc(f.get("founders")), nri: /Gulf/.test(String(f.get("where"))), where: esc(f.get("where")), timeline: esc(when), intent, can_afford_30k: fit,
+    source_item: item, source_keyword: kw, source_via: "form", status: "new", updated: IST().toISOString().slice(0, 16) };
+  const leads = await kv(env, "leads", {}); leads[id] = lead; await kvPut(env, "leads", leads); await bumpPost(env, item, "leads");
+  await log(env, `form lead ${id}: ${intent}/${fit} from ${item}`);
+  await discord(env, `🔔 **New ${intent.toUpperCase()}-intent lead** (budget fit: ${fit})\n👤 ${lead.name}\n📞 ${phone}  ·  🗣 ${lead.language}\n🏢 ${lead.business}\n📈 ${lead.traction}\n👥 ${lead.founders} · ${lead.where}\n⏱ ${lead.timeline}\n📍 Came from: ${item}${kw ? " (" + kw + ")" : ""}\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`);
+}
 const KEYWORD_OPENER = {
   START: "Hi! 👋 Thanks for your comment. Want a quick guide on which company type suits you: OPC, Private Limited or LLP? Tap the button below.",
   NAME: "Hi! 👋 Thanks for your comment. Want our tips to keep your company name from getting rejected? Tap the button below.",
@@ -498,7 +542,7 @@ export default {
         await log(env, `follow-up sent to ${id}`); return json({ ok: true, sent: true, hours_left_in_window: left / 3600e3 });
       }
       if (u.pathname === "/ops/run" && req.method === "POST") { const { what } = await req.json(); if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env);
-        if (what === "poll") { await env.STATE.delete("poll_since"); await pollInbox(env); return json({ ok: true, since: await env.STATE.get("poll_since") }); } if (what === "reel") await postReel(env); if (what === "story") await postStory(env); if (what === "carousel") await postCarousel(env); return json({ ok: true }); }
+        if (what === "poll") { await pollInbox(env); return json({ ok: true }); } if (what === "reel") await postReel(env); if (what === "story") await postStory(env); if (what === "carousel") await postCarousel(env); return json({ ok: true }); }
       if (u.pathname === "/ops/graph" && req.method === "POST") {      // diagnostics: one Graph API call with the app's token
         const { path, params, method } = await req.json();
         const g = new URL(`${env.GRAPH}/${path}`); const b = new URLSearchParams({ ...(params || {}), access_token: env.IG_TOKEN });
@@ -510,6 +554,8 @@ export default {
       }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
     }
+    if (u.pathname === "/talk" && req.method === "GET") return new Response(talkPage(u.searchParams.get("k"), u.searchParams.get("i"), u.searchParams.get("done")), { headers: { "content-type": "text/html; charset=utf-8" } });
+    if (u.pathname === "/talk" && req.method === "POST") { try { await talkSubmit(env, await req.formData()); } catch (e) { await log(env, `ERROR form ${e.message}`); } return Response.redirect(`${u.origin}/talk?done=1`, 303); }
     if (u.pathname === "/privacy" || u.pathname === "/data-deletion" || u.pathname === "/terms") return new Response(`<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width"><title>Rejection List Kerala - ${u.pathname.slice(1)}</title><body style="font-family:sans-serif;max-width:720px;margin:40px auto;padding:0 16px;line-height:1.6"><h1>Rejection List Kerala</h1>
 <h2>Privacy policy</h2><p>This app is used only by the Instagram account @rejectionlist.kerala (Rejection List - India) to publish its own posts and to reply to people who comment on its posts or send it a direct message.</p>
 <p><b>What we collect:</b> your Instagram user ID and username, the comments and messages you send to @rejectionlist.kerala, and any details you choose to share in that conversation (for example your name, phone number, preferred language and business plans).</p>
