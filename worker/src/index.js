@@ -248,13 +248,20 @@ function matchKeyword(text) {
 }
 // Tap-to-reply buttons (Instagram quick replies, max 13, title max 20 chars). A tap arrives as a normal text message.
 const qr = titles => titles.map(t => ({ content_type: "text", title: t, payload: t.toUpperCase() }));
+// DMs go out through the Instagram-login app ("Rejectionlist", token kept in KV) when it is connected; otherwise the publisher app.
+async function igMsg(env, body) {
+  const tok = await env.STATE.get("ig_login_token");
+  if (!tok) return graph(env, `${env.IG_USER_ID}/messages`, body);
+  const r = await fetch("https://graph.instagram.com/v24.0/me/messages", { method: "POST", body: new URLSearchParams({ ...body, access_token: tok }) });
+  const j = await r.json(); if (j.error) throw new Error(`ig messages: ${j.error.message}`); return j;
+}
 async function sendMsg(env, recipient, text, buttons = []) {
   const msg = buttons.length ? { text, quick_replies: qr(buttons) } : { text };
-  try { return await graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify(recipient), message: JSON.stringify(msg) }); }
+  try { return await igMsg(env, { recipient: JSON.stringify(recipient), message: JSON.stringify(msg) }); }
   catch (e) {   // if Instagram rejects the buttons, still deliver the text
     if (!buttons.length) throw e;
     await log(env, `buttons rejected, sent plain text: ${e.message}`);
-    return graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify(recipient), message: JSON.stringify({ text }) });
+    return igMsg(env, { recipient: JSON.stringify(recipient), message: JSON.stringify({ text }) });
   }
 }
 async function sendDM(env, to, text, buttons = []) { return sendMsg(env, { id: to }, text, buttons); }
@@ -279,6 +286,7 @@ async function handleWebhook(env, body) {
   await log(env, `webhook in: ${body.object || "?"} ${n[0]} message(s), ${n[1]} change(s) ${(body.entry || []).flatMap(e => (e.changes || []).map(c => c.field)).join(",")}`);
   for (const entry of body.entry || []) {
     for (const ev of entry.messaging || []) {
+      const mid = ev.message?.mid || ev.postback?.mid; if (mid) { if (await env.STATE.get(`dup:${mid}`)) continue; await env.STATE.put(`dup:${mid}`, "1", { expirationTtl: 86400 }); }
       if (ev.postback && !ev.message) ev.message = { text: ev.postback.title || ev.postback.payload || "" };   // button taps of other kinds
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
       const uid = ev.sender.id; const key = `t:${uid}`;
@@ -338,7 +346,8 @@ async function handleWebhook(env, body) {
         }
       }
     }
-    for (const ch of entry.changes || []) { // keyword comments -> one private reply opens the DM
+    for (const ch of entry.changes || []) {
+      if (ch.value?.id) { const dk = `dup:c:${ch.field}:${ch.value.id}`; if (await env.STATE.get(dk)) continue; await env.STATE.put(dk, "1", { expirationTtl: 86400 }); } // keyword comments -> one private reply opens the DM
       if (ch.field !== "comments" || !ch.value?.text) continue;
       const who = ch.value.from?.username || ch.value.from?.id || "?";
       await log(env, `comment from @${who}${ch.value.parent_id ? " (reply in thread)" : ""}: ${ch.value.text.slice(0, 60)}`);
@@ -463,6 +472,10 @@ export default {
         const { path, params, method } = await req.json();
         const g = new URL(`${env.GRAPH}/${path}`); const b = new URLSearchParams({ ...(params || {}), access_token: env.IG_TOKEN });
         const r = (method || "GET") === "GET" ? await fetch(`${g}?${b}`) : await fetch(g, { method, body: b }); return json(await r.json());
+      }
+      if (u.pathname === "/ops/settoken" && req.method === "POST") {   // store the Instagram-login token (never logged)
+        const { token } = await req.json(); const r = await (await fetch(`https://graph.instagram.com/v24.0/me?fields=user_id,username&access_token=${encodeURIComponent(token)}`)).json();
+        if (r.error) return json({ ok: false, error: r.error.message }); await env.STATE.put("ig_login_token", token); await env.STATE.put("ig_login_token_set", String(Date.now())); return json({ ok: true, username: r.username, user_id: r.user_id });
       }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
     }
