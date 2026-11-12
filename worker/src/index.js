@@ -155,13 +155,13 @@ async function snapshot(env) {
     const age = (Date.now() - p.t) / 86400e3; if (age > 30 || p.kind === undefined) continue;
     let v = {};
     try {
-      const metrics = p.kind === "carousel" ? "reach,shares,saved,total_interactions,likes,comments" : "reach,views,shares,saved,total_interactions,likes,comments";
+      const metrics = p.kind === "carousel" || p.kind === "poster" ? "reach,shares,saved,total_interactions,likes,comments" : "reach,views,shares,saved,total_interactions,likes,comments";
       const r = await graph(env, `${p.media}/insights`, { metric: metrics }, "GET");
       v = Object.fromEntries(r.data.map(d => [d.name, d.values?.[0]?.value ?? d.total_value?.value ?? 0]));
     } catch (e) { v = { error: String(e.message).slice(0, 80) }; }
     const ev = await kv(env, `ev:${id}`, { comments: 0, keyword: {}, leads: 0, dms: 0 });
     const posted_ist = IST(new Date(p.t));
-    const row = { day, id, kind: p.kind, segment: p.segment, scene: p.scene || null, trial: !!p.trial,
+    const row = { day, id, kind: p.kind, segment: p.segment, scene: p.scene || null, layout: p.layout || null, trial: !!p.trial,
       posted_at: posted_ist.toISOString().slice(0, 16), weekday: posted_ist.getUTCDay(), slot: posted_ist.toISOString().slice(11, 16),
       age_days: Math.round(age * 10) / 10, ...v, keyword_comments: Object.values(ev.keyword).reduce((a, b) => a + b, 0), keywords: ev.keyword, dms: ev.dms, leads: ev.leads };
     const k = `snap:${id}`; const hist = await kv(env, k, []); hist.push(row); await kvPut(env, k, hist.slice(-31));
@@ -738,6 +738,21 @@ export default {
 <h2>Data deletion</h2><p>To delete your data, send the word <b>DELETE</b> as a direct message to @rejectionlist.kerala on Instagram, or ask us in any message. We remove your conversation and details within 7 days and confirm when done.</p>
 <h2>Terms</h2><p>Information shared in replies is general guidance about company registration, not legal advice.</p>
 <p>Contact: send a direct message to @rejectionlist.kerala on Instagram.</p></body>`, { headers: { "content-type": "text/html; charset=utf-8" } });
+    if (u.pathname === "/public/insights") {   // performance per post for the script writer: no names, numbers or messages
+      const posted = await kv(env, "posted", {}); const leads = Object.values(await kv(env, "leads", {})); const posts = [];
+      for (const [id, p] of Object.entries(posted)) {
+        if (p.kind === "story") continue;
+        const h = await kv(env, `snap:${id}`, []); const r = h.find(x => x.age_days >= 2) || h[h.length - 1] || {};
+        const L = leads.filter(l => l.source_item === id);
+        posts.push({ id, kind: p.kind, segment: p.segment || null, scene: p.scene || null, layout: p.layout || null, posted_at: IST(new Date(p.t)).toISOString().slice(0, 16), judged_at_days: r.age_days ?? null,
+          reach: r.reach ?? null, views: r.views ?? null, shares: r.shares ?? null, saved: r.saved ?? null, likes: r.likes ?? null, comments: r.comments ?? null,
+          keyword_comments: r.keyword_comments ?? null, dms: r.dms ?? null, leads: L.length, high_intent: L.filter(l => l.intent === "high").length, nri_leads: L.filter(l => l.nri).length, budget_likely: L.filter(l => l.can_afford_30k === "likely").length });
+      }
+      const nx = await kv(env, "nudge", {});
+      return json({ updated: IST().toISOString().slice(0, 16), weights: await kv(env, "weights", null), slot_report: await kv(env, "slot_report", null),
+        leads_total: leads.length, leads_by_segment_of_post: leads.reduce((a, l) => { const p = posted[l.source_item]; const k = p?.segment || "direct"; a[k] = (a[k] || 0) + 1; return a; }, {}),
+        checkins_today: nx._s || null, posts });
+    }
     if (u.pathname === "/public/posted") return json([...Object.keys(await kv(env, "posted", {})), ...Object.keys(await kv(env, "stories", {}))]); // builder reads this to know stock (reels, carousels, stories)
     if (u.searchParams.get("key") !== env.ADMIN_KEY) return new Response("rl-kerala autopilot", { status: 200 });
     if (u.pathname === "/status") return json({ weights: await kv(env, "weights", null), posted: Object.keys(await kv(env, "posted", {})).length, log: (await kv(env, "log", [])).slice(0, 60) });
