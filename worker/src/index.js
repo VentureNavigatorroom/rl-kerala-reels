@@ -6,11 +6,36 @@
 // Vars: LIB_BASE (GitHub Pages base URL of library/), GRAPH (graph API base)
 // KV binding: STATE
 
-const SLOTS_IST = [ // [hh, mm, type]  5 reels + 5 stories + 5 carousels a day
-  [7, 25, "reel"], [8, 10, "story"], [9, 10, "carousel"], [11, 40, "carousel"], [12, 20, "reel"], [13, 5, "story"],
-  [15, 10, "carousel"], [17, 25, "reel"], [18, 10, "story"], [18, 45, "carousel"], [19, 25, "reel"], [20, 15, "story"],
-  [20, 55, "carousel"], [21, 25, "reel"], [22, 10, "story"],
+// Daily volume rises in stages (owner's plan, Nov 2026). A stage starts on its date unless KV "stage_hold" is set
+// (the monitor sets it when reach per post drops sharply or Instagram flags the account), or KV "stage_force" picks one.
+const STAGES = [
+  { from: "2026-11-01", reel: 5, carousel: 5, story: 5, poster: 0 },
+  { from: "2026-11-14", reel: 10, carousel: 6, story: 5, poster: 2 },
+  { from: "2026-11-21", reel: 15, carousel: 8, story: 5, poster: 3 },
+  { from: "2026-11-28", reel: 20, carousel: 10, story: 5, poster: 4 },
+  { from: "2026-12-05", reel: 25, carousel: 10, story: 5, poster: 5 },
 ];
+const STORY_TIMES = [[8, 10], [13, 5], [18, 10], [20, 15], [22, 10]];   // story logic picks teaser / tip / quiz / contact by hour
+async function stageNow(env, day) {
+  const f = await env.STATE.get("stage_force"); if (f !== null && STAGES[+f]) return { i: +f, ...STAGES[+f] };
+  let i = 0; STAGES.forEach((st, k) => { if (day >= st.from) i = k; });
+  const hold = await env.STATE.get("stage_hold"); if (hold !== null && +hold < i) i = +hold;   // hold = highest stage allowed
+  return { i, ...STAGES[i] };
+}
+function slotsFor(st) {   // spread feed posts 07:05-22:45 IST, types interleaved, never within 12 min of a story
+  const out = STORY_TIMES.slice(0, st.story).map(([h, m]) => [h, m, "story"]);
+  const n = { reel: st.reel, carousel: st.carousel, poster: st.poster }, tot = st.reel + st.carousel + st.poster, seq = [], used = { reel: 0, carousel: 0, poster: 0 };
+  for (let k = 0; k < tot; k++) {   // pick the type furthest behind its share
+    const t = Object.keys(n).filter(x => used[x] < n[x]).sort((a, b) => used[a] / n[a] - used[b] / n[b])[0]; seq.push(t); used[t]++;
+  }
+  const start = 7 * 60 + 5, end = 22 * 60 + 45, storyMin = out.map(([h, m]) => h * 60 + m); let last = -99;
+  seq.forEach((t, k) => {
+    let m = Math.round(start + (end - start) * (k + 0.5) / tot);
+    while (storyMin.some(x => Math.abs(x - m) < 12) || m - last < 11) m++;
+    last = m; out.push([Math.floor(m / 60), m % 60, t]);
+  });
+  return out.sort((a, b) => a[0] * 60 + a[1] - b[0] * 60 - b[1]);
+}
 const TRIAL_SHARE = 0.4; // share of reels posted as trial reels (non-followers first) while the feature is available
 
 const IST = (d = new Date()) => new Date(d.getTime() + 5.5 * 3600e3);
@@ -107,6 +132,19 @@ async function postCarousel(env) {
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: box.id });
   posted[c.id] = { media: pub.id, t: Date.now(), kind: "carousel", segment: c.segment };
   await kvPut(env, "posted", posted); await log(env, `carousel ${c.id} posted (${pub.id})`);
+}
+
+async function postPoster(env) {   // single 4:5 image post
+  const m = await manifest(env); const posted = await kv(env, "posted", {});
+  const avail = (m.posters || []).filter(p => !posted[p.id]);
+  if (!avail.length) { await log(env, "NO POSTER STOCK"); await alertOnce(env, "noposter", "⚠️ Poster library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
+  const recent = Object.values(posted).filter(p => p.kind === "poster").sort((a, b) => b.t - a.t)[0];
+  const p = avail.find(x => !recent || (x.layout !== recent.layout && x.segment !== recent.segment)) || avail.find(x => !recent || x.layout !== recent.layout) || avail[0];
+  const c = await graph(env, `${env.IG_USER_ID}/media`, { image_url: `${env.LIB_BASE}/${p.image}`, caption: p.caption });
+  await waitReady(env, c.id);
+  const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
+  posted[p.id] = { media: pub.id, t: Date.now(), kind: "poster", segment: p.segment, layout: p.layout };
+  await kvPut(env, "posted", posted); await log(env, `poster ${p.id} posted (${pub.id})`);
 }
 
 // ---------------- optimiser ----------------
@@ -513,7 +551,7 @@ async function handleWebhook(env, body) {
       try {
         // Until Meta lets the app read incoming DMs (flag dm_inbound), the one private reply carries the whole resource + the callback form.
         const inbound = await env.STATE.get("dm_inbound");
-        let hook = "", point = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); point = it?.point || ""; } catch (e0) {}
+        let hook = "", point = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); point = it?.point || ""; } catch (e0) {}
         const r = inbound ? await sendMsg(env, { comment_id: ch.value.id }, KEYWORD_OPENER[kw], ["Yes, send it 👍"])
           : await sendMsg(env, { comment_id: ch.value.id }, directReply(env, kw, item, hook, point));
         if (!inbound && r.recipient_id) { const tk = `t:${r.recipient_id}`; const th = await kv(env, tk, []); th.push({ role: "assistant", content: directReply(env, kw, item, hook, point) }); await kvPut(env, tk, th); }   // so the AI knows what was already sent
@@ -602,14 +640,15 @@ const KEYWORD_REPLY = {
   CHECKLIST: "Here you go! Documents needed for registration:\n\n📄 For each director: PAN, Aadhaar/ID, address proof (bank statement or utility bill), photo\n🏠 For the office: a recent electricity/water bill + owner's NOC (your home works too)\n📝 2–3 company name options\n\nA Private Limited needs at least 2 directors (one must live in India). How many founders are there?",
 };
 
-const postKind = (env, what) => what === "reel" ? postReel(env) : what === "story" ? postStory(env) : postCarousel(env);
+const postKind = (env, what) => what === "reel" ? postReel(env) : what === "story" ? postStory(env) : what === "poster" ? postPoster(env) : postCarousel(env);
 
 // ---------------- entry points ----------------
 export default {
   async scheduled(ev, env, ctx) {
     const now = IST(); const h = now.getUTCHours(), mi = now.getUTCMinutes();
-    const slot = SLOTS_IST.find(([sh, sm]) => sh === h && Math.abs(sm - mi) < 5);
     const day = now.toISOString().slice(0, 10);
+    const stage = await stageNow(env, day);
+    const slot = slotsFor(stage).find(([sh, sm]) => sh === h && mi >= sm && mi - sm < 5);
     if (await env.STATE.get("poll_inbox")) ctx.waitUntil((async () => {   // backup route, off while Meta delivers DMs by webhook                                    // check the inbox every 10 s so replies feel instant
       const t0 = Date.now();
       for (let k = 0; k < 6; k++) {
@@ -673,7 +712,8 @@ export default {
       }
       if (u.pathname === "/ops/nudge") return json(await kv(env, "nudge", {}));
       if (u.pathname === "/ops/run" && req.method === "POST") { const { what, id } = await req.json(); if (what === "nudge") return json(await processNudges(env, id || null)); if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env);
-        if (what === "poll") { await pollInbox(env); return json({ ok: true }); } if (what === "reel") await postReel(env); if (what === "story") await postStory(env); if (what === "carousel") await postCarousel(env); return json({ ok: true }); }
+        if (what === "poll") { await pollInbox(env); return json({ ok: true }); } if (what === "reel") await postReel(env); if (what === "story") await postStory(env); if (what === "carousel") await postCarousel(env); if (what === "poster") await postPoster(env);
+        if (what === "slots") { const d = IST().toISOString().slice(0, 10); const st = await stageNow(env, u.searchParams.get("day") || d); return json({ stage: st, slots: slotsFor(st) }); } return json({ ok: true }); }
       if (u.pathname === "/ops/graph" && req.method === "POST") {      // diagnostics: one Graph API call with the app's token
         const { path, params, method } = await req.json();
         const g = new URL(`${env.GRAPH}/${path}`); const b = new URLSearchParams({ ...(params || {}), access_token: env.IG_TOKEN });
