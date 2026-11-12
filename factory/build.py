@@ -93,13 +93,18 @@ def sync_posted(man):
             for f in (i["video"], i["cover"], f"media/{i['id']}_story.jpg"):
                 p = f"{LIB}/{f}"
                 if os.path.exists(p): os.remove(p)
-    man["stories"] = [x for x in man.get("stories", []) if os.path.exists(f"{LIB}/{x['image']}")]
+    for x in man.get("stories", []):
+        if not x.get("src"): continue                     # reel teasers go with their reel
+        if x["id"] in posted and not x.get("posted"): x["posted"] = now
+        if x.get("posted") and now - x["posted"] > 3 * 86400 and os.path.exists(f"{LIB}/{x['image']}"): os.remove(f"{LIB}/{x['image']}")
+    # standalone stories stay listed after posting so the builder never makes them again; teasers leave with their media
+    man["stories"] = [x for x in man.get("stories", []) if x.get("src") or os.path.exists(f"{LIB}/{x['image']}")]
     for c in man.get("carousels", []):
         if c["id"] in posted and not c.get("posted"): c["posted"] = now
         if c.get("posted") and now - c["posted"] > 3 * 86400:
             for f in c["images"]:
                 if os.path.exists(f"{LIB}/{f}"): os.remove(f"{LIB}/{f}")
-    man["carousels"] = [c for c in man.get("carousels", []) if not (c.get("posted") and not os.path.exists(f"{LIB}/{c['images'][0]}"))]
+    # posted carousels stay listed (without media) so the builder never makes them again
 
 def place(s, man):
     """Pick the location: scripts tied to one of the 4 original settings rotate through every compatible place,
@@ -126,6 +131,10 @@ def main():
         man["items"] = [i for i in man["items"] if i["id"] not in old]
         man["stories"] = [x for x in man.get("stories", []) if x.get("reel") not in old]
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+    # carousels and standalone stories are quick still images: top them up before the slow reel renders
+    for name, fn, env, dflt in (("carousels", build_carousels, "CAROUSEL_TARGET", "70"), ("stories", build_stories, "STORY_TARGET", "70")):
+        try: fn(man, int(os.environ.get(env, dflt)))
+        except Exception as e: print(f"{name} build failed:", repr(e), flush=True)
     stock = sum(1 for i in man["items"] if not i.get("posted"))
     if only: todo = [s for s in bank if s["id"] in only]
     else: todo = pick(bank, man, max(0, target - stock))
@@ -149,7 +158,8 @@ def main():
         print("built", s["id"], info["duration"], flush=True)
     left = len([s for s in bank if s["id"] not in {i["id"] for i in man["items"]}])
     cl = len([c for c in load_carousels() if c["id"] not in {c["id"] for c in man.get("carousels", [])}])
-    man["bank_left"] = dict(reel_scripts=left, carousels=cl); json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+    tl = len([t for t in load_stories() if t["id"] not in {x.get("src") for x in man.get("stories", [])}])
+    man["bank_left"] = dict(reel_scripts=left, carousels=cl, stories=tl); json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
     # delete media no longer referenced by the manifest (old-version reels, pruned posts)
     keep = set()
     def walk(o):
