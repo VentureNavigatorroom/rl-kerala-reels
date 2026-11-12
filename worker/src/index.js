@@ -65,7 +65,7 @@ async function postReel(env) {
   }
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
-  posted[it.id] = { media: pub.id, t: Date.now(), kind: it.kind, segment: it.segment, trial: asTrial && !(await kv(env, "trial_unavailable", false)) };
+  posted[it.id] = { media: pub.id, t: Date.now(), kind: it.kind, segment: it.segment, scene: it.scene || null, trial: asTrial && !(await kv(env, "trial_unavailable", false)) };
   await kvPut(env, "posted", posted); await log(env, `reel ${it.id} posted (${pub.id})${posted[it.id].trial ? " as trial" : ""}`);
 }
 async function postStory(env) {
@@ -82,7 +82,9 @@ async function postStory(env) {
   const c = await graph(env, `${env.IG_USER_ID}/media`, { media_type: "STORIES", image_url: `${env.LIB_BASE}/${s.image}` });
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
-  done[s.id] = { media: pub.id, t: Date.now() }; await kvPut(env, "stories", done); await log(env, `story ${s.id} posted`);
+  done[s.id] = { media: pub.id, t: Date.now() }; await kvPut(env, "stories", done);
+  posted[s.id] = { media: pub.id, t: Date.now(), kind: "story", segment: s.segment || null, story_kind: s.kind || "teaser" }; await kvPut(env, "posted", posted);
+  await log(env, `story ${s.id} posted`);
 }
 
 async function postCarousel(env) {
@@ -101,29 +103,59 @@ async function postCarousel(env) {
 }
 
 // ---------------- optimiser ----------------
-async function optimise(env) {
-  const posted = await kv(env, "posted", {}); const stats = {};
+async function snapshot(env) {
+  // one row per post per day: metrics + where/when it was posted. Kept 60 days. This is the insights database.
+  const posted = await kv(env, "posted", {}); const day = IST().toISOString().slice(0, 10);
   for (const [id, p] of Object.entries(posted)) {
-    if (Date.now() - p.t < 48 * 3600e3 || Date.now() - p.t > 30 * 86400e3) continue; // judge after 48 h, last 30 days
+    const age = (Date.now() - p.t) / 86400e3; if (age > 30 || p.kind === undefined) continue;
+    let v = {};
     try {
-      const r = await graph(env, `${p.media}/insights`, { metric: "reach,shares,saved,total_interactions" }, "GET");
-      const v = Object.fromEntries(r.data.map(d => [d.name, d.values?.[0]?.value ?? d.total_value?.value ?? 0]));
-      const cm = await graph(env, `${p.media}/comments`, { fields: "text", limit: "100" }, "GET");
-      const kw = (cm.data || []).filter(c => /START|NAME|AFTER|CHECKLIST/i.test(c.text)).length;
-      p.stats = { ...v, keyword_comments: kw };
-    } catch (e) { continue; }
-    const s = p.stats; const score = (s.shares * 3 + s.saved * 2 + s.keyword_comments * 10 + s.total_interactions) / Math.max(50, s.reach) * 1000;
-    for (const dim of ["kind", "segment"]) { const k = p[dim]; stats[dim] ??= {}; stats[dim][k] ??= []; stats[dim][k].push(score); }
+      const metrics = p.kind === "carousel" ? "reach,shares,saved,total_interactions,likes,comments" : "reach,views,shares,saved,total_interactions,likes,comments";
+      const r = await graph(env, `${p.media}/insights`, { metric: metrics }, "GET");
+      v = Object.fromEntries(r.data.map(d => [d.name, d.values?.[0]?.value ?? d.total_value?.value ?? 0]));
+    } catch (e) { v = { error: String(e.message).slice(0, 80) }; }
+    const ev = await kv(env, `ev:${id}`, { comments: 0, keyword: {}, leads: 0, dms: 0 });
+    const posted_ist = IST(new Date(p.t));
+    const row = { day, id, kind: p.kind, segment: p.segment, scene: p.scene || null, trial: !!p.trial,
+      posted_at: posted_ist.toISOString().slice(0, 16), weekday: posted_ist.getUTCDay(), slot: posted_ist.toISOString().slice(11, 16),
+      age_days: Math.round(age * 10) / 10, ...v, keyword_comments: Object.values(ev.keyword).reduce((a, b) => a + b, 0), keywords: ev.keyword, dms: ev.dms, leads: ev.leads };
+    const k = `snap:${id}`; const hist = await kv(env, k, []); hist.push(row); await kvPut(env, k, hist.slice(-31));
   }
-  await kvPut(env, "posted", posted);
-  const weights = { updated: IST().toISOString().slice(0, 10) };
+  await log(env, `snapshot ${day}`);
+}
+
+function median(a) { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; }
+
+async function optimise(env) {
+  // Cautious: judge each post at 48-72h; compare it with posts from the SAME slot (time effect removed),
+  // need >= 5 posts per group and a clear gap before moving weights, and move at most 25% per week.
+  const posted = await kv(env, "posted", {}); const rows = [];
+  for (const id of Object.keys(posted)) {
+    const h = await kv(env, `snap:${id}`, []); const r = h.find(x => x.age_days >= 2) || null;
+    if (!r || r.error || !r.reach) continue;
+    r.score = ((r.shares || 0) * 3 + (r.saved || 0) * 2 + (r.keyword_comments || 0) * 10 + (r.leads || 0) * 25 + (r.total_interactions || 0)) / Math.max(50, r.reach) * 1000;
+    rows.push(r);
+  }
+  const bySlot = {}; rows.forEach(r => (bySlot[r.slot] ??= []).push(r.score));
+  rows.forEach(r => { const m = median(bySlot[r.slot]); r.rel = m ? r.score / m : 1; });   // relative to same time slot
+  const old = await kv(env, "weights", { kind: {}, segment: {} }); const weights = { updated: IST().toISOString().slice(0, 10), n_posts: rows.length, kind: {}, segment: {} };
   for (const dim of ["kind", "segment"]) {
-    const means = Object.fromEntries(Object.entries(stats[dim] || {}).filter(([, a]) => a.length >= 3).map(([k, a]) => [k, a.reduce((x, y) => x + y) / a.length]));
-    const avg = Object.values(means).reduce((x, y) => x + y, 0) / Math.max(1, Object.keys(means).length);
-    // move toward winners but never below 0.5x or above 2x: every type keeps being tested
-    weights[dim] = Object.fromEntries(Object.entries(means).map(([k, m]) => [k, Math.min(2, Math.max(0.5, avg ? m / avg : 1))]));
+    const g = {}; rows.forEach(r => (g[r[dim]] ??= []).push(r.rel));
+    for (const [k, a] of Object.entries(g)) {
+      const prev = old[dim]?.[k] ?? 1;
+      if (a.length < 5) { weights[dim][k] = prev; continue; }                  // not enough evidence: keep
+      const m = median(a); const target = Math.abs(m - 1) < 0.15 ? 1 : Math.min(2, Math.max(0.5, m));   // ignore small gaps
+      weights[dim][k] = Math.round(Math.min(prev * 1.25, Math.max(prev * 0.75, target)) * 100) / 100;     // max 25% move
+    }
   }
-  await kvPut(env, "weights", weights); await log(env, `optimiser: ${JSON.stringify(weights)}`);
+  // Time slots are only REPORTED (not auto-changed) until there are 3+ weeks of data
+  const slotRep = Object.fromEntries(Object.entries(bySlot).map(([s, a]) => [s, { posts: a.length, median_score: Math.round(median(a) * 10) / 10 }]));
+  await kvPut(env, "weights", weights); await kvPut(env, "slot_report", slotRep);
+  await log(env, `optimiser: ${JSON.stringify(weights)}`);
+  if (IST().getUTCDay() === 1) {                                           // Monday summary to Discord
+    const top = [...rows].sort((a, b) => b.score - a.score).slice(0, 3).map(r => `${r.id} (${r.kind}/${r.segment}, ${r.slot}): reach ${r.reach}, shares ${r.shares || 0}, keyword ${r.keyword_comments}, leads ${r.leads}`).join("\n");
+    await discord(env, `📈 Weekly insights (${rows.length} posts judged)\nTop posts:\n${top || "not enough data yet"}\nMix weights: ${JSON.stringify({ kind: weights.kind, segment: weights.segment })}\nTimes are only being measured for now; no time changes until 3+ weeks of data.`);
+  }
 }
 
 // ---------------- DM bot ----------------
@@ -149,11 +181,33 @@ async function extractLead(env, thread) {
 async function sendDM(env, to, text) {
   return graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ id: to }), message: JSON.stringify({ text }) });
 }
+async function opsOk(env, key) {
+  if (!key) return false;
+  const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key)))].map(b => b.toString(16).padStart(2, "0")).join("");
+  return h === env.OPS_KEY_SHA256;
+}
+async function mediaToItem(env, mediaId) {
+  const posted = await kv(env, "posted", {});
+  const hit = Object.entries(posted).find(([, p]) => p.media === mediaId);
+  return hit ? hit[0] : `media:${mediaId}`;
+}
+async function bumpPost(env, item, field, n = 1) {        // live engagement counters per post
+  const k = `ev:${item}`; const e = await kv(env, k, { comments: 0, keyword: {}, leads: 0, dms: 0 });
+  if (field.startsWith("kw:")) { const w = field.slice(3); e.keyword[w] = (e.keyword[w] || 0) + n; } else e[field] = (e[field] || 0) + n;
+  await kvPut(env, k, e);
+}
+
 async function handleWebhook(env, body) {
   for (const entry of body.entry || []) {
     for (const ev of entry.messaging || []) {
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
       const uid = ev.sender.id; const key = `t:${uid}`; const thread = await kv(env, key, []);
+      const meta = await kv(env, `m:${uid}`, { first: Date.now(), sources: [] });
+      meta.last_in = Date.now();                                     // 24h window starts from their last message
+      if (ev.message.reply_to?.story?.id) meta.sources.push({ via: "story_reply", media: ev.message.reply_to.story.id, t: Date.now() });
+      if (!meta.sources.length) meta.sources.push({ via: "dm", t: Date.now() });
+      await kvPut(env, `m:${uid}`, meta);
+      const src = meta.sources[0]; if (src.media) await bumpPost(env, await mediaToItem(env, src.media), "dms");
       thread.push({ role: "user", content: ev.message.text });
       const reply = await botReply(env, thread); thread.push({ role: "assistant", content: reply });
       await kvPut(env, key, thread); await sendDM(env, uid, reply);
@@ -161,16 +215,27 @@ async function handleWebhook(env, body) {
         const lead = await extractLead(env, thread);
         if (lead) {
           const leads = await kv(env, "leads", {}); const prev = leads[uid];
-          leads[uid] = { ...lead, ig_user: uid, updated: IST().toISOString().slice(0, 16) }; await kvPut(env, "leads", leads); await log(env, `lead ${uid}: ${lead.intent}/${lead.can_afford_30k}`);
+          const meta2 = await kv(env, `m:${uid}`, { sources: [] }); const s0 = meta2.sources[0] || {};
+          const fromItem = s0.media ? await mediaToItem(env, s0.media) : "direct";
+          leads[uid] = { ...lead, ig_user: uid, source_item: fromItem, source_keyword: s0.keyword || null, source_via: s0.via || "dm", status: prev?.status || "new", updated: IST().toISOString().slice(0, 16) };
+          await kvPut(env, "leads", leads); await log(env, `lead ${uid}: ${lead.intent}/${lead.can_afford_30k} from ${fromItem}`);
+          if (!prev) await bumpPost(env, fromItem, "leads");
           if (lead.phone && (!prev || !prev.phone) && lead.intent !== "low") {
-            await discord(env, `🔔 **New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}\n🏢 ${lead.business}\n👥 ${lead.founders}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`);
+            await discord(env, `🔔 **New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`);
           }
         }
       }
     }
     for (const ch of entry.changes || []) { // keyword comments -> one private reply opens the DM
       if (ch.field !== "comments" || !ch.value?.text) continue;
+      const item = await mediaToItem(env, ch.value.media?.id); await bumpPost(env, item, "comments");
       const m = ch.value.text.match(/\b(START|NAME|AFTER|CHECKLIST)\b/i); if (!m) continue;
+      await bumpPost(env, item, "kw:" + m[1].toUpperCase());
+      if (ch.value.from?.id) {                                       // remember where this person came from, per keyword
+        const mk = `m:${ch.value.from.id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
+        if (!meta.sources.some(s => s.comment === ch.value.id)) meta.sources.push({ via: "comment", keyword: m[1].toUpperCase(), media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() });
+        await kvPut(env, mk, meta);
+      }
       const text = KEYWORD_REPLY[m[1].toUpperCase()];
       try { await graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ comment_id: ch.value.id }), message: JSON.stringify({ text }) }); await log(env, `private reply to ${m[1]} comment`); }
       catch (e) { await log(env, `comment reply failed: ${e.message}`); }
@@ -198,7 +263,7 @@ export default {
         const k = `slot:${day}:${slot[0]}:${slot[1]}`;
         if (!(await env.STATE.get(k))) { await env.STATE.put(k, "1", { expirationTtl: 172800 }); slot[2] === "reel" ? await postReel(env) : slot[2] === "story" ? await postStory(env) : await postCarousel(env); }
       }
-      if (h === 3 && mi < 5) await optimise(env);
+      if (h === 3 && mi < 5) { await snapshot(env); await optimise(env); }
       if (h === 21 && mi >= 40 && mi < 45) {
         const posted = await kv(env, "posted", {}); const today = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day).length;
         const leads = Object.values(await kv(env, "leads", {})).filter(l => (l.updated || "").startsWith(day));
@@ -213,6 +278,26 @@ export default {
       return u.searchParams.get("hub.verify_token") === env.VERIFY_TOKEN ? new Response(u.searchParams.get("hub.challenge")) : new Response("no", { status: 403 });
     }
     if (u.pathname === "/webhook" && req.method === "POST") { const b = await req.json(); ctx.waitUntil(handleWebhook(env, b).catch(e => log(env, `webhook ERROR ${e.message}`))); return new Response("ok"); }
+    if (u.pathname.startsWith("/ops/")) {
+      if (!(await opsOk(env, req.headers.get("x-ops-key")))) return new Response("no", { status: 403 });
+      if (u.pathname === "/ops/leads") return json(await kv(env, "leads", {}));
+      if (u.pathname === "/ops/insights") {
+        const posted = await kv(env, "posted", {}); const out = {};
+        for (const id of Object.keys(posted)) out[id] = { posted: posted[id], events: await kv(env, `ev:${id}`, null), snapshots: await kv(env, `snap:${id}`, []) };
+        return json({ weights: await kv(env, "weights", null), slot_report: await kv(env, "slot_report", null), posts: out });
+      }
+      if (u.pathname === "/ops/thread") { const id = u.searchParams.get("id"); return json({ meta: await kv(env, `m:${id}`, null), thread: await kv(env, `t:${id}`, []) }); }
+      if (u.pathname === "/ops/followup" && req.method === "POST") {          // send one DM if still inside the 24h window
+        const { id, text, status, note } = await req.json(); const meta = await kv(env, `m:${id}`, null);
+        const leads = await kv(env, "leads", {}); if (leads[id]) { leads[id].status = status || leads[id].status; leads[id].notes = [...(leads[id].notes || []), { t: IST().toISOString().slice(0, 16), note }]; await kvPut(env, "leads", leads); }
+        if (!text) return json({ ok: true, sent: false, reason: "status only" });
+        const left = meta?.last_in ? 24 * 3600e3 - (Date.now() - meta.last_in) : -1;
+        if (left <= 0) return json({ ok: false, sent: false, reason: "outside Instagram 24h window", hours_since_last_message: meta?.last_in ? (Date.now() - meta.last_in) / 3600e3 : null });
+        await sendDM(env, id, text); const t = await kv(env, `t:${id}`, []); t.push({ role: "assistant", content: text }); await kvPut(env, `t:${id}`, t);
+        await log(env, `follow-up sent to ${id}`); return json({ ok: true, sent: true, hours_left_in_window: left / 3600e3 });
+      }
+      if (u.pathname === "/ops/run" && req.method === "POST") { const { what } = await req.json(); if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env); return json({ ok: true }); }
+    }
     if (u.pathname === "/public/posted") return json(Object.keys(await kv(env, "posted", {}))); // builder reads this to know stock
     if (u.searchParams.get("key") !== env.ADMIN_KEY) return new Response("rl-kerala autopilot", { status: 200 });
     if (u.pathname === "/status") return json({ weights: await kv(env, "weights", null), posted: Object.keys(await kv(env, "posted", {})).length, log: (await kv(env, "log", [])).slice(0, 60) });

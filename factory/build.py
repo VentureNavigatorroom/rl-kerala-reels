@@ -55,7 +55,7 @@ def build_stories(man, target):
         for p in parts:
             sid = f"s_{t['id']}" + ("_a" if p == "answer" else "")
             cover.story_card(t, f"{LIB}/media/{sid}.jpg", part=p)
-            man["stories"].append(dict(id=sid, image=f"media/{sid}.jpg", src=t["id"], kind=t["kind"] if p != "answer" else "answer", after=f"s_{t['id']}" if p == "answer" else None))
+            man["stories"].append(dict(id=sid, image=f"media/{sid}.jpg", src=t["id"], segment=t.get("segment"), kind=t["kind"] if p != "answer" else "answer", after=f"s_{t['id']}" if p == "answer" else None))
             stock += 1
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
 
@@ -128,7 +128,7 @@ def main():
         man.setdefault("stories", [])
         man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"])]
         cap = s["hook"].replace("\n", " ") + "\n\n" + s["cta"][0] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #business #entrepreneur #pvtltd #keralabusiness"
-        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"],
+        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"),
             video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)
