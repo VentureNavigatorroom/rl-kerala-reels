@@ -21,7 +21,9 @@ jobs:
           sed -i "s/__KV_ID__/$ID/" wrangler.toml
       - name: Deploy
         working-directory: worker
-        run: wrangler deploy
+        run: |
+          echo y | wrangler secret delete VERIFY_TOKEN 2>/dev/null || true
+          wrangler deploy
       - name: Set secrets
         working-directory: worker
         env:
