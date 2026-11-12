@@ -2,7 +2,10 @@ name: reel-factory
 # Builds new reels every night so the library always holds ~8 days of unposted stock.
 on:
   schedule: [{ cron: "30 19 * * *" }]   # 01:00 IST
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      stock_target: { description: "reels to keep ready", default: "70" }
+      time_budget_min: { description: "minutes of building", default: "320" }
 permissions: { contents: write, pages: write, id-token: write }
 concurrency: { group: factory, cancel-in-progress: false }
 jobs:
@@ -37,8 +40,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           POSTED_URL: https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev/public/posted
-          STOCK_TARGET: "70"
-          TIME_BUDGET_MIN: "320"
+          STOCK_TARGET: ${{ inputs.stock_target || '70' }}
+          TIME_BUDGET_MIN: ${{ inputs.time_budget_min || '320' }}
           TTS_THREADS: "4"
         run: python factory/build.py
       - name: Save library (single squashed commit on branch "library")
