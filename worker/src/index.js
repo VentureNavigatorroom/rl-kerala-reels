@@ -216,6 +216,10 @@ async function extractLead(env, thread) {
   catch (e) { return regexLead(thread); }
   try { return JSON.parse((r.response || "").match(/\{[\s\S]*\}/)[0]); } catch { return regexLead(thread); }
 }
+async function igProfile(env, igsid) {
+  try { const p = await graph(env, igsid, { fields: "username,is_user_follow_business" }, "GET"); return { username: p.username || null, follows: typeof p.is_user_follow_business === "boolean" ? p.is_user_follow_business : null }; }
+  catch (e) { await log(env, `profile lookup failed: ${e.message}`); return { username: null, follows: null }; }
+}
 async function sendDM(env, to, text) {
   return graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ id: to }), message: JSON.stringify({ text }) });
 }
@@ -249,10 +253,27 @@ async function handleWebhook(env, body) {
       await kvPut(env, `m:${uid}`, meta);
       const src = meta.sources[0]; if (src.media) await bumpPost(env, await mediaToItem(env, src.media), "dms");
       thread.push({ role: "user", content: ev.message.text });
+      const prof = await igProfile(env, uid);                         // username + whether they follow us (null if Instagram won't say)
+      if (prof.username && !meta.username) meta.username = prof.username;
+      if (!meta.pending_kw && meta.username) {                        // keyword comment whose private reply Instagram refused: they DM'd us instead
+        const pk = await env.STATE.get(`pk:${meta.username.toLowerCase()}`);
+        if (pk) { meta.pending_kw = pk; await env.STATE.delete(`pk:${meta.username.toLowerCase()}`); }
+      }
       let reply;
-      if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {   // they answered our short opener: now send what the post promised
-        reply = KEYWORD_REPLY[meta.pending_kw]; delete meta.pending_kw; await kvPut(env, `m:${uid}`, meta);
-      } else reply = await botReply(env, thread);
+      if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {
+        // soft follow gate: ask to follow, re-check when they say they did, and after two tries send it anyway (never block a lead)
+        if (prof.follows === false && (meta.follow_asks || 0) < 2) {
+          meta.follow_asks = (meta.follow_asks || 0) + 1;
+          reply = meta.follow_asks === 1 ? FOLLOW_ASK : FOLLOW_RECHECK;
+          await log(env, `follow check @${meta.username || uid}: not following (ask ${meta.follow_asks})`);
+        } else {
+          const pre = prof.follows === false ? "No worries, here it is anyway! 😊" : prof.follows && meta.follow_asks ? "Thanks for following! 🙌 Here you go!" : "";
+          reply = pre ? KEYWORD_REPLY[meta.pending_kw].replace(/^Here you go!/, pre) : KEYWORD_REPLY[meta.pending_kw];
+          await log(env, `sent ${meta.pending_kw} resource to @${meta.username || uid} (follows: ${prof.follows})`);
+          delete meta.pending_kw; meta.follow_asks = 0;
+        }
+        await kvPut(env, `m:${uid}`, meta);
+      } else { await kvPut(env, `m:${uid}`, meta); reply = await botReply(env, thread); }
       thread.push({ role: "assistant", content: reply });
       await kvPut(env, key, thread); await sendDM(env, uid, reply);
       if (/\d{10}/.test(ev.message.text.replace(/\D/g, "")) || thread.length >= 12) {
@@ -293,6 +314,7 @@ async function handleWebhook(env, body) {
       }
       catch (e) {   // Instagram refuses some private replies (e.g. replies inside a thread): answer publicly and invite a DM
         await log(env, `private reply failed, replying publicly: ${e.message}`);
+        if (ch.value.from?.username) await env.STATE.put(`pk:${ch.value.from.username.toLowerCase()}`, kw, { expirationTtl: 7 * 86400 });
         try { await graph(env, `${ch.value.id}/replies`, { message: PUBLIC_REPLY }); await log(env, `public reply to ${m[1]} comment`); }
         catch (e2) { await log(env, `comment reply failed: ${e2.message}`); }
       }
@@ -305,10 +327,12 @@ async function handleWebhook(env, body) {
 const PUBLIC_REPLY = "Thanks! Send us a \"Hi\" in DM and we'll send it across right away.";
 // Public note under the comment (varied so it never looks like a copy-paste bot) tells people where the DM is.
 const PUBLIC_DONE = [
-  "Sent you a DM 📩 If it's not in your inbox, check message requests.",
-  "Just messaged you! 📩 Peek in your requests folder if you don't see it.",
-  "Check your DMs 📩 It may be under message requests.",
+  "Sent you a DM 📩 Not in your inbox? Check message requests, including hidden requests / spam.",
+  "Just messaged you! 📩 If you can't see it, look in message requests or the hidden requests (spam) folder.",
+  "Check your DMs 📩 Instagram sometimes puts it under requests or hidden requests, so peek there too.",
 ];
+const FOLLOW_ASK = "Almost there! 🙌 Please follow @rejectionlist.kerala (we share a useful company-registration tip every day), then reply DONE and we'll send it right away.";
+const FOLLOW_RECHECK = "Hmm, we can't see your follow yet 🤔 Open our profile, tap Follow, and reply DONE once more.";
 // First private reply is short and asks for a reply: a reply moves the chat into their main inbox,
 // then the full resource (KEYWORD_REPLY) follows.
 const KEYWORD_OPENER = {
@@ -394,7 +418,7 @@ export default {
     if (u.pathname === "/leads") return json(await kv(env, "leads", {}));
     if (u.pathname === "/reset/test") {   // wipe log, chats, people, engagement counters and leads (keeps posting history)
       let n = 0;
-      for (const prefix of ["t:", "m:", "ev:", "alert:"]) {
+      for (const prefix of ["t:", "m:", "ev:", "alert:", "pk:"]) {
         let cur; do { const l = await env.STATE.list({ prefix, cursor: cur }); for (const k of l.keys) { await env.STATE.delete(k.name); n++; } cur = l.list_complete ? null : l.cursor; } while (cur);
       }
       for (const k of ["log", "leads", "retry"]) { await env.STATE.delete(k); n++; }
