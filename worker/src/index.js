@@ -220,9 +220,18 @@ async function igProfile(env, igsid) {
   try { const p = await graph(env, igsid, { fields: "username,is_user_follow_business" }, "GET"); return { username: p.username || null, follows: typeof p.is_user_follow_business === "boolean" ? p.is_user_follow_business : null }; }
   catch (e) { await log(env, `profile lookup failed: ${e.message}`); return { username: null, follows: null }; }
 }
-async function sendDM(env, to, text) {
-  return graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ id: to }), message: JSON.stringify({ text }) });
+// Tap-to-reply buttons (Instagram quick replies, max 13, title max 20 chars). A tap arrives as a normal text message.
+const qr = titles => titles.map(t => ({ content_type: "text", title: t, payload: t.toUpperCase() }));
+async function sendMsg(env, recipient, text, buttons = []) {
+  const msg = buttons.length ? { text, quick_replies: qr(buttons) } : { text };
+  try { return await graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify(recipient), message: JSON.stringify(msg) }); }
+  catch (e) {   // if Instagram rejects the buttons, still deliver the text
+    if (!buttons.length) throw e;
+    await log(env, `buttons rejected, sent plain text: ${e.message}`);
+    return graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify(recipient), message: JSON.stringify({ text }) });
+  }
 }
+async function sendDM(env, to, text, buttons = []) { return sendMsg(env, { id: to }, text, buttons); }
 async function opsOk(env, key) {
   if (!key) return false;
   const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key)))].map(b => b.toString(16).padStart(2, "0")).join("");
@@ -244,6 +253,7 @@ async function handleWebhook(env, body) {
   await log(env, `webhook in: ${body.object || "?"} ${n[0]} message(s), ${n[1]} change(s) ${(body.entry || []).flatMap(e => (e.changes || []).map(c => c.field)).join(",")}`);
   for (const entry of body.entry || []) {
     for (const ev of entry.messaging || []) {
+      if (ev.postback && !ev.message) ev.message = { text: ev.postback.title || ev.postback.payload || "" };   // button taps of other kinds
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
       const uid = ev.sender.id; const key = `t:${uid}`; const thread = await kv(env, key, []);
       const meta = await kv(env, `m:${uid}`, { first: Date.now(), sources: [] });
@@ -259,23 +269,24 @@ async function handleWebhook(env, body) {
         const pk = await env.STATE.get(`pk:${meta.username.toLowerCase()}`);
         if (pk) { meta.pending_kw = pk; await env.STATE.delete(`pk:${meta.username.toLowerCase()}`); }
       }
-      let reply;
+      let reply, buttons = [];
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {
         // soft follow gate: ask to follow, re-check when they say they did, and after two tries send it anyway (never block a lead)
         if (prof.follows === false && (meta.follow_asks || 0) < 2) {
           meta.follow_asks = (meta.follow_asks || 0) + 1;
-          reply = meta.follow_asks === 1 ? FOLLOW_ASK : FOLLOW_RECHECK;
+          reply = meta.follow_asks === 1 ? FOLLOW_ASK : FOLLOW_RECHECK; buttons = ["I've followed ✅"];
           await log(env, `follow check @${meta.username || uid}: not following (ask ${meta.follow_asks})`);
         } else {
           const pre = prof.follows === false ? "No worries, here it is anyway! 😊" : prof.follows && meta.follow_asks ? "Thanks for following! 🙌 Here you go!" : "";
           reply = pre ? KEYWORD_REPLY[meta.pending_kw].replace(/^Here you go!/, pre) : KEYWORD_REPLY[meta.pending_kw];
+          buttons = NEXT_BUTTONS;
           await log(env, `sent ${meta.pending_kw} resource to @${meta.username || uid} (follows: ${prof.follows})`);
           delete meta.pending_kw; meta.follow_asks = 0;
         }
         await kvPut(env, `m:${uid}`, meta);
       } else { await kvPut(env, `m:${uid}`, meta); reply = await botReply(env, thread); }
       thread.push({ role: "assistant", content: reply });
-      await kvPut(env, key, thread); await sendDM(env, uid, reply);
+      await kvPut(env, key, thread); await sendDM(env, uid, reply, buttons);
       if (/\d{10}/.test(ev.message.text.replace(/\D/g, "")) || thread.length >= 12) {
         const lead = await extractLead(env, thread);
         if (lead) {
@@ -306,7 +317,7 @@ async function handleWebhook(env, body) {
       }
       const kw = m[1].toUpperCase();
       try {
-        const r = await graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ comment_id: ch.value.id }), message: JSON.stringify({ text: KEYWORD_OPENER[kw] }) });
+        const r = await sendMsg(env, { comment_id: ch.value.id }, KEYWORD_OPENER[kw], ["Yes, send it 👍"]);
         if (r.recipient_id) { const mk = `m:${r.recipient_id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
           meta.pending_kw = kw; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
         await log(env, `private reply to ${kw} comment`);
@@ -332,15 +343,16 @@ const PUBLIC_DONE = [
   "Just messaged you! 📩 If you can't see it, look in message requests or the hidden requests (spam) folder.",
   "Check your DMs 📩 Instagram sometimes puts it under requests or hidden requests, so peek there too.",
 ];
-const FOLLOW_ASK = "Almost there! 🙌 Please follow @rejectionlist.kerala (we share a useful company-registration tip every day), then reply DONE and we'll send it right away.";
-const FOLLOW_RECHECK = "Hmm, we can't see your follow yet 🤔 Open our profile, tap Follow, and reply DONE once more.";
+const FOLLOW_ASK = "Almost there! 🙌 Please follow @rejectionlist.kerala (we share a useful company-registration tip every day), then tap the button below and we'll send it right away.";
+const FOLLOW_RECHECK = "Hmm, we can't see your follow yet 🤔 Open our profile, tap Follow, then tap the button again.";
+const NEXT_BUTTONS = ["Talk to our team", "Which type suits me?", "Documents needed"];
 // First private reply is short and asks for a reply: a reply moves the chat into their main inbox,
 // then the full resource (KEYWORD_REPLY) follows.
 const KEYWORD_OPENER = {
-  START: "Hi! 👋 Thanks for your comment. Want a quick guide on which company type suits you: OPC, Private Limited or LLP? Just reply YES.",
-  NAME: "Hi! 👋 Thanks for your comment. Want our tips to keep your company name from getting rejected? Just reply YES.",
-  AFTER: "Hi! 👋 Thanks for your comment. Want the checklist for the first 180 days after registration? Just reply YES.",
-  CHECKLIST: "Hi! 👋 Thanks for your comment. Want the list of documents you need for registration? Just reply YES.",
+  START: "Hi! 👋 Thanks for your comment. Want a quick guide on which company type suits you: OPC, Private Limited or LLP? Tap the button below.",
+  NAME: "Hi! 👋 Thanks for your comment. Want our tips to keep your company name from getting rejected? Tap the button below.",
+  AFTER: "Hi! 👋 Thanks for your comment. Want the checklist for the first 180 days after registration? Tap the button below.",
+  CHECKLIST: "Hi! 👋 Thanks for your comment. Want the list of documents you need for registration? Tap the button below.",
 };
 const KEYWORD_REPLY = {
   START: "Here you go!\n\nIn short:\n• Starting alone: OPC (One Person Company)\n• 2+ founders, may raise funding later: Private Limited\n• Partners, no funding plans: LLP is also an option\n\nWe'll help you pick the right one. What does your business do?",
