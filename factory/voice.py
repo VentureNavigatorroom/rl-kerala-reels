@@ -1,5 +1,5 @@
 """Malayalam voices with AI4Bharat Indic Parler-TTS (Apache-2.0). Caches every line by content hash."""
-import os, hashlib
+import re, os, hashlib
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.environ.get("VOICE_CACHE", f"{ROOT}/.voice_cache")
 os.makedirs(CACHE, exist_ok=True)
@@ -31,7 +31,19 @@ def _load():
         _model = (model, AutoTokenizer.from_pretrained(m), AutoTokenizer.from_pretrained(model.config.text_encoder._name_or_path))
     return _model
 
+# Acronyms are spelled out letter by letter in Malayalam (NRI -> എൻ ആർ ഐ), otherwise the model reads them as one word.
+LETTER = dict(zip("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "എ ബി സി ഡി ഇ എഫ് ജി എച്ച് ഐ ജെ കെ എൽ എം എൻ ഒ പി ക്യു ആർ എസ് ടി യു വി ഡബ്ല്യു എക്സ് വൈ സെഡ്".split()))
+AS_WORD = {"START", "AFTER", "NAME", "PAN", "CHECKLIST", "DONE", "STOP"}
+ACR = re.compile(r"(?<![A-Za-z])([A-Z]{2,6})(?![a-z])")
+def spoken(text):
+    text = ACR.sub(lambda m: m.group(1) if m.group(1) in AS_WORD else " ".join(LETTER[c] for c in m.group(1)), text)
+    text = re.sub(r"(\d)([A-Z])(?![A-Za-z])", lambda m: m.group(1) + " " + LETTER[m.group(2)], text)   # 20A -> 20 എ
+    text = re.sub(r"-(?=[\u0d00-\u0d7f])", "", text)   # NRI-ക്ക് -> എൻ ആർ ഐക്ക്
+    return text.replace("-", " ")
+HAS_ACR = lambda t: bool(ACR.search(t)) and any(w not in AS_WORD for w in ACR.findall(t))
+
 def say(text, voice):
+    text = spoken(text)
     key = hashlib.sha1(f"{voice}|{VOICES[voice]}|{text}".encode()).hexdigest()[:16]
     out = f"{CACHE}/{key}.wav"
     if os.path.exists(out): return out

@@ -8,7 +8,7 @@ import cover
 
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
-VERSION = 3   # bump when voices/look change: unposted reels from older versions get rebuilt
+VERSION = 4   # bump when voices/look change: unposted reels from older versions get rebuilt
 
 def load_bank():
     S = []
@@ -165,7 +165,17 @@ def main():
     only = [a for a in sys.argv[1:] if not a.startswith("-")]
     bank, man = load_bank(), manifest()
     sync_posted(man)
-    old = {i["id"] for i in man["items"] if not i.get("posted") and i.get("v", 1) < VERSION}
+    # v4 changed only how acronyms are spoken: rebuild just the unposted reels whose lines contain one, re-tag the rest
+    from voice import HAS_ACR
+    byid = {s["id"]: s for s in bank}
+    def needs(i):
+        if i.get("v", 1) < 3: return True
+        sc = byid.get(i["id"]); return bool(sc) and HAS_ACR(json.dumps([sc.get("lines"), sc.get("items"), sc.get("end")], ensure_ascii=False))
+    old = set()
+    for i in man["items"]:
+        if not i.get("posted") and i.get("v", 1) < VERSION:
+            if needs(i): old.add(i["id"])
+            else: i["v"] = VERSION
     if old:
         print("rebuilding older-version reels:", len(old))
         man["items"] = [i for i in man["items"] if i["id"] not in old]
