@@ -18,6 +18,25 @@ def load_bank():
     ids = [s["id"] for s in S]; assert len(ids) == len(set(ids)), "duplicate script ids"
     return S
 
+def load_carousels():
+    C = []
+    for f in sorted(glob.glob(f"{ROOT}/bank/carousels*.py")):
+        spec = importlib.util.spec_from_file_location(os.path.basename(f)[:-3], f); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        C += m.C
+    ids = [c["id"] for c in C]; assert len(ids) == len(set(ids)), "duplicate carousel ids"
+    return C
+
+def build_carousels(man, target):
+    import carousel
+    made = {c["id"] for c in man.setdefault("carousels", [])}
+    stock = sum(1 for c in man["carousels"] if not c.get("posted"))
+    for c in [c for c in load_carousels() if c["id"] not in made][:max(0, target - stock)]:
+        files = carousel.make(c, f"{LIB}/media", seed=abs(hash(c["id"])) % 3)
+        cap = c["hook"].replace("\n", " ") + "\n\n" + c["cta"][0] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #keralabusiness #entrepreneur"
+        man["carousels"].append(dict(id=c["id"], segment=c["segment"], images=[f"media/{os.path.basename(p)}" for p in files], caption=cap, posted=None))
+        print("carousel", c["id"], len(files), flush=True)
+    json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+
 def manifest():
     return json.load(open(MAN)) if os.path.exists(MAN) else {"items": []}
 
@@ -53,6 +72,12 @@ def sync_posted(man):
                 p = f"{LIB}/{f}"
                 if os.path.exists(p): os.remove(p)
     man["stories"] = [x for x in man.get("stories", []) if os.path.exists(f"{LIB}/{x['image']}")]
+    for c in man.get("carousels", []):
+        if c["id"] in posted and not c.get("posted"): c["posted"] = now
+        if c.get("posted") and now - c["posted"] > 3 * 86400:
+            for f in c["images"]:
+                if os.path.exists(f"{LIB}/{f}"): os.remove(f"{LIB}/{f}")
+    man["carousels"] = [c for c in man.get("carousels", []) if not (c.get("posted") and not os.path.exists(f"{LIB}/{c['images'][0]}"))]
 
 def main():
     target = int(os.environ.get("STOCK_TARGET", "40")); budget = float(os.environ.get("TIME_BUDGET_MIN", "300")) * 60
@@ -86,7 +111,9 @@ def main():
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)
     left = len([s for s in bank if s["id"] not in {i["id"] for i in man["items"]}])
-    print(f"unbuilt scripts left in bank: {left}")
+    cl = len([c for c in load_carousels() if c["id"] not in {c["id"] for c in man.get("carousels", [])}])
+    man["bank_left"] = dict(reel_scripts=left, carousels=cl); json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+    print(f"unbuilt scripts left in bank: {left}, carousels left: {cl}")
 
 if __name__ == "__main__":
     main()

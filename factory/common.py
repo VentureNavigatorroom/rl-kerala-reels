@@ -19,6 +19,7 @@ import re
 _EMOJI = re.compile("[\U0001F000-\U0001FFFF\u2600-\u27BF\uFE0F\u200B]")
 def runs(text):
     text = re.sub("  +", " ", _EMOJI.sub("", text)).strip() if _EMOJI.search(text) else text
+    text = text.replace("₹", "Rs.").replace("→", ">")
     out = []
     for ch in text:
         k = "malayalam" if ("ഀ" <= ch <= "ൿ" or ch in "‌‍") else "latin"

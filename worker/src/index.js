@@ -6,9 +6,10 @@
 // Vars: LIB_BASE (GitHub Pages base URL of library/), GRAPH (graph API base)
 // KV binding: STATE
 
-const SLOTS_IST = [ // [hh, mm, type]
-  [7, 25, "reel"], [8, 10, "story"], [12, 20, "reel"], [13, 5, "story"], [17, 25, "reel"],
-  [18, 10, "story"], [19, 25, "reel"], [20, 15, "story"], [21, 25, "reel"], [22, 10, "story"],
+const SLOTS_IST = [ // [hh, mm, type]  5 reels + 5 stories + 5 carousels a day
+  [7, 25, "reel"], [8, 10, "story"], [9, 10, "carousel"], [11, 40, "carousel"], [12, 20, "reel"], [13, 5, "story"],
+  [15, 10, "carousel"], [17, 25, "reel"], [18, 10, "story"], [18, 45, "carousel"], [19, 25, "reel"], [20, 15, "story"],
+  [20, 55, "carousel"], [21, 25, "reel"], [22, 10, "story"],
 ];
 const TRIAL_SHARE = 0.4; // share of reels posted as trial reels (non-followers first) while the feature is available
 
@@ -48,7 +49,7 @@ async function postReel(env) {
   const w = await kv(env, "weights", null);
   const avail = m.items.filter(i => !posted[i.id]);
   if (!avail.length) { await log(env, "NO STOCK: library empty"); await discord(env, "⚠️ Reel library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
-  if (avail.length < 35 && IST().getUTCHours() === 7) await discord(env, `⚠️ Backup below 1 week: ${avail.length} reels left (target 70 = 2 weeks). Ask Claude to write more scripts.`);
+  if (avail.length < 35 && IST().getUTCHours() === 7 && IST().getUTCMinutes() < 30) await discord(env, `⚠️ Backup below 1 week: ${avail.length} reels left (target 70 = 2 weeks). Ask Claude to write more scripts.`);
   const recent = Object.values(posted).sort((a, b) => b.t - a.t).slice(0, 2);
   const score = i => (w?.kind?.[i.kind] ?? 1) * (w?.segment?.[i.segment] ?? 1) * (recent.some(r => r.kind === i.kind) ? 0.5 : 1) * (0.8 + Math.random() * 0.4);
   const it = avail.sort((a, b) => score(b) - score(a))[0];
@@ -76,6 +77,21 @@ async function postStory(env) {
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
   done[s.id] = { media: pub.id, t: Date.now() }; await kvPut(env, "stories", done); await log(env, `story ${s.id} posted`);
+}
+
+async function postCarousel(env) {
+  const m = await manifest(env); const posted = await kv(env, "posted", {});
+  const avail = (m.carousels || []).filter(c => !posted[c.id]);
+  if (!avail.length) { await log(env, "NO CAROUSEL STOCK"); await discord(env, "⚠️ Carousel library is empty."); return; }
+  const recent = Object.values(posted).filter(p => p.kind === "carousel").sort((a, b) => b.t - a.t)[0];
+  const c = avail.find(x => !recent || x.segment !== recent.segment) || avail[0];
+  const kids = [];
+  for (const img of c.images.slice(0, 10)) kids.push((await graph(env, `${env.IG_USER_ID}/media`, { image_url: `${env.LIB_BASE}/${img}`, is_carousel_item: "true" })).id);
+  const box = await graph(env, `${env.IG_USER_ID}/media`, { media_type: "CAROUSEL", children: kids.join(","), caption: c.caption });
+  await waitReady(env, box.id);
+  const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: box.id });
+  posted[c.id] = { media: pub.id, t: Date.now(), kind: "carousel", segment: c.segment };
+  await kvPut(env, "posted", posted); await log(env, `carousel ${c.id} posted (${pub.id})`);
 }
 
 // ---------------- optimiser ----------------
@@ -167,7 +183,7 @@ export default {
     try {
       if (slot) {
         const k = `slot:${day}:${slot[0]}:${slot[1]}`;
-        if (!(await env.STATE.get(k))) { await env.STATE.put(k, "1", { expirationTtl: 172800 }); slot[2] === "reel" ? await postReel(env) : await postStory(env); }
+        if (!(await env.STATE.get(k))) { await env.STATE.put(k, "1", { expirationTtl: 172800 }); slot[2] === "reel" ? await postReel(env) : slot[2] === "story" ? await postStory(env) : await postCarousel(env); }
       }
       if (h === 3 && mi < 5) await optimise(env);
       if (h === 21 && mi >= 40 && mi < 45) {
@@ -189,6 +205,7 @@ export default {
     if (u.pathname === "/status") return json({ weights: await kv(env, "weights", null), posted: Object.keys(await kv(env, "posted", {})).length, log: (await kv(env, "log", [])).slice(0, 60) });
     if (u.pathname === "/leads") return json(await kv(env, "leads", {}));
     if (u.pathname === "/run/reel") { await postReel(env); return json({ ok: true, log: (await kv(env, "log", [])).slice(0, 3) }); }
+    if (u.pathname === "/run/carousel") { await postCarousel(env); return json({ ok: true, log: (await kv(env, "log", [])).slice(0, 3) }); }
     if (u.pathname === "/run/story") { await postStory(env); return json({ ok: true, log: (await kv(env, "log", [])).slice(0, 3) }); }
     if (u.pathname === "/run/optimise") { await optimise(env); return json(await kv(env, "weights", null)); }
     return new Response("not found", { status: 404 });
