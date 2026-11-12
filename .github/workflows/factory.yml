@@ -38,6 +38,7 @@ jobs:
           pip install -q -U protobuf sentencepiece
           python -c "import torch, torchaudio, parler_tts; print(torch.__version__, torchaudio.__version__)"
       - name: Check bank (problems are listed here; the builder also skips any script that would render wrong)
+        id: bankcheck
         continue-on-error: true
         run: python factory/check_bank.py
       - name: Build reels
@@ -65,3 +66,6 @@ jobs:
         with: { path: library }
       - uses: actions/deploy-pages@v4
         if: ${{ !cancelled() && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}
+      - name: Fail the run if the bank check found problems (after building and publishing, so nothing is lost)
+        if: ${{ !cancelled() && steps.bankcheck.outcome == 'failure' }}
+        run: echo "::error::check_bank.py found problems in bank/ (see the Check bank step)"; exit 1

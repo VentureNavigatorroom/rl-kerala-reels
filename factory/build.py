@@ -162,6 +162,7 @@ def place(s, man):
     s["scene"] = opts[0]; return s
 
 def main():
+    run_fail = []
     target = int(os.environ.get("STOCK_TARGET", "40")); budget = float(os.environ.get("TIME_BUDGET_MIN", "300")) * 60
     only = [a for a in sys.argv[1:] if not a.startswith("-")]
     bank, man = load_bank(), manifest()
@@ -201,7 +202,7 @@ def main():
     # carousels and standalone stories are quick still images: top them up before the slow reel renders
     for name, fn, env, dflt in (("carousels", build_carousels, "CAROUSEL_TARGET", "70"), ("stories", build_stories, "STORY_TARGET", "70"), ("posters", build_posters, "POSTER_TARGET", "70")):
         try: fn(man, int(os.environ.get(env, dflt)))
-        except Exception as e: print(f"{name} build failed:", repr(e), flush=True)
+        except Exception as e: print(f"{name} build failed:", repr(e), flush=True); run_fail.append(f"{name}: {e!r}")
     stock = sum(1 for i in man["items"] if not i.get("posted"))
     if only: todo = [s for s in bank if s["id"] in only]
     else: todo = pick(bank, man, max(0, target - stock))
@@ -217,7 +218,7 @@ def main():
         try: info = build(s, out, seed=abs(hash(s["id"])) % 10000)
         except Exception as e:   # one bad script must not lose the whole night's work
             fails = man.setdefault("failed", {}); fails[s["id"]] = fails.get(s["id"], 0) + 1
-            print("FAILED", s["id"], repr(e), flush=True); json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1); continue
+            print("FAILED", s["id"], repr(e), flush=True); run_fail.append(f"{s['id']}: {e!r}"); json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1); continue
         cover.make(s, info["cover_frame"], f"{LIB}/media/{s['id']}.jpg")
         cover.story(s, info["cover_frame"], f"{LIB}/media/{s['id']}_story.jpg")
         man.setdefault("stories", [])
@@ -242,6 +243,11 @@ def main():
     for f in os.listdir(f"{LIB}/media"):
         if f not in keep and not f.startswith("."): os.remove(f"{LIB}/media/{f}")
     print(f"unbuilt scripts left in bank: {left}, carousels left: {cl}")
+    # anything that failed is saved and published as usual, but the run ends red so the monitor reads this log and fixes it
+    man["last_failures"] = run_fail; json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+    if run_fail:
+        for f in run_fail: print(f"::error::{f}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

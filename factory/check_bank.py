@@ -67,14 +67,93 @@ for f in sorted(glob.glob(f"{ROOT}/bank/*.py")):
         m = PRICE.search(line)
         if m: err(f"{os.path.basename(f)}:{k}: price word '{m.group(2)}' (only statutory penalties may appear)")
 
-# 5. near-duplicate hooks across reels / carousels
-def norm(t): return re.sub(r"[\s\"'.,!?:]+", "", t)
+# 4b. every rupee amount must be a statutory penalty (or penalty arithmetic / a quiz's wrong option already reviewed).
+#     A new amount fails here: if it really is penalty maths from the checked facts, add it to RUPEE_OK.
+RUPEE_OK = {"0", "100", "1,000", "6,000", "30,000", "50,000", "2,50,000", "1 ലക്ഷം", "10 ലക്ഷം", "ഒരു", "നൂറ്", "ആയിരം", "അമ്പതിനായിരം", "ഒരു ലക്ഷം"}
+RUPEE = re.compile(r"(\S+(?: ലക്ഷം)?) രൂപ")
+def texts(x):   # every string inside an item
+    if isinstance(x, str): yield x
+    elif isinstance(x, (list, tuple)):
+        for y in x: yield from texts(y)
+    elif isinstance(x, dict):
+        for k, y in x.items():
+            if k != "cta": yield from texts(y)
+for name, xs in banks.items():
+    for x in xs:
+        for t in texts(x):
+            for m in RUPEE.finditer(t.replace("\n", " ")):
+                amt = m.group(1).strip("\"'(:")
+                if amt not in RUPEE_OK: err(f"{x['id']}: amount '{amt} രൂപ' is not a known statutory penalty (no service prices)")
+
+# 4c. no emoji in on-screen text (chat bubbles are exempt: the chat renderer drops emoji)
+EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✅]")
+for name, xs in banks.items():
+    for x in xs:
+        for k, v in x.items():
+            if name == "reels" and x["kind"] == "chat" and k == "lines": continue
+            if k == "cta": continue
+            for t in texts(v):
+                if EMOJI.search(t): err(f"{x['id']}: emoji in on-screen text ({k})")
+
+# 4d. dialogue fits the people: address words match the listener's gender; nobody calls themselves by name
+FEM_ADDR = ("ചേച്ചി", "ചേച്ചീ", "മോളേ", "ഇത്താ", "ടീച്ചറേ", "സിസ്റ്റർ", "മാഡം")
+MAL_ADDR = ("ചേട്ടാ", "ഏട്ടാ", "ഇക്കാ", "മോനേ", "അളിയാ", "സാറേ", "ചേട്ടായി", "മച്ചാനേ", "അണ്ണാ", "ഡാ")
+def has_word(t, w): return re.search(r"(^|[\s\"'(,!?.]|[ഀ-ൿ])" + re.escape(w) + r"($|[\s\"'),!?.])", t) is not None
+for s in banks["reels"]:
+    if s["kind"] != "duo3d": continue
+    sc = s.get("scene") or "teashop"
+    if sc not in duo3d.SCENES: continue
+    nm = s.get("names") or duo3d.SCENES[sc]["names"]; N = {"A": nm[0], "V": nm[1]}
+    for who, cam, txt in s["lines"]:
+        if who not in N: continue
+        lis = N["V" if who == "A" else "A"]; lf = voice.is_female(lis)
+        for w in (MAL_ADDR if lf else FEM_ADDR):
+            if has_word(txt, w): err(f"{s['id']}: {N[who]} calls {lis} '{w}' (wrong gender for the listener)")
+        own = N[who]; first = re.split(r"[\s,!?.]", txt.strip(), maxsplit=1)[0]
+        if len(own) > 2 and first != own and first.startswith(own[:-1]) and len(first) <= len(own) + 4:
+            err(f"{s['id']}: {own} seems to address themselves ('{first}')")
+        if txt.strip().startswith(own + ","): err(f"{s['id']}: {own} addresses themselves by name")
+
+# 4e. length limits: the longest texts that are known to render without overflow (raise only after a test render)
+LIMITS = dict(hook_line=38, end_line=32, duo_line=130, chat_line=122, lines=11, list_title=54, list_text=94, list_items=3,
+              slide_title=42, slide_text=103, slides=5, car_hook_lines=4, p_tag=28, p_big=17, p_text=112, p_myth=67, p_truth=94,
+              p_title=35, p_item=52, p_items=5, s_title=41, s_body=125, s_q=124, s_a=29, s_why=91, s_line=63)
+def over(i, key, n):
+    if n > LIMITS[key]: err(f"{i}: {key} is {n} characters/items (limit {LIMITS[key]}); shorten it so it fits on screen")
+for s in banks["reels"]:
+    for l in s["hook"].split("\n"): over(s["id"], "hook_line", len(l))
+    for l in s["end"].split("\n"): over(s["id"], "end_line", len(l))
+    if s["kind"] == "duo3d": [over(s["id"], "duo_line", len(l[2])) for l in s["lines"]]; over(s["id"], "lines", len(s["lines"]))
+    if s["kind"] == "chat": [over(s["id"], "chat_line", len(l[1])) for l in s["lines"]]; over(s["id"], "lines", len(s["lines"]))
+    if s["kind"] == "list":
+        over(s["id"], "list_items", len(s["items"]))
+        for a, b in s["items"]: over(s["id"], "list_title", len(a)); over(s["id"], "list_text", len(b))
+for c in banks["carousels"]:
+    for l in c["hook"].split("\n"): over(c["id"], "hook_line", len(l))
+    for l in c["end"].split("\n"): over(c["id"], "end_line", len(l))
+    over(c["id"], "car_hook_lines", c["hook"].count("\n") + 1); over(c["id"], "slides", len(c["slides"]))
+    for a, b in c["slides"]: over(c["id"], "slide_title", len(a)); over(c["id"], "slide_text", len(b))
+for p in banks["posters"]:
+    for k in ("tag", "big", "text", "myth", "truth", "title"):
+        if k in p: over(p["id"], "p_" + k, len(p[k]))
+    if "items" in p: over(p["id"], "p_items", len(p["items"])); [over(p["id"], "p_item", len(i)) for i in p["items"]]
+for t in banks["stories"]:
+    for k in ("title", "body", "q", "a", "why", "line"):
+        if k in t: over(t["id"], "s_" + k, len(t[k]))
+
+# 5. repeated or near-duplicate hooks (reels and carousels) and poster angles
+import difflib
+def norm(t): return re.sub(r"[\s\"'.,!?:…]+", "", t)
 for name in ("reels", "carousels"):
-    seen = {}
-    for x in banks[name]:
-        h = norm(x["hook"])
-        if h in seen: err(f"{x['id']}: same hook as {seen[h]}")
-        seen[h] = x["id"]
+    hs = [(x["id"], norm(x["hook"])) for x in banks[name]]
+    for a in range(len(hs)):
+        for b in range(a + 1, len(hs)):
+            if hs[a][1] == hs[b][1] or difflib.SequenceMatcher(None, hs[a][1], hs[b][1]).ratio() > 0.85:
+                err(f"{hs[b][0]}: hook repeats / nearly repeats {hs[a][0]}")
+pa = [(p["id"], norm(p.get("big", "") + p.get("text", "") + p.get("myth", "") + p.get("title", "") + "".join(p.get("items", [])))) for p in banks["posters"]]
+for a in range(len(pa)):
+    for b in range(a + 1, len(pa)):
+        if difflib.SequenceMatcher(None, pa[a][1], pa[b][1]).ratio() > 0.8: err(f"{pa[b][0]}: poster nearly repeats {pa[a][0]}")
 
 print(f"reels {len(banks['reels'])}, carousels {len(banks['carousels'])}, posters {len(banks['posters'])}, stories {len(banks['stories'])}")
 if errs:
