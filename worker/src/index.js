@@ -25,6 +25,11 @@ async function discord(env, content) {
   if (!env.DISCORD_WEBHOOK) return;
   try { await fetch(env.DISCORD_WEBHOOK, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: content.slice(0, 1900) }) }); } catch {}
 }
+async function alertOnce(env, tag, content) {   // at most one Discord alert per tag per IST day
+  const k = `alert:${tag}:${IST().toISOString().slice(0, 10)}`;
+  if (await env.STATE.get(k)) return;
+  await env.STATE.put(k, "1", { expirationTtl: 172800 }); await discord(env, content);
+}
 async function graph(env, path, params = {}, method = "POST") {
   const u = new URL(`${env.GRAPH}/${path}`);
   const body = new URLSearchParams({ ...params, access_token: env.IG_TOKEN });
@@ -78,7 +83,7 @@ async function postStory(env) {
   const hour = IST().getUTCHours();
   const pendingAnswer = others.find(s => s.after);
   let s = hour < 9 ? teasers[0] : (pendingAnswer || others.find(x => x.kind === (hour < 14 ? "tip" : hour < 19 ? "quiz" : "contact")) || others[0] || teasers[0]);
-  if (!s) { await log(env, "NO STORY STOCK"); return; }
+  if (!s) { await log(env, "NO STORY STOCK"); await alertOnce(env, "nostory", "⚠️ Story library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
   const c = await graph(env, `${env.IG_USER_ID}/media`, { media_type: "STORIES", image_url: `${env.LIB_BASE}/${s.image}` });
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
@@ -90,7 +95,7 @@ async function postStory(env) {
 async function postCarousel(env) {
   const m = await manifest(env); const posted = await kv(env, "posted", {});
   const avail = (m.carousels || []).filter(c => !posted[c.id]);
-  if (!avail.length) { await log(env, "NO CAROUSEL STOCK"); await discord(env, "⚠️ Carousel library is empty."); return; }
+  if (!avail.length) { await log(env, "NO CAROUSEL STOCK"); await alertOnce(env, "nocarousel", "⚠️ Carousel library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
   const recent = Object.values(posted).filter(p => p.kind === "carousel").sort((a, b) => b.t - a.t)[0];
   const c = avail.find(x => !recent || x.segment !== recent.segment) || avail[0];
   const kids = [];
@@ -285,6 +290,8 @@ const KEYWORD_REPLY = {
   CHECKLIST: "ഹായ്! 👋 രജിസ്ട്രേഷന് വേണ്ട ഡോക്യുമെന്റ്സ്:\n\n📄 ഓരോ ഡയറക്ടർക്കും: പാൻ, ആധാർ/ഐഡി, അഡ്രസ്സ് പ്രൂഫ് (ബാങ്ക് സ്റ്റേറ്റ്‌മെന്റ്/ബിൽ), ഫോട്ടോ\n🏠 ഓഫീസിന്: പുതിയ കറന്റ്/വാട്ടർ ബിൽ + ഉടമയുടെ NOC (വീടായാലും മതി)\n📝 2–3 കമ്പനി പേരുകൾ\n\nപ്രൈവറ്റ് ലിമിറ്റഡിന് കുറഞ്ഞത് 2 ഡയറക്ടർമാർ (ഒരാൾ ഇന്ത്യയിൽ താമസിക്കുന്നയാൾ). എത്ര ഫൗണ്ടർമാർ ഉണ്ട്?",
 };
 
+const postKind = (env, what) => what === "reel" ? postReel(env) : what === "story" ? postStory(env) : postCarousel(env);
+
 // ---------------- entry points ----------------
 export default {
   async scheduled(ev, env, ctx) {
@@ -294,13 +301,27 @@ export default {
     try {
       if (slot) {
         const k = `slot:${day}:${slot[0]}:${slot[1]}`;
-        if (!(await env.STATE.get(k))) { await env.STATE.put(k, "1", { expirationTtl: 172800 }); slot[2] === "reel" ? await postReel(env) : slot[2] === "story" ? await postStory(env) : await postCarousel(env); }
+        if (!(await env.STATE.get(k))) {
+          await env.STATE.put(k, "1", { expirationTtl: 172800 });
+          try { await postKind(env, slot[2]); }
+          catch (e) {   // one retry ~10 min later covers most temporary Instagram errors
+            await kvPut(env, "retry", { what: slot[2], at: Date.now() + 10 * 60e3 });
+            await log(env, `ERROR ${slot[2]} post failed, retrying in 10 min: ${e.message}`);
+            await discord(env, `⚠️ ${slot[2]} post failed, retrying in 10 min: ${e.message}`);
+          }
+        }
+      }
+      const retry = await kv(env, "retry", null);
+      if (retry && Date.now() >= retry.at) {
+        await env.STATE.delete("retry");
+        try { await postKind(env, retry.what); await log(env, `retry of ${retry.what} succeeded`); }
+        catch (e) { throw new Error(`${retry.what} retry also failed: ${e.message}`); }
       }
       if (h === 3 && mi < 5) { await snapshot(env); await optimise(env); }
       if (h === 21 && mi >= 40 && mi < 45) {
         const posted = await kv(env, "posted", {}); const today = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day).length;
         const leads = Object.values(await kv(env, "leads", {})).filter(l => (l.updated || "").startsWith(day));
-        const errs = (await kv(env, "log", [])).filter(l => l.startsWith(day) && /ERROR|NO STOCK/.test(l)).length;
+        const errs = (await kv(env, "log", [])).filter(l => l.startsWith(day) && /ERROR|NO .*STOCK/.test(l)).length;
         await discord(env, `📊 Daily report ${day}: ${today} reels posted · ${leads.length} leads today · ${errs} problems`);
       }
     } catch (e) { await log(env, `ERROR ${e.message}`); await discord(env, `❌ Autopilot error: ${e.message}`); }
