@@ -30,7 +30,6 @@ jobs:
         run: |
           printf '%s' "$IG_TOKEN" | wrangler secret put IG_TOKEN
           printf '%s' "$DISCORD_WEBHOOK" | wrangler secret put DISCORD_WEBHOOK
-          printf '%s' "rlk-$(echo -n "$IG_TOKEN" | sha256sum | cut -c1-24)" | wrangler secret put VERIFY_TOKEN
           KEY="rlk-$(echo -n "admin$IG_TOKEN" | sha256sum | cut -c1-32)"
           printf '%s' "$KEY" | wrangler secret put ADMIN_KEY
           URL=$(wrangler deployments list 2>/dev/null | grep -oE 'https://[^ ]+workers.dev' | head -1)

@@ -33,7 +33,7 @@ jobs:
       - name: Build reels
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          POSTED_URL: ${{ vars.POSTED_URL }}
+          POSTED_URL: https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev/public/posted
           STOCK_TARGET: "40"
           TIME_BUDGET_MIN: "300"
           TTS_THREADS: "4"
