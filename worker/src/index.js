@@ -304,6 +304,89 @@ async function bumpPost(env, item, field, n = 1) {        // live engagement cou
   await kvPut(env, k, e);
 }
 
+// ---------------- check-ins for people who went quiet ----------------
+// Index (KV "nudge"): { <ig id>: { li: last message from them, n: check-ins sent since then, tot: check-ins ever, ls: last check-in time, u: username }
+//                       | { c: comment id, t: time, u, f }   (commented, got our DM, never replied) , _s: today's counters }
+// Instagram only allows a DM within 24 h of the person's last message, so DM check-ins go out 2 h, 9 h and 22 h after it.
+// Someone who only commented cannot be DM'd a second time, so they get one public reply under their comment instead.
+const NUDGE_AT = [2, 9, 22].map(h => h * 3600e3), NUDGE_GAP = 3 * 3600e3, NUDGE_MAX_TOTAL = 6, NUDGE_COMMENT_AT = 3 * 3600e3;
+const NUDGE_OPEN = [
+  "Hey, just checking in 👋 We were halfway through your company registration chat and didn't want to leave you hanging.",
+  "Hi again 🙂 No rush at all. One quick answer and we can take this forward for you.",
+  "Last check from our side 🙏 If you'd still like our team to call you, just reply here and we'll pick up where we stopped.",
+];
+const NUDGE_PUBLIC = [
+  "just checking 👋 did our DM reach you? It may be sitting in message requests (or hidden requests). Reply there and we'll take it forward.",
+  "quick check 🙂 we sent what you asked for by DM. If you can't see it, look in message requests, then reply there and we'll continue.",
+];
+const OPT_OUT = /^\s*(stop|unsubscribe|not interested|no thanks|no thank you|don'?t message|leave me)\b/i;
+function nudgeText(thread, meta, n) {   // check-in line + the exact step they stopped on, so a reply continues the normal flow
+  const lastA = [...thread].reverse().find(m => m.role === "assistant")?.content || "";
+  if (/will call you/i.test(lastA)) return null;                       // flow already finished
+  const open = NUDGE_OPEN[Math.min(n, NUDGE_OPEN.length - 1)];
+  if (meta?.pending_kw) return { text: `${open}\n\nYour guide is ready. Follow @rejectionlist.kerala, then tap the button below and we'll send it right away.`, buttons: ["I've followed ✅"] };
+  const qLine = lastA.split("\n").reverse().find(l => l.includes("?")) || "";               // the question(s) they were last asked, as written
+  let q = (qLine.match(/[^.!?•✅📄🏠📝]*\?/gu) || []).map(x => x.trim()).filter(Boolean).join(" ");
+  if (!q && /name you have in mind/i.test(lastA)) q = "Which company name do you have in mind? Send it here and we'll give it a first review.";
+  if (!q) q = "Shall we continue? Reply here and we'll pick up right where we stopped.";
+  const buttons = /malayalam or english/i.test(q) ? ["Malayalam", "English"] : Object.values(KEYWORD_REPLY).some(r => lastA.endsWith(r.slice(-60))) ? NEXT_BUTTONS : [];
+  return { text: `${open}\n\n${q}`, buttons };
+}
+function nudgeStat(nx, field) { const day = IST().toISOString().slice(0, 10); if (nx._s?.day !== day) nx._s = { day }; nx._s[field] = (nx._s[field] || 0) + 1; }
+async function nudgeApply(env, ops, stats = []) {   // re-read before writing so a message that arrived meanwhile is not lost
+  if (!Object.keys(ops).length && !stats.length) return;
+  const nx = await kv(env, "nudge", {});
+  for (const [id, v] of Object.entries(ops)) { if (v === null) delete nx[id]; else if (!nx[id] || nx[id].c || !v.li || (nx[id].li || 0) <= v.li) nx[id] = v; }
+  for (const f of stats) nudgeStat(nx, f);
+  await kvPut(env, "nudge", nx);
+}
+async function processNudges(env, force = null) {
+  const now = Date.now(), hr = IST().getUTCHours();
+  if (!force && (hr < 8 || hr >= 22)) return { skipped: "quiet hours" };          // never message people at night
+  const nx = await kv(env, "nudge", null); if (!nx) return { none: true };
+  const ops = {}, stats = [], out = []; let sent = 0, leads = null;
+  const getLeads = async () => leads || (leads = await kv(env, "leads", {}));
+  for (const [id, e] of Object.entries(nx)) {
+    if (id === "_s" || (force && force !== id)) continue;
+    if (sent >= 4) break;                                                          // a few per minute is plenty
+    try {
+      if (e.c && !e.li) {                                                          // commented, got the DM, never replied
+        if (now - e.t > 6 * 864e5) { ops[id] = null; continue; }
+        if (!force && now - e.t < NUDGE_COMMENT_AT) continue;
+        const metas = [await kv(env, `m:${id}`, null), e.f && e.f !== id ? await kv(env, `m:${e.f}`, null) : null];
+        const L = (await getLeads())[id] || (e.f ? (await getLeads())[e.f] : null);
+        ops[id] = null;
+        if (metas.some(m => m && (m.last_in > e.t - 60e3 || m.no_nudge)) || (L?.phone && L?.language)) continue;   // they did reply, opted out, or are already a full lead
+        await graph(env, `${e.c}/replies`, { message: `${e.u ? "@" + e.u + " " : ""}${NUDGE_PUBLIC[Math.floor(Math.random() * NUDGE_PUBLIC.length)]}` });
+        sent++; stats.push("pub"); out.push(`${id}: public`); await log(env, `check-in: public reply to @${e.u || id} (no DM reply yet)`);
+        continue;
+      }
+      const age = now - e.li;
+      if (age > 23.5 * 3600e3 || e.n >= NUDGE_AT.length || (e.tot || 0) >= NUDGE_MAX_TOTAL) { ops[id] = null; continue; }
+      if (!force && (age < NUDGE_AT[e.n] || now - (e.ls || 0) < NUDGE_GAP)) continue;
+      const meta = await kv(env, `m:${id}`, null);
+      if (!meta || meta.no_nudge) { ops[id] = null; continue; }
+      if (meta.last_in > e.li + 1000) { ops[id] = { ...e, li: meta.last_in, n: 0 }; continue; }   // they wrote again; restart the clock
+      const L = (await getLeads())[id];
+      if (L?.phone && L?.language) { ops[id] = null; continue; }                   // flow complete
+      const thread = await kv(env, `t:${id}`, []);
+      if (!thread.length || thread[thread.length - 1].role !== "assistant") continue;
+      const nt = nudgeText(thread, meta, e.n); if (!nt) { ops[id] = null; continue; }
+      try { await sendDM(env, id, nt.text, nt.buttons); }
+      catch (e1) { ops[id] = null; await log(env, `check-in to ${id} not delivered: ${String(e1.message).slice(0, 90)}`); continue; }
+      thread.push({ role: "assistant", content: nt.text }); await kvPut(env, `t:${id}`, thread);
+      ops[id] = { ...e, n: e.n + 1, tot: (e.tot || 0) + 1, ls: now }; sent++; stats.push("sent"); out.push(`${id}: dm ${e.n + 1}`);
+      await log(env, `check-in ${e.n + 1} sent to @${meta.username || id}`);
+      if (L?.phone && !L.alerted && L.intent !== "low") {                          // gave a number but stopped: still worth a call
+        const all = await kv(env, "leads", {}); if (all[id]) { all[id].alerted = true; await kvPut(env, "leads", all); leads = all; }
+        await discord(env, `🔔 **Lead stopped midway, but left a number** (${L.intent} intent)\n📞 ${L.phone}  ·  🗣 ${L.language || "not answered"}\n🏢 ${L.business || "?"}\n📍 Came from: ${L.source_item || "?"}\nThey went quiet about ${Math.round(age / 3600e3)} h ago; a check-in message has been sent.\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
+      }
+    } catch (err) { await log(env, `ERROR check-in ${id}: ${String(err.message).slice(0, 90)}`); ops[id] = null; }
+  }
+  await nudgeApply(env, ops, stats);
+  return { sent, out };
+}
+
 async function pollInbox(env) {
   const since = Date.now() - 15 * 60e3;   // look-back window; dup: keys stop double handling
   let j;   // the publisher app's token can read the inbox
@@ -334,11 +417,19 @@ async function handleWebhook(env, body) {
       if (/^\s*delete\s*$/i.test(ev.message.text)) {                  // data deletion request (see /privacy)
         await env.STATE.delete(key); await env.STATE.delete(`m:${uid}`);
         const leads = await kv(env, "leads", {}); if (leads[uid]) { delete leads[uid]; await kvPut(env, "leads", leads); }
+        await nudgeApply(env, { [uid]: null });
         await sendDM(env, uid, "Done. We have deleted your conversation and details from our system."); await log(env, `data deleted for ${uid}`); continue;
       }
       const thread = await kv(env, key, []);
       const meta = await kv(env, `m:${uid}`, { first: Date.now(), sources: [] });
       meta.last_in = Date.now();                                     // 24h window starts from their last message
+      if (OPT_OUT.test(ev.message.text)) {                           // asked us to stop: no check-ins for this person, and no further questions now
+        meta.no_nudge = true; await kvPut(env, `m:${uid}`, meta); await nudgeApply(env, { [uid]: null });
+        const bye = "No problem 🙏 We won't send you any more reminders. If you need us later, just message here.";
+        thread.push({ role: "user", content: ev.message.text }, { role: "assistant", content: bye }); await kvPut(env, key, thread);
+        await sendDM(env, uid, bye); await log(env, `opt-out from ${uid}`); continue;
+      }
+      if (meta.no_nudge) delete meta.no_nudge;                       // they started talking again
       if (ev.message.reply_to?.story?.id) meta.sources.push({ via: "story_reply", media: ev.message.reply_to.story.id, t: Date.now() });
       if (!meta.sources.length) meta.sources.push({ via: "dm", t: Date.now() });
       await kvPut(env, `m:${uid}`, meta);
@@ -375,6 +466,7 @@ async function handleWebhook(env, body) {
       } else { await kvPut(env, `m:${uid}`, meta); reply = await botReply(env, thread); }
       thread.push({ role: "assistant", content: reply });
       await kvPut(env, key, thread); await sendDM(env, uid, reply, buttons);
+      let flowDone = false;
       const uMsgs = thread.filter(m => m.role === "user"); const pIdx = uMsgs.findIndex(m => /\d{10}/.test(m.content.replace(/\D/g, "")));
       if (pIdx >= 0 || thread.length >= 12) {
         const lead = await extractLead(env, thread);
@@ -382,6 +474,7 @@ async function handleWebhook(env, body) {
           const leads = await kv(env, "leads", {}); const prev = leads[uid];
           const meta2 = await kv(env, `m:${uid}`, { sources: [] }); const s0 = meta2.sources[0] || {};
           const fromItem = s0.media ? await mediaToItem(env, s0.media) : "direct";
+          flowDone = !!(lead.phone && lead.language);
           const ready = lead.phone && (lead.language || uMsgs.length - 1 - pIdx >= 2);   // wait for the call language (or two more messages) so the alert is complete
           leads[uid] = { ...lead, alerted: prev?.alerted || false, ig_user: uid, source_item: fromItem, source_keyword: s0.keyword || null, source_via: s0.via || "dm", status: prev?.status || "new", updated: IST().toISOString().slice(0, 16) };
           await kvPut(env, "leads", leads); await log(env, `lead ${uid}: ${lead.intent}/${lead.can_afford_30k} from ${fromItem}`);
@@ -392,6 +485,13 @@ async function handleWebhook(env, body) {
           }
         }
       }
+      try {   // check-in index: (re)start the clock for this person, or drop them once the flow is complete
+        const nx = await kv(env, "nudge", {}); const pe = nx[uid];
+        if (pe?.n > 0) nudgeStat(nx, "back");
+        for (const [k, v] of Object.entries(nx)) if (k !== uid && k !== "_s" && v.c && !v.li && ((v.u && meta.username && v.u.toLowerCase() === meta.username.toLowerCase()) || v.f === uid)) delete nx[k];
+        if (flowDone || meta.no_nudge) delete nx[uid]; else nx[uid] = { li: meta.last_in, n: 0, tot: pe?.tot || 0, ls: pe?.ls || 0, u: meta.username || pe?.u || null };
+        await kvPut(env, "nudge", nx);
+      } catch (e9) { await log(env, `check-in index: ${String(e9.message).slice(0, 80)}`); }
     }
     for (const ch of entry.changes || []) {
       if (ch.value?.id) { const dk = `dup:c:${ch.field}:${ch.value.id}`; if (await env.STATE.get(dk)) continue; await env.STATE.put(dk, "1", { expirationTtl: 86400 }); } // keyword comments -> one private reply opens the DM
@@ -420,6 +520,8 @@ async function handleWebhook(env, body) {
         if (r.recipient_id) { const mk = `m:${r.recipient_id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
           if (inbound && meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); if (inbound) meta.pending_kw = kw; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
         await log(env, `private reply to ${kw} comment`);
+        try { const nid = r.recipient_id || `c:${ch.value.id}`; const nx = await kv(env, "nudge", {});
+          if (!nx[nid]?.li) { nx[nid] = { c: ch.value.id, t: Date.now(), u: ch.value.from?.username || null, f: ch.value.from?.id || null }; await kvPut(env, "nudge", nx); } } catch (e8) {}
         try { await graph(env, `${ch.value.id}/replies`, { message: PUBLIC_DONE[Math.floor(Math.random() * PUBLIC_DONE.length)] }); } catch (e3) { await log(env, `public note failed: ${e3.message}`); }
       }
       catch (e) {   // Instagram refuses some private replies (e.g. replies inside a thread): answer publicly and invite a DM
@@ -534,12 +636,14 @@ export default {
         try { await postKind(env, retry.what); await log(env, `retry of ${retry.what} succeeded`); }
         catch (e) { throw new Error(`${retry.what} retry also failed: ${e.message}`); }
       }
+      try { await processNudges(env); } catch (eN) { await log(env, `ERROR check-ins: ${String(eN.message).slice(0, 90)}`); }
       if (h === 3 && mi === 1) { await snapshot(env); await optimise(env); await refreshIgToken(env); }
       if (h === 21 && mi === 41) {
         const posted = await kv(env, "posted", {}); const today = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day).length;
         const leads = Object.values(await kv(env, "leads", {})).filter(l => (l.updated || "").startsWith(day));
         const errs = (await kv(env, "log", [])).filter(l => l.startsWith(day) && /ERROR|NO .*STOCK/.test(l)).length;
-        await discord(env, `📊 Daily report ${day}: ${today} reels posted · ${leads.length} leads today · ${errs} problems`);
+        const nx = await kv(env, "nudge", {}); const ns = nx._s?.day === day ? nx._s : {}; const waiting = Object.keys(nx).filter(k => k !== "_s").length;
+        await discord(env, `📊 Daily report ${day}: ${today} posts · ${leads.length} leads today · ${errs} problems\n💬 Check-ins: ${ns.sent || 0} DMs + ${ns.pub || 0} comment replies sent · ${ns.back || 0} people came back · ${waiting} chats still waiting`);
       }
     } catch (e) { await log(env, `ERROR ${e.message}`); await discord(env, `❌ Autopilot error: ${e.message}`); }
   },
@@ -567,7 +671,8 @@ export default {
         await sendDM(env, id, text); const t = await kv(env, `t:${id}`, []); t.push({ role: "assistant", content: text }); await kvPut(env, `t:${id}`, t);
         await log(env, `follow-up sent to ${id}`); return json({ ok: true, sent: true, hours_left_in_window: left / 3600e3 });
       }
-      if (u.pathname === "/ops/run" && req.method === "POST") { const { what } = await req.json(); if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env);
+      if (u.pathname === "/ops/nudge") return json(await kv(env, "nudge", {}));
+      if (u.pathname === "/ops/run" && req.method === "POST") { const { what, id } = await req.json(); if (what === "nudge") return json(await processNudges(env, id || null)); if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env);
         if (what === "poll") { await pollInbox(env); return json({ ok: true }); } if (what === "reel") await postReel(env); if (what === "story") await postStory(env); if (what === "carousel") await postCarousel(env); return json({ ok: true }); }
       if (u.pathname === "/ops/graph" && req.method === "POST") {      // diagnostics: one Graph API call with the app's token
         const { path, params, method } = await req.json();
