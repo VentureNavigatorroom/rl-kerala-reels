@@ -154,7 +154,8 @@ def place(s, man):
     if s.get("scene_lock") or home not in duo3d.GROUPS:
         return s
     if not s.get("names"): s["names"] = duo3d.SCENES[home]["names"]       # dialogue mentions these names
-    opts = [x for x in duo3d.GROUPS[home] if x in duo3d.SCENES and duo3d.available(x)] or [home]
+    # only places whose drawn people match the script's names (a woman's name never lands on a man with a moustache)
+    opts = [x for x in duo3d.GROUPS[home] if x in duo3d.SCENES and duo3d.available(x) and duo3d.fits(x, s["names"])] or [home]
     hist = [i.get("scene") for i in sorted(man["items"], key=lambda i: i.get("built", 0))]
     def last(x): return max([k for k, v in enumerate(hist) if v == x], default=-1)
     opts.sort(key=lambda x: (last(x), abs(hash(s["id"] + x)) % 97))
@@ -182,6 +183,12 @@ def main():
         if i.get("v", 1) < 4 and HAS_ACR(json.dumps([sc.get("lines"), sc.get("items"), sc.get("end")], ensure_ascii=False)): return True
         return voice_changed(i, sc)
     old = set()
+    for i in man["items"]:   # any unposted reel whose names do not match the people drawn in its location
+        sc = byid.get(i["id"])
+        if sc and sc.get("kind") == "duo3d" and not i.get("posted") and i.get("scene") in duo3d.SCENES:
+            home = sc.get("scene") or "teashop"
+            nm = sc.get("names") or duo3d.SCENES[home if home in duo3d.GROUPS else i["scene"]]["names"]
+            if not duo3d.fits(i["scene"], nm): old.add(i["id"])
     for i in man["items"]:
         if not i.get("posted") and i.get("v", 1) < VERSION:
             if needs(i): old.add(i["id"])

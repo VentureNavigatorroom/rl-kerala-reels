@@ -37,6 +37,9 @@ jobs:
           pip install -q --force-reinstall --no-deps torchaudio --index-url https://download.pytorch.org/whl/cpu
           pip install -q -U protobuf sentencepiece
           python -c "import torch, torchaudio, parler_tts; print(torch.__version__, torchaudio.__version__)"
+      - name: Check bank (problems are listed here; the builder also skips any script that would render wrong)
+        continue-on-error: true
+        run: python factory/check_bank.py
       - name: Build reels
         id: build
         env:

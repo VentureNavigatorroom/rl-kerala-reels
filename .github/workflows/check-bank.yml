@@ -1,0 +1,15 @@
+name: check-bank
+# Fails (red X on the commit) when a bank file breaks a content rule: duplicate ids, unknown location, names that do not
+# match the people drawn in a location, a name with no known voice gender, wrong CTA, rupee sign or price words, repeated hooks.
+on:
+  push: { branches: [main], paths: ["bank/**", "factory/**", ".github/workflows/check-bank.yml"] }
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q pillow numpy
+      - run: python factory/check_bank.py

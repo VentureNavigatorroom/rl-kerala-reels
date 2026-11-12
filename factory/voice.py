@@ -18,6 +18,13 @@ VOICES = {
     "NARRATOR": "Anjali speaks clearly and confidently at a moderate pace, like explaining something useful to a friend. The recording is close-sounding with very little background noise.",
 }
 
+# every man's name / relation word in use; a name in neither set is an error in check_bank.py (so its voice is never guessed)
+MALE = {"അഖിൽ", "അച്ഛൻ", "അനന്തു", "അനിയൻ", "അനൂപ്", "അപ്പ", "അപ്പൂപ്പൻ", "അമ്മാവൻ", "അമൽ", "അരവിന്ദ്", "അരുൺ", "അർജുൻ", "ആദിത്യൻ", "ആദിൽ", "ആദർശ്", "ആന്റണി", "ആഷിക്", "ആസിഫ്", "ആൽബിൻ", "ആൽവിൻ", "ഇക്ക", "ഇർഫാൻ", "ഉണ്ണി", "ഉപ്പ", "ഏട്ടൻ", "കിരൺ", "കുമാർ", "ഗോകുൽ", "ഗോപി", "ചേട്ടൻ", "ജസ്റ്റിൻ", "ജാഫർ", "ജിതിൻ", "ജിബിൻ", "ജിഷ്ണു", "ജെയ്സൺ", "ജോ", "ജോബി", "ജോമോൻ", "ജോയി", "ജോസഫ്", "ജോർജ്", "ടോണി", "ടോമി", "ഡെന്നിസ്", "തോമസ്", "ദിനേശ്", "നസീർ", "നിഖിൽ", "നിതിൻ", "നൗഷാദ്", "പ്രകാശ്", "പ്രവീൺ", "ഫഹദ്", "ഫെബിൻ", "ഫൈസൽ", "ബാലൻ", "ബിജു", "ബിജോയ്", "ബിനു", "ബേസിൽ", "ഭർത്താവ്", "മകൻ", "മനോജ്", "മാമൻ", "മുഹ്സിൻ", "മോഹനൻ", "രമേശ്", "രാജേഷ്", "രാഹുൽ", "റഫീഖ്", "റഷീദ്", "റിസ്വാൻ", "റോഷൻ", "വരുൺ", "വാസു", "വിനീത്", "വിവേക്", "വിഷ്ണു", "ശരത്", "ശ്യാം", "ശ്രീനാഥ്", "ഷംസു", "ഷഫീഖ്", "ഷമീർ", "ഷഹീൻ", "ഷാജി", "ഷാനവാസ്", "ഷിജു", "ഷിബു", "സജി", "സഞ്ജു", "സന്തോഷ്", "സനൽ", "സലീം", "സാബു", "സിജോ", "സിബി", "സുജിത്", "സുരേഷ്", "ഹാരിസ്"}
+
+def gender_known(name):
+    w = name.replace(".", " ").split()
+    return any(x in FEMALE or x in MALE for x in w + [name])
+
 def is_female(name, names=None):
     names = FEMALE if names is None else names
     return name in names or any(w in names for w in name.replace(".", " ").split())

@@ -29,6 +29,12 @@ GROUPS = {
     "home": ["home", "kitchen", "veranda", "balcony", "rooftop", "hospital", "weddinghall"],
     "gulf": ["gulf", "gulfroom", "gulfoffice", "mall", "airport"],
 }
+def fits(scene, names):
+    """True when the two names have the same genders as the two people drawn in this location
+    (each location's default names describe its 3D characters: left A, right V)."""
+    from voice import is_female
+    return tuple(is_female(n) for n in names) == tuple(is_female(n) for n in SCENES[scene]["names"])
+
 def available(scene):
     import os
     d = f"{ROOT}/assets/stills" + ("/" + SCENES[scene]["dir"] if SCENES[scene]["dir"] else "")
@@ -60,6 +66,7 @@ def build(s, out, seed=0):
     from voice import voice_for
     scene = s.get("scene", "teashop"); IMG, MOV, FG, SPR = assets(scene)
     nm = s.get("names") or SCENES[scene]["names"]
+    if not fits(scene, nm): raise ValueError(f"names {nm} do not match the people drawn in {scene} {SCENES[scene]['names']}")
     NAMES = {"A": (nm[0], (255, 196, 40)), "V": (nm[1], (120, 190, 255))}
     VOICE = {"A": voice_for(nm[0], 0), "V": voice_for(nm[1], 1)}
     if VOICE["A"] == VOICE["V"]: VOICE["V"] = VOICE["V"][0] + "2"
