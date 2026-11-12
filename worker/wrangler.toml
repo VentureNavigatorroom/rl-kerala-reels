@@ -1,0 +1,18 @@
+name = "rl-kerala-autopilot"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[ai]
+binding = "AI"
+
+[[kv_namespaces]]
+binding = "STATE"
+id = "__KV_ID__"
+
+[vars]
+GRAPH = "https://graph.instagram.com/v24.0"
+IG_USER_ID = "17841417749063213"
+LIB_BASE = "https://venturenavigatorroom.github.io/rl-kerala-reels"

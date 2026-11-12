@@ -1,0 +1,37 @@
+name: deploy-autopilot
+# Deploys the Cloudflare autopilot whenever worker/ changes (or on demand).
+on:
+  push: { branches: [main], paths: ["worker/**", ".github/workflows/deploy-worker.yml"] }
+  workflow_dispatch: {}
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Create or find the KV store
+        working-directory: worker
+        run: |
+          npm i -g wrangler@latest >/dev/null 2>&1
+          ID=$(wrangler kv namespace list | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const l=JSON.parse(s.slice(s.indexOf("[")));const n=l.find(x=>x.title.includes("rl-kerala-state"));console.log(n?n.id:"")})')
+          if [ -z "$ID" ]; then ID=$(wrangler kv namespace create rl-kerala-state | grep -oE '[0-9a-f]{32}' | head -1); fi
+          sed -i "s/__KV_ID__/$ID/" wrangler.toml
+      - name: Deploy
+        working-directory: worker
+        run: wrangler deploy
+      - name: Set secrets
+        working-directory: worker
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          printf '%s' "$IG_TOKEN" | wrangler secret put IG_TOKEN
+          printf '%s' "$DISCORD_WEBHOOK" | wrangler secret put DISCORD_WEBHOOK
+          printf '%s' "rlk-$(echo -n "$IG_TOKEN" | sha256sum | cut -c1-24)" | wrangler secret put VERIFY_TOKEN
+          KEY="rlk-$(echo -n "admin$IG_TOKEN" | sha256sum | cut -c1-32)"
+          printf '%s' "$KEY" | wrangler secret put ADMIN_KEY
+          URL=$(wrangler deployments list 2>/dev/null | grep -oE 'https://[^ ]+workers.dev' | head -1)
+          curl -s -X POST -H "content-type: application/json" -d "{\"content\":\"✅ Autopilot deployed. Private status page: ${URL:-<worker url>}/status?key=$KEY\"}" "$DISCORD_WEBHOOK" >/dev/null || true

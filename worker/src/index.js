@@ -20,6 +20,10 @@ async function kvPut(env, k, v) { await env.STATE.put(k, JSON.stringify(v)); }
 async function log(env, msg) {
   const l = await kv(env, "log", []); l.unshift(`${IST().toISOString().slice(0, 16)} ${msg}`); await kvPut(env, "log", l.slice(0, 300));
 }
+async function discord(env, content) {
+  if (!env.DISCORD_WEBHOOK) return;
+  try { await fetch(env.DISCORD_WEBHOOK, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: content.slice(0, 1900) }) }); } catch {}
+}
 async function graph(env, path, params = {}, method = "POST") {
   const u = new URL(`${env.GRAPH}/${path}`);
   const body = new URLSearchParams({ ...params, access_token: env.IG_TOKEN });
@@ -43,7 +47,8 @@ async function postReel(env) {
   const m = await manifest(env); const posted = await kv(env, "posted", {});
   const w = await kv(env, "weights", null);
   const avail = m.items.filter(i => !posted[i.id]);
-  if (!avail.length) { await log(env, "NO STOCK: library empty"); return; }
+  if (!avail.length) { await log(env, "NO STOCK: library empty"); await discord(env, "⚠️ Reel library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
+  if (avail.length < 10) await discord(env, `⚠️ Only ${avail.length} reels left in stock. The script bank may be running out.`);
   const recent = Object.values(posted).sort((a, b) => b.t - a.t).slice(0, 2);
   const score = i => (w?.kind?.[i.kind] ?? 1) * (w?.segment?.[i.segment] ?? 1) * (recent.some(r => r.kind === i.kind) ? 0.5 : 1) * (0.8 + Math.random() * 0.4);
   const it = avail.sort((a, b) => score(b) - score(a))[0];
@@ -131,7 +136,13 @@ async function handleWebhook(env, body) {
       await kvPut(env, key, thread); await sendDM(env, uid, reply);
       if (/\d{10}/.test(ev.message.text.replace(/\D/g, "")) || thread.length >= 12) {
         const lead = await extractLead(env, thread);
-        if (lead) { const leads = await kv(env, "leads", {}); leads[uid] = { ...lead, updated: IST().toISOString().slice(0, 16) }; await kvPut(env, "leads", leads); await log(env, `lead ${uid}: ${lead.intent}/${lead.can_afford_30k}`); }
+        if (lead) {
+          const leads = await kv(env, "leads", {}); const prev = leads[uid];
+          leads[uid] = { ...lead, ig_user: uid, updated: IST().toISOString().slice(0, 16) }; await kvPut(env, "leads", leads); await log(env, `lead ${uid}: ${lead.intent}/${lead.can_afford_30k}`);
+          if (lead.phone && (!prev || !prev.phone) && lead.intent !== "low") {
+            await discord(env, `🔔 **New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}\n🏢 ${lead.business}\n👥 ${lead.founders}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`);
+          }
+        }
       }
     }
     for (const ch of entry.changes || []) { // keyword comments -> one private reply opens the DM
@@ -159,7 +170,13 @@ export default {
         if (!(await env.STATE.get(k))) { await env.STATE.put(k, "1", { expirationTtl: 172800 }); slot[2] === "reel" ? await postReel(env) : await postStory(env); }
       }
       if (h === 3 && mi < 5) await optimise(env);
-    } catch (e) { await log(env, `ERROR ${e.message}`); }
+      if (h === 21 && mi >= 40 && mi < 45) {
+        const posted = await kv(env, "posted", {}); const today = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day).length;
+        const leads = Object.values(await kv(env, "leads", {})).filter(l => (l.updated || "").startsWith(day));
+        const errs = (await kv(env, "log", [])).filter(l => l.startsWith(day) && /ERROR|NO STOCK/.test(l)).length;
+        await discord(env, `📊 Daily report ${day}: ${today} reels posted · ${leads.length} leads today · ${errs} problems`);
+      }
+    } catch (e) { await log(env, `ERROR ${e.message}`); await discord(env, `❌ Autopilot error: ${e.message}`); }
   },
   async fetch(req, env, ctx) {
     const u = new URL(req.url);
