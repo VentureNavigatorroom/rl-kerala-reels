@@ -3,7 +3,7 @@ name: post-now
 on:
   workflow_dispatch:
     inputs:
-      what: { description: "reel, carousel, story, status (only show the log) or reset (wipe test log, chats and leads)", default: "reel" }
+      what: { description: "reel, carousel, story, status (only show the log) reset (wipe test log, chats and leads) or diag (check Instagram messaging setup)", default: "reel" }
 jobs:
   post:
     runs-on: ubuntu-latest
@@ -15,7 +15,16 @@ jobs:
           BASE: https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev
         run: |
           KEY="rlk-$(echo -n "admin$IG_TOKEN" | sha256sum | cut -c1-32)"; echo "::add-mask::$KEY"
-          case "$WHAT" in reel|carousel|story|status|reset) ;; *) echo "what must be reel, carousel, story or status"; exit 1;; esac
+          case "$WHAT" in reel|carousel|story|status|reset|diag) ;; *) echo "what must be reel, carousel, story or status"; exit 1;; esac
+          if [ "$WHAT" = diag ]; then
+            G=https://graph.facebook.com/v24.0
+            echo "== token owner"; curl -s "$G/me?fields=id,name&access_token=$IG_TOKEN"; echo
+            echo "== token debug (type, scopes)"; curl -s "$G/debug_token?input_token=$IG_TOKEN&access_token=$IG_TOKEN" | python3 -c "import json,sys; d=json.load(sys.stdin).get('data',{}); print({k: d.get(k) for k in ('type','app_id','application','is_valid','scopes','profile_id')})"
+            PAGE=$(curl -s "$G/me/accounts?fields=id,name,instagram_business_account&access_token=$IG_TOKEN" | tee /dev/stderr | python3 -c "import json,sys; d=json.load(sys.stdin).get('data',[]); print(next((p['id'] for p in d if p.get('instagram_business_account',{}).get('id')=='17841417749063213'), ''))" 2>/dev/null)
+            ME=$(curl -s "$G/me?fields=id&access_token=$IG_TOKEN" | python3 -c "import json,sys; print(json.load(sys.stdin).get('id',''))")
+            for P in $PAGE $ME; do echo "== subscribed apps for $P"; curl -s "$G/$P/subscribed_apps?access_token=$IG_TOKEN"; echo; done
+            exit 0
+          fi
           if [ "$WHAT" = status ]; then OUT='"ok": true'; elif [ "$WHAT" = reset ]; then OUT=$(curl -s "$BASE/reset/test?key=$KEY"); echo "$OUT"; else echo "== posting one $WHAT"; OUT=$(curl -s -m 600 "$BASE/run/$WHAT?key=$KEY"); echo "$OUT"; fi
           echo "== status"
           curl -s "$BASE/status?key=$KEY" | python3 -c "import json,sys; d=json.load(sys.stdin); print('posted total:', d['posted']); print('\n'.join(d['log'][:40]))"
