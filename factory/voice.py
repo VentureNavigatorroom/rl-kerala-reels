@@ -37,8 +37,13 @@ def say(text, voice):
     if os.path.exists(out): return out
     import torch, soundfile as sf
     model, tok, dtok = _load()
-    torch.manual_seed(int(key[:6], 16))
     d = dtok(VOICES[voice], return_tensors="pt"); p = tok(text, return_tensors="pt")
-    a = model.generate(input_ids=d.input_ids, attention_mask=d.attention_mask, prompt_input_ids=p.input_ids, prompt_attention_mask=p.attention_mask)
-    sf.write(out + ".tmp.wav", a.cpu().numpy().squeeze(), model.config.sampling_rate); os.replace(out + ".tmp.wav", out)
+    for tryno in range(4):   # the model now and then returns (almost) no audio: try other seeds
+        torch.manual_seed(int(key[:6], 16) + tryno * 7919)
+        a = model.generate(input_ids=d.input_ids, attention_mask=d.attention_mask, prompt_input_ids=p.input_ids, prompt_attention_mask=p.attention_mask)
+        a = a.cpu().numpy().reshape(-1)
+        if a.size > 0.3 * model.config.sampling_rate: break
+    else:
+        raise RuntimeError(f"no audio for line: {text[:40]}")
+    sf.write(out + ".tmp.wav", a, model.config.sampling_rate); os.replace(out + ".tmp.wav", out)
     return out

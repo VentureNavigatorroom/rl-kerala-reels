@@ -64,7 +64,8 @@ def manifest():
 
 def pick(bank, man, n):
     built = {i["id"] for i in man["items"]}
-    todo = [s for s in bank if s["id"] not in built]
+    fails = man.get("failed", {})
+    todo = [s for s in bank if s["id"] not in built and fails.get(s["id"], 0) < 2]   # skip scripts that failed twice
     w = json.load(open(f"{LIB}/weights.json")) if os.path.exists(f"{LIB}/weights.json") else {}
     kw = w.get("kind", {"duo3d": 0.45, "chat": 0.35, "list": 0.2}); sw = w.get("segment", {})
     out, last_kind, last_seg = [], None, None
@@ -146,7 +147,10 @@ def main():
         build = importlib.import_module(mod).build
         if s["kind"] == "duo3d": s = place(s, man)
         out = f"{LIB}/media/{s['id']}.mp4"
-        info = build(s, out, seed=abs(hash(s["id"])) % 10000)
+        try: info = build(s, out, seed=abs(hash(s["id"])) % 10000)
+        except Exception as e:   # one bad script must not lose the whole night's work
+            fails = man.setdefault("failed", {}); fails[s["id"]] = fails.get(s["id"], 0) + 1
+            print("FAILED", s["id"], repr(e), flush=True); json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1); continue
         cover.make(s, info["cover_frame"], f"{LIB}/media/{s['id']}.jpg")
         cover.story(s, info["cover_frame"], f"{LIB}/media/{s['id']}_story.jpg")
         man.setdefault("stories", [])

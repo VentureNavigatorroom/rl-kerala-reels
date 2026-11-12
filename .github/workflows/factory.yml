@@ -37,6 +37,7 @@ jobs:
           pip install -q -U protobuf sentencepiece
           python -c "import torch, torchaudio, parler_tts; print(torch.__version__, torchaudio.__version__)"
       - name: Build reels
+        id: build
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           POSTED_URL: https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev/public/posted
@@ -45,11 +46,15 @@ jobs:
           TTS_THREADS: "4"
         run: python factory/build.py
       - name: Save library (single squashed commit on branch "library")
+        if: ${{ !cancelled() && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}   # keep what was built even if a later reel crashed
         run: |
           cd library && git init -q -b library && git config user.name "reel-factory" && git config user.email "reel-factory@users.noreply.github.com"
           git add -A && git commit -q -m "library $(date -u +%F)"
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" library:library
       - uses: actions/configure-pages@v5
+        if: ${{ !cancelled() && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}   # keep what was built even if a later reel crashed
       - uses: actions/upload-pages-artifact@v3
+        if: ${{ !cancelled() && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}   # keep what was built even if a later reel crashed
         with: { path: library }
       - uses: actions/deploy-pages@v4
+        if: ${{ !cancelled() && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}
