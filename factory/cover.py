@@ -6,8 +6,9 @@ from common import *
 BADGE = {"duo3d": ("ഒരു ചെറിയ കഥ", (204, 92, 52)), "chat": ("ചാറ്റ് സ്റ്റോറി", (47, 91, 234)), "list": ("ചെക്ക്‌ലിസ്റ്റ്", (34, 139, 84))}
 
 def make(s, frame, out):
-    im = frame.convert("RGBA").resize((W, H)).filter(ImageFilter.GaussianBlur(5 if s["kind"] == "duo3d" else 22))
-    im.alpha_composite(Image.new("RGBA", (W, H), (8, 12, 22, 70 if s["kind"] == "duo3d" else 140)))
+    if s["kind"] == "duo3d": return make_scene(s, frame, out)
+    im = frame.convert("RGBA").resize((W, H)).filter(ImageFilter.GaussianBlur(22))
+    im.alpha_composite(Image.new("RGBA", (W, H), (8, 12, 22, 140)))
     g = np.linspace(0, 1, H)[:, None]
     a = (np.clip((g - 0.35) / 0.45, 0, 1) * 225).astype(np.uint8)
     shade = Image.fromarray(np.dstack([np.zeros((H, W, 3), np.uint8), np.repeat(a, W, axis=1)]), "RGBA")
@@ -19,6 +20,23 @@ def make(s, frame, out):
     bw = int(tlen(label, 44)) + 60; badge = rrect(bw, 82, 41, col + (255,)); tdraw(ImageDraw.Draw(badge), 30, 58, label, 44, (255, 255, 255))
     paste(im, badge, (W - bw) // 2, 660)
     d = ImageDraw.Draw(im); tdraw(d, (W - tlen("@" + BRAND, 38, 600)) / 2, H - 300, "@" + BRAND, 38, (235, 235, 235), 600)
+    im.convert("RGB").save(out, quality=90)
+
+
+def make_scene(s, frame, out):
+    """3D reel cover: the place and both people stay sharp and visible; the hook sits on a dark band above them.
+    Everything important is inside the 3:4 grid crop (y 240-1680)."""
+    im = frame.convert("RGBA").resize((W, H))
+    g = np.linspace(0, 1, H)[:, None]
+    a = (np.clip(1 - np.abs(g - 0.33) / 0.2, 0, 1) ** 0.7 * 200).astype(np.uint8)          # band behind the hook
+    a = np.maximum(a, (np.clip((g - 0.80) / 0.1, 0, 1) * 215).astype(np.uint8))           # bottom for the handle
+    im.alpha_composite(Image.fromarray(np.dstack([np.full((H, W, 3), (10, 12, 20), np.uint8), np.repeat(a, W, axis=1)]), "RGBA"))
+    label, col = BADGE[s["kind"]]
+    bw = int(tlen(label, 42)) + 60; badge = rrect(bw, 78, 39, col + (255,)); tdraw(ImageDraw.Draw(badge), 30, 55, label, 42, (255, 255, 255))
+    paste(im, badge, (W - bw) // 2, 270)
+    hb = fit_block(s["hook"], 92, (255, 222, 70), 960, 400, stroke=8, sfill=(20, 14, 8), lh=1.3)
+    paste(im, hb, (W - hb.width) // 2, 650 - hb.height // 2)
+    d = ImageDraw.Draw(im); tdraw(d, (W - tlen("@" + BRAND, 38, 600)) / 2, H - 230, "@" + BRAND, 38, (235, 235, 235), 600)
     im.convert("RGB").save(out, quality=90)
 
 

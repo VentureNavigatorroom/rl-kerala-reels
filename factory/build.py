@@ -101,6 +101,20 @@ def sync_posted(man):
                 if os.path.exists(f"{LIB}/{f}"): os.remove(f"{LIB}/{f}")
     man["carousels"] = [c for c in man.get("carousels", []) if not (c.get("posted") and not os.path.exists(f"{LIB}/{c['images'][0]}"))]
 
+def place(s, man):
+    """Pick the location: scripts tied to one of the 4 original settings rotate through every compatible place,
+    preferring places used least recently, so consecutive reels never look the same."""
+    import duo3d
+    s = dict(s); home = s.get("scene") or "teashop"
+    if s.get("scene_lock") or home not in duo3d.GROUPS:
+        return s
+    if not s.get("names"): s["names"] = duo3d.SCENES[home]["names"]       # dialogue mentions these names
+    opts = [x for x in duo3d.GROUPS[home] if x in duo3d.SCENES and duo3d.available(x)] or [home]
+    hist = [i.get("scene") for i in sorted(man["items"], key=lambda i: i.get("built", 0))]
+    def last(x): return max([k for k, v in enumerate(hist) if v == x], default=-1)
+    opts.sort(key=lambda x: (last(x), abs(hash(s["id"] + x)) % 97))
+    s["scene"] = opts[0]; return s
+
 def main():
     target = int(os.environ.get("STOCK_TARGET", "40")); budget = float(os.environ.get("TIME_BUDGET_MIN", "300")) * 60
     only = [a for a in sys.argv[1:] if not a.startswith("-")]
@@ -121,6 +135,7 @@ def main():
         if time.time() - t0 > budget: print("time budget reached"); break
         mod = {"duo3d": "duo3d", "chat": "chat", "list": "listreel"}[s["kind"]]
         build = importlib.import_module(mod).build
+        if s["kind"] == "duo3d": s = place(s, man)
         out = f"{LIB}/media/{s['id']}.mp4"
         info = build(s, out, seed=abs(hash(s["id"])) % 10000)
         cover.make(s, info["cover_frame"], f"{LIB}/media/{s['id']}.jpg")
@@ -128,7 +143,7 @@ def main():
         man.setdefault("stories", [])
         man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"])]
         cap = s["hook"].replace("\n", " ") + "\n\n" + s["cta"][0] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #business #entrepreneur #pvtltd #keralabusiness"
-        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"),
+        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None,
             video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)

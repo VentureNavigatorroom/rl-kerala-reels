@@ -1,4 +1,4 @@
-"""3D tea-shop dialogue reel (Anu + Vishnu) with passing traffic and street sounds."""
+"""3D two-person dialogue reel in one of ~50 Kerala / Gulf locations; background sound varies per reel."""
 import json, math
 import numpy as np
 from PIL import Image, ImageDraw
@@ -6,20 +6,45 @@ from common import *
 from voice import say
 
 # Settings: each has its own stills folder, default people and ambience. Scripts may override names.
-SCENES = {
-    "teashop": dict(dir="", names=("അനു", "വിഷ്ണു"), amb="street"),
-    "office":  dict(dir="office", names=("നേഹ", "രാഹുൽ"), amb="office"),
-    "home":    dict(dir="home", names=("സ്നേഹ", "അരുൺ"), amb="home"),
-    "gulf":    dict(dir="gulf", names=("ഷിജു", "ഫൈസൽ"), amb="gulf"),
+# name pair (A, V) and sound kind per location; scripts may override names.
+_S = dict(
+    teashop=("അനു", "വിഷ്ണു", "street"), office=("നേഹ", "രാഹുൽ", "indoor"), home=("സ്നേഹ", "അരുൺ", "indoor"), gulf=("ഷിജു", "ഫൈസൽ", "indoor"),
+    busstop=("ജിബിൻ", "അഖിൽ", "street"), hospital=("ലക്ഷ്മി", "ജോസഫ്", "busy"), bank=("ശ്രുതി", "മനോജ്", "busy"), canteen=("ആതിര", "അമൽ", "busy"),
+    shop=("ബിനു", "സുരേഷ്", "street"), beach=("ദിവ്യ", "നിഖിൽ", "water"), cafe=("ആൽവിൻ", "റോഷൻ", "indoor"), airport=("ഷമീർ", "റഫീഖ്", "busy"),
+    farm=("വാസു", "ഗോപി", "nature"), thattukada=("സിജോ", "ബിജു", "night"), autostand=("സജി", "ഷാജി", "street"), ferry=("മീര", "ടോണി", "water"),
+    metro=("അഞ്ജലി", "കിരൺ", "busy"), rubber=("ജോയി", "തോമസ്", "nature"), fishmarket=("സുമ", "ആന്റണി", "busy"), textile=("രമ്യ", "പ്രകാശ്", "indoor"),
+    weddinghall=("കാവ്യ", "ശരത്", "busy"), classroom=("നിമ്മി", "ആദർശ്", "indoor"), library=("ഗ്രീഷ്മ", "അനൂപ്", "indoor"), gym=("റിയ", "ജസ്റ്റിൻ", "indoor"),
+    salon=("സോണിയ", "വിനീത്", "indoor"), mobileshop=("ഹന്ന", "ഫഹദ്", "street"), bakery=("ജിഷ", "സാബു", "street"), hotellobby=("നീതു", "ജെയ്സൺ", "indoor"),
+    rooftop=("ആര്യ", "ശ്യാം", "night"), balcony=("അമ്മു", "വിവേക്", "nature"), kitchen=("ബിന്ദു", "രാജേഷ്", "indoor"), veranda=("ശാന്ത", "ബാലൻ", "nature"),
+    railway=("ഷീബ", "ദിനേശ്", "busy"), hostel=("അലീന", "സഞ്ജു", "indoor"), garage=("ഐശ്വര്യ", "ജിതിൻ", "indoor"), pharmacy=("സിനി", "പ്രവീൺ", "street"),
+    tailor=("ഉഷ", "മോഹനൻ", "indoor"), homestay=("ടീന", "ജോമോൻ", "nature"), munnar=("സെലിൻ", "ബേസിൽ", "nature"), handloom=("ലീല", "കുമാർ", "indoor"),
+    park=("ഗായത്രി", "അനന്തു", "nature"), juiceshop=("റസിയ", "നൗഷാദ്", "street"), foodcourt=("മരിയ", "ഡെന്നിസ്", "busy"), akshaya=("സുധ", "രമേശ്", "busy"),
+    photocopy=("അശ്വതി", "ഉണ്ണി", "street"), petrolpump=("സന്തോഷ്", "ഷിബു", "street"), courier=("ജയ", "അരവിന്ദ്", "street"), gulfoffice=("ഷഹാന", "ആസിഫ്", "indoor"),
+    gulfroom=("നസീർ", "ഷംസു", "indoor"), mall=("സുമയ്യ", "ജാഫർ", "busy"))
+SCENES = {k: dict(dir="" if k == "teashop" else k, names=(a, b), amb=m) for k, (a, b, m) in _S.items()}
+# a script written for one of the 4 original settings can play in any of these compatible places
+GROUPS = {
+    "teashop": ["teashop", "thattukada", "busstop", "autostand", "juiceshop", "bakery", "park", "farm", "rubber", "ferry", "beach", "petrolpump", "fishmarket", "munnar", "homestay", "railway", "shop"],
+    "office": ["office", "cafe", "garage", "library", "hostel", "akshaya", "photocopy", "courier", "metro", "canteen", "classroom", "bank", "hotellobby", "foodcourt", "mobileshop", "pharmacy", "tailor", "textile", "salon", "gym", "handloom"],
+    "home": ["home", "kitchen", "veranda", "balcony", "rooftop", "hospital", "weddinghall"],
+    "gulf": ["gulf", "gulfroom", "gulfoffice", "mall", "airport"],
 }
+def available(scene):
+    import os
+    d = f"{ROOT}/assets/stills" + ("/" + SCENES[scene]["dir"] if SCENES[scene]["dir"] else "")
+    return (os.path.exists(f"{d}/wide_rest.png") or os.path.exists(f"{d}/wide_rest.jpg")) and os.path.exists(f"{d}/V_v.png")
 _CACHE = {}
 def assets(scene="teashop"):
+    import os
     if scene not in _CACHE:
         ST = f"{ROOT}/assets/stills" + ("/" + SCENES[scene]["dir"] if SCENES[scene]["dir"] else "")
+        ov = json.load(open(f"{ST}/ov.json")) if os.path.exists(f"{ST}/ov.json") else None
         def load(cam, tag):
-            rest = Image.open(f"{ST}/{cam}_rest.png").convert("RGBA")
+            rp = f"{ST}/{cam}_rest.jpg" if os.path.exists(f"{ST}/{cam}_rest.jpg") else f"{ST}/{cam}_rest.png"
+            rest = Image.open(rp).convert("RGBA")
             if tag == "rest": return rest
-            v = Image.open(f"{ST}/{cam}_{tag}.png").convert("RGBA"); out = rest.copy(); out.alpha_composite(v); return out
+            v = Image.open(f"{ST}/{cam}_{tag}.png").convert("RGBA"); out = rest.copy()
+            out.alpha_composite(v, tuple(ov[f"{cam}_{tag}"]) if ov else (0, 0)); return out
         img = {("wide", "rest"): load("wide", "rest"), ("wide", "A"): load("wide", "a"), ("wide", "V"): load("wide", "v"),
                ("A", "rest"): load("A", "rest"), ("A", "A"): load("A", "a"), ("V", "rest"): load("V", "rest"), ("V", "V"): load("V", "v")}
         import os
@@ -104,20 +129,26 @@ def build(s, out, seed=0):
         return im, None
 
     amb = SCENES[scene]["amb"]; mx = Mixer(DUR, seed)
-    if amb == "street": mx.room(); mx.birds(DUR)
-    elif amb == "office":
-        mx.room(0.04, 0.02)
-        for t0k in np.arange(rng.uniform(1, 3), DUR, 0.11):           # distant keyboard bursts
-            if rng.random() < 0.35:
-                u = np.arange(int(SR * 0.02)) / SR; mx.add(t0k, (rng.standard_normal(len(u)) * np.exp(-u * 300) * 0.02).astype(np.float32))
-    elif amb == "home":
-        mx.room(0.035, 0.0); mx.birds(DUR, every=4.5, vol=0.025)
-        tt_ = np.arange(mx.n) / SR; mx.x += (np.sin(2 * np.pi * 95 * tt_) * 0.004 * (1 + 0.3 * np.sin(2 * np.pi * 4 * tt_))).astype(np.float32)   # ceiling fan
-    else:
-        mx.room(0.05, 0.0); tt_ = np.arange(mx.n) / SR; mx.x += (np.sin(2 * np.pi * 120 * tt_) * 0.005).astype(np.float32)   # AC hum
+    # not every reel gets a background bed: about a third are voice-only, a third very light, a third the place's own sounds
+    mode = s.get("sound") or ["clean", "light", "place"][int(rng.integers(0, 3))]
+    if mode == "light": mx.room(0.018, 0.0)
+    elif mode == "place":
+        if amb == "street": mx.room(0.03, 0.012); mx.birds(DUR, every=5.0, vol=0.02)
+        elif amb == "busy": mx.room(0.03, 0.02)
+        elif amb == "nature": mx.birds(DUR, every=3.5, vol=0.03); mx.room(0.012, 0.0)
+        elif amb == "water":
+            mx.room(0.01, 0.0); tt_ = np.arange(mx.n) / SR; kk = np.exp(-np.arange(900) / 300.0); kk /= kk.sum()
+            mx.x += (np.convolve(rng.standard_normal(mx.n), kk, "same") * 0.25 * (0.5 + 0.5 * np.sin(2 * np.pi * 0.12 * tt_)) ** 2).astype(np.float32)
+        elif amb == "night":
+            mx.room(0.012, 0.0)
+            for t0k in np.arange(0.5, DUR, 0.9):   # crickets
+                u = np.arange(int(SR * 0.12)) / SR; mx.add(t0k + rng.uniform(0, 0.3), (np.sin(2 * np.pi * 4300 * u) * (np.sin(2 * np.pi * 45 * u) > 0) * np.hanning(len(u)) * 0.012).astype(np.float32))
+        else: mx.room(0.02, 0.0)
     for t0, w in wavs: mx.add(t0, load_wav(w))
-    for t0c in (rng.uniform(1, DUR - 1, 4) if amb in ("street", "home") else []):   # glass clinks
-        u = np.arange(int(SR * 0.25)) / SR; mx.add(t0c, ((np.sin(2 * np.pi * 2900 * u) + 0.5 * np.sin(2 * np.pi * 4350 * u)) * np.exp(-u * 30) * 0.06).astype(np.float32))
+    if mode == "place" and amb in ("street", "nature"):
+        for t0c in rng.uniform(1, DUR - 1, 2):   # a couple of glass clinks
+            u = np.arange(int(SR * 0.25)) / SR; mx.add(t0c, ((np.sin(2 * np.pi * 2900 * u) + 0.5 * np.sin(2 * np.pi * 4350 * u)) * np.exp(-u * 30) * 0.04).astype(np.float32))
+    if mode != "place": TR = []
     k = np.exp(-np.arange(120) / 60.0); k /= k.sum()
     for name, t0, v, x0 in TR:
         T = abs(24 / v); u = np.arange(int(SR * T)) / SR; amp = 1 / (1 + ((x0 + v * u) / 4) ** 2)
