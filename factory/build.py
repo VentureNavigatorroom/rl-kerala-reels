@@ -37,6 +37,28 @@ def build_carousels(man, target):
         print("carousel", c["id"], len(files), flush=True)
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
 
+def load_stories():
+    T = []
+    for f in sorted(glob.glob(f"{ROOT}/bank/stories*.py")):
+        spec = importlib.util.spec_from_file_location(os.path.basename(f)[:-3], f); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        T += m.T
+    ids = [t["id"] for t in T]; assert len(ids) == len(set(ids)), "duplicate story ids"
+    return T
+
+def build_stories(man, target):
+    """Standalone stories. A quiz becomes two queued stories (question, then answer)."""
+    made = {x.get("src") for x in man.setdefault("stories", []) if x.get("src")}
+    stock = sum(1 for x in man["stories"] if not x.get("posted") and x.get("src"))
+    for t in [t for t in load_stories() if t["id"] not in made]:
+        if stock >= target: break
+        parts = ["q", "answer"] if t["kind"] == "quiz" else [None]
+        for p in parts:
+            sid = f"s_{t['id']}" + ("_a" if p == "answer" else "")
+            cover.story_card(t, f"{LIB}/media/{sid}.jpg", part=p)
+            man["stories"].append(dict(id=sid, image=f"media/{sid}.jpg", src=t["id"], kind=t["kind"] if p != "answer" else "answer", after=f"s_{t['id']}" if p == "answer" else None))
+            stock += 1
+    json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+
 def manifest():
     return json.load(open(MAN)) if os.path.exists(MAN) else {"items": []}
 

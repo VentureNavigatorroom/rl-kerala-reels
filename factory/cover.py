@@ -34,3 +34,32 @@ def story(s, frame, out):
     paste(im, sub, (W - sub.width) // 2, 700 + hb.height + 60)
     d = ImageDraw.Draw(im); tdraw(d, (W - tlen("@" + BRAND, 40, 600)) / 2, H - 260, "@" + BRAND, 40, (235, 235, 235), 600)
     im.convert("RGB").save(out, quality=88)
+
+
+# ---------- standalone Stories (tip / quiz / answer / contact) ----------
+STORY_BG = {"tip": (13, 27, 48), "quiz": (34, 110, 84), "answer": (34, 110, 84), "contact": (204, 92, 52)}
+def story_card(t, out, part=None):
+    kind = "answer" if part == "answer" else t["kind"]
+    im = Image.new("RGBA", (W, H), STORY_BG[kind] + (255,)); d = ImageDraw.Draw(im)
+    label = {"tip": "ഇന്നത്തെ ടിപ്പ്", "quiz": "ക്വിസ്", "answer": "ഉത്തരം", "contact": "ഞങ്ങളോട് ചോദിക്കൂ"}[kind]
+    lw = int(tlen(label, 46)) + 60; pill = rrect(lw, 88, 44, (255, 222, 70, 255)); tdraw(ImageDraw.Draw(pill), 30, 62, label, 46, (20, 24, 34))
+    paste(im, pill, (W - lw) // 2, 420)
+    if kind == "tip":
+        a = fit_block(t["title"], 84, (255, 255, 255), 940, 420); paste(im, a, (W - a.width) // 2, 580)
+        b = fit_block(t["body"], 56, (220, 228, 240), 920, 520, wt=600); paste(im, b, (W - b.width) // 2, 620 + a.height)
+        foot = "ഇതുപോലുള്ള ടിപ്സിന് ഫോളോ ചെയ്യൂ"
+    elif kind == "quiz":
+        a = fit_block(t["q"], 70, (255, 255, 255), 940, 820, lh=1.45); paste(im, a, (W - a.width) // 2, 580)
+        foot = "ഉത്തരം അടുത്ത സ്റ്റോറിയിൽ. നിങ്ങളുടെ ഉത്തരം റിപ്ലൈ ചെയ്യൂ"
+    elif kind == "answer":
+        a = fit_block(t["a"], 88, (255, 222, 70), 940, 300); paste(im, a, (W - a.width) // 2, 600)
+        b = fit_block(t["why"], 56, (235, 245, 238), 920, 500, wt=600); paste(im, b, (W - b.width) // 2, 640 + a.height)
+        foot = "ഇതുപോലുള്ള ടിപ്സിന് ഫോളോ ചെയ്യൂ"
+    else:
+        a = fit_block(t["line"], 80, (255, 255, 255), 940, 520); paste(im, a, (W - a.width) // 2, 600)
+        kw = f"{t['kw']} എന്ന് റിപ്ലൈ ചെയ്യൂ"; pw = int(tlen(kw, 56)) + 100
+        p2 = rrect(pw, 136, 68, (255, 255, 255, 255)); tdraw(ImageDraw.Draw(p2), 50, 90, kw, 56, STORY_BG[kind])
+        paste(im, p2, (W - pw) // 2, 680 + a.height); foot = "ഞങ്ങൾ മെസ്സേജിൽ മറുപടി തരും"
+    fb = block(foot, 44, (255, 255, 255), maxw=900, wt=600); paste(im, fb, (W - fb.width) // 2, H - 560)
+    tdraw(d, (W - tlen("@" + BRAND, 40, 600)) / 2, H - 300, "@" + BRAND, 40, (235, 235, 235), 600)
+    im.convert("RGB").save(out, quality=88)

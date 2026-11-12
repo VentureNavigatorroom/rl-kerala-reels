@@ -69,10 +69,16 @@ async function postReel(env) {
   await kvPut(env, "posted", posted); await log(env, `reel ${it.id} posted (${pub.id})${posted[it.id].trial ? " as trial" : ""}`);
 }
 async function postStory(env) {
+  // daily mix: 1 new-reel teaser, then tip / quiz question / quiz answer / contact card, so people follow and reply
   const m = await manifest(env); const done = await kv(env, "stories", {});
-  const stories = (m.stories || []).filter(s => !done[s.id]);
-  if (!stories.length) { await log(env, "NO STORY STOCK"); return; }
-  const s = stories[0];
+  const posted = await kv(env, "posted", {});
+  const all = (m.stories || []).filter(s => !done[s.id] && (!s.after || done[s.after]));
+  const teasers = all.filter(s => s.reel && posted[s.reel]);           // only tease reels already live
+  const others = all.filter(s => !s.reel);
+  const hour = IST().getUTCHours();
+  const pendingAnswer = others.find(s => s.after);
+  let s = hour < 9 ? teasers[0] : (pendingAnswer || others.find(x => x.kind === (hour < 14 ? "tip" : hour < 19 ? "quiz" : "contact")) || others[0] || teasers[0]);
+  if (!s) { await log(env, "NO STORY STOCK"); return; }
   const c = await graph(env, `${env.IG_USER_ID}/media`, { media_type: "STORIES", image_url: `${env.LIB_BASE}/${s.image}` });
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
