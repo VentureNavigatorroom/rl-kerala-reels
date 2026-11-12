@@ -329,7 +329,7 @@ async function sendDM(env, to, text, buttons = []) { return sendMsg(env, { id: t
 async function opsOk(env, key) {
   if (!key) return false;
   const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key)))].map(b => b.toString(16).padStart(2, "0")).join("");
-  return h === env.OPS_KEY_SHA256;
+  return h === env.OPS_KEY_SHA256 || (!!env.OPS_KEY_MONITOR_SHA256 && h === env.OPS_KEY_MONITOR_SHA256);   // owner key or monitor key
 }
 async function mediaToItem(env, mediaId) {
   const posted = await kv(env, "posted", {});

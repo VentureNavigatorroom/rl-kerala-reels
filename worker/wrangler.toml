@@ -17,4 +17,5 @@ GRAPH = "https://graph.facebook.com/v24.0"
 IG_USER_ID = "17841417749063213"
 VERIFY_TOKEN = "rlk-verify-x7qbBIBfWYC"
 OPS_KEY_SHA256 = "8015a5678ec64ba7b4b2353fc2fe9b6e8085d6d2ed93d5b9b1912b34339f761f"
+OPS_KEY_MONITOR_SHA256 = "409d50263f6532d2914eedab3e84c7f2e572869811932eaaec9972971c602dd2"   # second key, used by the scheduled monitor; the owner's key above still works
 LIB_BASE = "https://venturenavigatorroom.github.io/rl-kerala-reels"
