@@ -268,6 +268,9 @@ async function handleWebhook(env, body) {
     }
     for (const ch of entry.changes || []) { // keyword comments -> one private reply opens the DM
       if (ch.field !== "comments" || !ch.value?.text) continue;
+      const who = ch.value.from?.username || ch.value.from?.id || "?";
+      await log(env, `comment from @${who}${ch.value.parent_id ? " (reply in thread)" : ""}: ${ch.value.text.slice(0, 60)}`);
+      if (ch.value.from?.id && ch.value.from.id === env.IG_USER_ID) continue;   // our own comments
       const item = await mediaToItem(env, ch.value.media?.id); await bumpPost(env, item, "comments");
       const m = ch.value.text.match(/\b(START|NAME|AFTER|CHECKLIST)\b/i); if (!m) continue;
       await bumpPost(env, item, "kw:" + m[1].toUpperCase());
@@ -278,13 +281,18 @@ async function handleWebhook(env, body) {
       }
       const text = KEYWORD_REPLY[m[1].toUpperCase()];
       try { await graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ comment_id: ch.value.id }), message: JSON.stringify({ text }) }); await log(env, `private reply to ${m[1]} comment`); }
-      catch (e) { await log(env, `comment reply failed: ${e.message}`); }
+      catch (e) {   // Instagram refuses some private replies (e.g. replies inside a thread): answer publicly and invite a DM
+        await log(env, `private reply failed, replying publicly: ${e.message}`);
+        try { await graph(env, `${ch.value.id}/replies`, { message: PUBLIC_REPLY }); await log(env, `public reply to ${m[1]} comment`); }
+        catch (e2) { await log(env, `comment reply failed: ${e2.message}`); }
+      }
     }
   }
 }
 
 // Fixed, fully automatic first replies. Each keyword delivers what the post promised, with no human work.
 // Legal content only from the checked fact list; no prices; no promise of a manual availability check.
+const PUBLIC_REPLY = "നന്ദി! വിവരങ്ങൾ അയക്കാൻ ഞങ്ങൾക്ക് ഒരു \"Hi\" DM ചെയ്യൂ, ഉടനെ മറുപടി തരാം.";
 const KEYWORD_REPLY = {
   START: "ഹായ്! 👋 ഞാൻ rejectionlist.kerala-യുടെ ഓട്ടോമേറ്റഡ് അസിസ്റ്റന്റ് ആണ്.\n\nചുരുക്കത്തിൽ:\n• ഒറ്റയ്ക്കാണെങ്കിൽ: OPC (വൺ പേഴ്സൺ കമ്പനി)\n• 2+ പേർ, ഭാവിയിൽ ഫണ്ടിംഗ്: പ്രൈവറ്റ് ലിമിറ്റഡ്\n• പാർട്ണർമാർ, ഫണ്ടിംഗ് പ്ലാൻ ഇല്ല: LLP-യും നോക്കാം\n\nനിങ്ങൾക്ക് ഏതാണ് ശരി എന്ന് പറഞ്ഞുതരാം. നിങ്ങളുടെ ബിസിനസ് എന്താണ്?",
   NAME: "ഹായ്! 👋 പേര് റിജക്ട് ആകാതിരിക്കാൻ:\n\n1. നിലവിലുള്ള കമ്പനിയുടെയോ LLP-യുടെയോ പേരിനോട് സാമ്യം (ഉച്ചാരണത്തിൽ പോലും) പാടില്ല\n2. രജിസ്റ്റേർഡ് ട്രേഡ്മാർക്കുമായി ക്ലാഷ് പാടില്ല\n3. Bank, Insurance പോലുള്ള വാക്കുകൾക്ക് പ്രത്യേക അനുമതി വേണം\n4. 2–3 ബാക്കപ്പ് പേരുകൾ കരുതുക\n\nമനസ്സിലുള്ള പേര് അയച്ചാൽ ഈ നിയമങ്ങൾ വെച്ച് ഒരു ആദ്യ റിവ്യൂ തരാം. അന്തിമ ലഭ്യത അപേക്ഷയുടെ സമയത്ത് ഉറപ്പാകും.",
