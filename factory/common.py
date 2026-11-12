@@ -87,7 +87,7 @@ def end_card(s):
 
 # ---------- audio ----------
 def load_wav(path):
-    p = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-af", "aecho=0.8:0.5:28:0.12,highpass=f=90", "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], capture_output=True, check=True)
+    p = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-af", "silenceremove=stop_periods=-1:stop_duration=0.18:stop_threshold=-38dB,atempo=1.14,aecho=0.8:0.5:22:0.08,highpass=f=90,acompressor=threshold=-20dB:ratio=3:attack=5:release=60", "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], capture_output=True, check=True)
     v = np.frombuffer(p.stdout, np.float32).copy()
     nz = np.where(np.abs(v) > 0.01)[0]
     if len(nz): v = v[max(0, nz[0] - 600): nz[-1] + 2000]

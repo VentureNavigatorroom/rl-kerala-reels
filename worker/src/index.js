@@ -48,7 +48,7 @@ async function postReel(env) {
   const w = await kv(env, "weights", null);
   const avail = m.items.filter(i => !posted[i.id]);
   if (!avail.length) { await log(env, "NO STOCK: library empty"); await discord(env, "⚠️ Reel library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
-  if (avail.length < 10) await discord(env, `⚠️ Only ${avail.length} reels left in stock. The script bank may be running out.`);
+  if (avail.length < 35 && IST().getUTCHours() === 7) await discord(env, `⚠️ Backup below 1 week: ${avail.length} reels left (target 70 = 2 weeks). Ask Claude to write more scripts.`);
   const recent = Object.values(posted).sort((a, b) => b.t - a.t).slice(0, 2);
   const score = i => (w?.kind?.[i.kind] ?? 1) * (w?.segment?.[i.segment] ?? 1) * (recent.some(r => r.kind === i.kind) ? 0.5 : 1) * (0.8 + Math.random() * 0.4);
   const it = avail.sort((a, b) => score(b) - score(a))[0];

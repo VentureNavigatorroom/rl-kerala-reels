@@ -8,7 +8,7 @@ concurrency: { group: factory, cancel-in-progress: false }
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 340
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
       - name: Restore library (kept on its own branch, history squashed so the repo never grows)
@@ -37,8 +37,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           POSTED_URL: https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev/public/posted
-          STOCK_TARGET: "40"
-          TIME_BUDGET_MIN: "300"
+          STOCK_TARGET: "70"
+          TIME_BUDGET_MIN: "320"
           TTS_THREADS: "4"
         run: python factory/build.py
       - name: Save library (single squashed commit on branch "library")

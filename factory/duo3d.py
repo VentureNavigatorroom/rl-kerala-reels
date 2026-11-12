@@ -43,7 +43,7 @@ def build(s, out, seed=0):
     wavs = []
     for i, (who, cam, txt) in enumerate(s["lines"]):
         w = say(txt, VOICE[who]); vd = wav_len(w); wavs.append((t, w))
-        segs.append(dict(kind="line", who=who, cam=cam, txt=txt, t0=t, t1=t + vd + 0.3, vd=vd)); t += vd + 0.3
+        segs.append(dict(kind="line", who=who, cam=cam, txt=txt, t0=t, t1=t + vd + 0.12, vd=vd)); t += vd + 0.12
     t_end = t; DUR = t_end + 4.5
     # traffic plan varies per reel
     TR = []; tt0 = rng.uniform(1.5, 4) if MOV else 1e9

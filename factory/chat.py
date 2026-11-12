@@ -25,7 +25,7 @@ def build(s, out, seed=0):
         b = rrect(tw + 64, len(lines) * 64 + 40, 34, (BLUE if who == 0 else (255, 255, 255)) + (255,))
         bd = ImageDraw.Draw(b)
         for j, l in enumerate(lines): tdraw(bd, 32, 20 + 48 + j * 64, l, 44, (255, 255, 255) if who == 0 else INK, 700)
-        ev.append(dict(who=who, img=b, t=t + 0.3, typing=t)); aud.append((t + 0.3, w, who)); t += 0.34 + d + 0.12
+        ev.append(dict(who=who, img=b, t=t + 0.22, typing=t)); aud.append((t + 0.22, w, who)); t += 0.25 + d + 0.05
     t_end = t + 0.3; DUR = t_end + 4.5
     base = bg(); paste(base, hook_im, (W - hook_im.width) // 2, 230)
     panel = rrect(PX1 - PX0, PY1 - PY0, 48, CREAM + (255,)); d = ImageDraw.Draw(panel)

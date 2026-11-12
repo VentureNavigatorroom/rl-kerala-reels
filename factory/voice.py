@@ -5,7 +5,7 @@ CACHE = os.environ.get("VOICE_CACHE", f"{ROOT}/.voice_cache")
 os.makedirs(CACHE, exist_ok=True)
 
 FEMALE = {"അനു", "ഫാത്തിമ", "അഞ്ജലി", "മീര", "ലക്ഷ്മി", "അമ്മ", "നിമ്മി", "ഗ്രീഷ്മ", "സാറ", "ദിവ്യ", "റിയ", "ആതിര", "നേഹ", "സ്നേഹ", "ഷബ്ന", "ജിഷ", "ആൻസി", "നസ്രിൻ", "ഉമ്മ", "ചേച്ചി"}
-STYLE = "speaks casually and expressively at a slightly fast pace with a natural, conversational delivery. The recording is close-sounding with very little background noise, like chatting with a friend."
+STYLE = "speaks in a very lively, animated and expressive way at a fast pace, with natural rises and falls in pitch, like excitedly chatting with a close friend. The audio is very clear and close-sounding with no background noise."
 VOICES = {
     "F1": f"Anjali {STYLE} Her pitch is moderate.",
     "F2": f"Anjali {STYLE} Her pitch is slightly high and her tone is bright.",
