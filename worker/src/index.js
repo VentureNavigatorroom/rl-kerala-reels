@@ -249,7 +249,11 @@ async function handleWebhook(env, body) {
       await kvPut(env, `m:${uid}`, meta);
       const src = meta.sources[0]; if (src.media) await bumpPost(env, await mediaToItem(env, src.media), "dms");
       thread.push({ role: "user", content: ev.message.text });
-      const reply = await botReply(env, thread); thread.push({ role: "assistant", content: reply });
+      let reply;
+      if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {   // they answered our short opener: now send what the post promised
+        reply = KEYWORD_REPLY[meta.pending_kw]; delete meta.pending_kw; await kvPut(env, `m:${uid}`, meta);
+      } else reply = await botReply(env, thread);
+      thread.push({ role: "assistant", content: reply });
       await kvPut(env, key, thread); await sendDM(env, uid, reply);
       if (/\d{10}/.test(ev.message.text.replace(/\D/g, "")) || thread.length >= 12) {
         const lead = await extractLead(env, thread);
@@ -279,8 +283,14 @@ async function handleWebhook(env, body) {
         if (!meta.sources.some(s => s.comment === ch.value.id)) meta.sources.push({ via: "comment", keyword: m[1].toUpperCase(), media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() });
         await kvPut(env, mk, meta);
       }
-      const text = KEYWORD_REPLY[m[1].toUpperCase()];
-      try { await graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ comment_id: ch.value.id }), message: JSON.stringify({ text }) }); await log(env, `private reply to ${m[1]} comment`); }
+      const kw = m[1].toUpperCase();
+      try {
+        const r = await graph(env, `${env.IG_USER_ID}/messages`, { recipient: JSON.stringify({ comment_id: ch.value.id }), message: JSON.stringify({ text: KEYWORD_OPENER[kw] }) });
+        if (r.recipient_id) { const mk = `m:${r.recipient_id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
+          meta.pending_kw = kw; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
+        await log(env, `private reply to ${kw} comment`);
+        try { await graph(env, `${ch.value.id}/replies`, { message: PUBLIC_DONE[Math.floor(Math.random() * PUBLIC_DONE.length)] }); } catch (e3) { await log(env, `public note failed: ${e3.message}`); }
+      }
       catch (e) {   // Instagram refuses some private replies (e.g. replies inside a thread): answer publicly and invite a DM
         await log(env, `private reply failed, replying publicly: ${e.message}`);
         try { await graph(env, `${ch.value.id}/replies`, { message: PUBLIC_REPLY }); await log(env, `public reply to ${m[1]} comment`); }
@@ -293,11 +303,25 @@ async function handleWebhook(env, body) {
 // Fixed, fully automatic first replies. Each keyword delivers what the post promised, with no human work.
 // Legal content only from the checked fact list; no prices; no promise of a manual availability check.
 const PUBLIC_REPLY = "Thanks! Send us a \"Hi\" in DM and we'll send it across right away.";
+// Public note under the comment (varied so it never looks like a copy-paste bot) tells people where the DM is.
+const PUBLIC_DONE = [
+  "Sent you a DM 📩 If it's not in your inbox, check message requests.",
+  "Just messaged you! 📩 Peek in your requests folder if you don't see it.",
+  "Check your DMs 📩 It may be under message requests.",
+];
+// First private reply is short and asks for a reply: a reply moves the chat into their main inbox,
+// then the full resource (KEYWORD_REPLY) follows.
+const KEYWORD_OPENER = {
+  START: "Hi! 👋 Thanks for your comment. Want a quick guide on which company type suits you: OPC, Private Limited or LLP? Just reply YES.",
+  NAME: "Hi! 👋 Thanks for your comment. Want our tips to keep your company name from getting rejected? Just reply YES.",
+  AFTER: "Hi! 👋 Thanks for your comment. Want the checklist for the first 180 days after registration? Just reply YES.",
+  CHECKLIST: "Hi! 👋 Thanks for your comment. Want the list of documents you need for registration? Just reply YES.",
+};
 const KEYWORD_REPLY = {
-  START: "Hi! 👋 Thanks for reaching out to rejectionlist.kerala.\n\nIn short:\n• Starting alone: OPC (One Person Company)\n• 2+ founders, may raise funding later: Private Limited\n• Partners, no funding plans: LLP is also an option\n\nWe'll help you pick the right one. What does your business do?",
-  NAME: "Hi! 👋 How to keep your company name from being rejected:\n\n1. It must not be similar (even in sound) to an existing company or LLP name\n2. It must not clash with a registered trademark\n3. Words like Bank or Insurance need special approval\n4. Keep 2–3 backup names ready\n\nSend us the name you have in mind and we'll give a first review against these rules. Final availability is confirmed when the application is filed.",
-  AFTER: "Hi! 👋 Your checklist after registration:\n\n✅ Within 30 days: appoint the first auditor\n✅ Open a current account in the company's name\n✅ Within 180 days: file the commencement of business declaration (INC-20A). Missing it means a penalty of Rs 50,000 on the company\n✅ Annual filings every year, even with zero revenue. Late fee of Rs 100 per day per form\n\nHow long ago was your company registered?",
-  CHECKLIST: "Hi! 👋 Documents needed for registration:\n\n📄 For each director: PAN, Aadhaar/ID, address proof (bank statement or utility bill), photo\n🏠 For the office: a recent electricity/water bill + owner's NOC (your home works too)\n📝 2–3 company name options\n\nA Private Limited needs at least 2 directors (one must live in India). How many founders are there?",
+  START: "Here you go!\n\nIn short:\n• Starting alone: OPC (One Person Company)\n• 2+ founders, may raise funding later: Private Limited\n• Partners, no funding plans: LLP is also an option\n\nWe'll help you pick the right one. What does your business do?",
+  NAME: "Here you go! How to keep your company name from being rejected:\n\n1. It must not be similar (even in sound) to an existing company or LLP name\n2. It must not clash with a registered trademark\n3. Words like Bank or Insurance need special approval\n4. Keep 2–3 backup names ready\n\nSend us the name you have in mind and we'll give a first review against these rules. Final availability is confirmed when the application is filed.",
+  AFTER: "Here you go! Your checklist after registration:\n\n✅ Within 30 days: appoint the first auditor\n✅ Open a current account in the company's name\n✅ Within 180 days: file the commencement of business declaration (INC-20A). Missing it means a penalty of Rs 50,000 on the company\n✅ Annual filings every year, even with zero revenue. Late fee of Rs 100 per day per form\n\nHow long ago was your company registered?",
+  CHECKLIST: "Here you go! Documents needed for registration:\n\n📄 For each director: PAN, Aadhaar/ID, address proof (bank statement or utility bill), photo\n🏠 For the office: a recent electricity/water bill + owner's NOC (your home works too)\n📝 2–3 company name options\n\nA Private Limited needs at least 2 directors (one must live in India). How many founders are there?",
 };
 
 const postKind = (env, what) => what === "reel" ? postReel(env) : what === "story" ? postStory(env) : postCarousel(env);
@@ -368,6 +392,14 @@ export default {
     if (u.searchParams.get("key") !== env.ADMIN_KEY) return new Response("rl-kerala autopilot", { status: 200 });
     if (u.pathname === "/status") return json({ weights: await kv(env, "weights", null), posted: Object.keys(await kv(env, "posted", {})).length, log: (await kv(env, "log", [])).slice(0, 60) });
     if (u.pathname === "/leads") return json(await kv(env, "leads", {}));
+    if (u.pathname === "/reset/test") {   // wipe log, chats, people, engagement counters and leads (keeps posting history)
+      let n = 0;
+      for (const prefix of ["t:", "m:", "ev:", "alert:"]) {
+        let cur; do { const l = await env.STATE.list({ prefix, cursor: cur }); for (const k of l.keys) { await env.STATE.delete(k.name); n++; } cur = l.list_complete ? null : l.cursor; } while (cur);
+      }
+      for (const k of ["log", "leads", "retry"]) { await env.STATE.delete(k); n++; }
+      return json({ ok: true, deleted: n });
+    }
     if (u.pathname === "/run/reel") { await postReel(env); return json({ ok: true, log: (await kv(env, "log", [])).slice(0, 3) }); }
     if (u.pathname === "/run/carousel") { await postCarousel(env); return json({ ok: true, log: (await kv(env, "log", [])).slice(0, 3) }); }
     if (u.pathname === "/run/story") { await postStory(env); return json({ ok: true, log: (await kv(env, "log", [])).slice(0, 3) }); }

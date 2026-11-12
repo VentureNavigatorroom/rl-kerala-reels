@@ -3,7 +3,7 @@ name: post-now
 on:
   workflow_dispatch:
     inputs:
-      what: { description: "reel, carousel, story, or status (only show the log)", default: "reel" }
+      what: { description: "reel, carousel, story, status (only show the log) or reset (wipe test log, chats and leads)", default: "reel" }
 jobs:
   post:
     runs-on: ubuntu-latest
@@ -15,8 +15,8 @@ jobs:
           BASE: https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev
         run: |
           KEY="rlk-$(echo -n "admin$IG_TOKEN" | sha256sum | cut -c1-32)"; echo "::add-mask::$KEY"
-          case "$WHAT" in reel|carousel|story|status) ;; *) echo "what must be reel, carousel, story or status"; exit 1;; esac
-          if [ "$WHAT" = status ]; then OUT='"ok": true'; else echo "== posting one $WHAT"; OUT=$(curl -s -m 600 "$BASE/run/$WHAT?key=$KEY"); echo "$OUT"; fi
+          case "$WHAT" in reel|carousel|story|status|reset) ;; *) echo "what must be reel, carousel, story or status"; exit 1;; esac
+          if [ "$WHAT" = status ]; then OUT='"ok": true'; elif [ "$WHAT" = reset ]; then OUT=$(curl -s "$BASE/reset/test?key=$KEY"); echo "$OUT"; else echo "== posting one $WHAT"; OUT=$(curl -s -m 600 "$BASE/run/$WHAT?key=$KEY"); echo "$OUT"; fi
           echo "== status"
           curl -s "$BASE/status?key=$KEY" | python3 -c "import json,sys; d=json.load(sys.stdin); print('posted total:', d['posted']); print('\n'.join(d['log'][:40]))"
           echo "$OUT" | grep -q '"ok": true' || { echo "POST FAILED"; exit 1; }
