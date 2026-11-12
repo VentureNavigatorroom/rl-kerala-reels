@@ -1,4 +1,10 @@
 # Script bank, batch 01. Every script is unique; none states a fee or price.
+# BEFORE PUSHING ANY BANK CHANGE: run  python3 factory/check_bank.py  and fix everything it lists until it prints "bank OK".
+#  It checks duplicate ids, unknown scenes / missing stills, names that do not match the people drawn in a location,
+#  names with no known voice gender, CTAs, the rupee sign and price words, and repeated hooks. Never push while it fails.
+# NAMES MUST MATCH THE PEOPLE DRAWN: each location's default names in factory/duo3d.py (_S) describe its two 3D characters
+#  (left "A", right "V"; e.g. akshaya = woman + man, farm = man + man). names= must keep the same genders in the same order,
+#  and any new person name (duo3d or chat) must first be added to FEMALE or MALE in factory/voice.py.
 # kinds: duo3d (Anu "A" + Vishnu "V" at the tea shop), chat (message story, any two names), list (narrator checklist)
 # Facts used here are limited to these, all checked earlier:
 #  - Pvt Ltd registration takes about 7-15 working days
