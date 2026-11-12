@@ -26,14 +26,29 @@ def load_carousels():
     ids = [c["id"] for c in C]; assert len(ids) == len(set(ids)), "duplicate carousel ids"
     return C
 
+# Every post also gets its own keyword (never reused), shown next to the general one: "START / LAUNCH".
+KW_POOL = """LAUNCH FOUNDER BRAND GROW DREAM OWNER TEAM OFFICE CLIENT INVOICE PROFIT BUDGET TRUST LEGAL SHARE BOARD DIRECTOR PARTNER SOLO FREELANCE STUDIO AGENCY CAFE BAKERY FARM SPICE EXPORT IMPORT GULF DUBAI QATAR KOCHI KERALA MALABAR MUNNAR BEACH FERRY METRO SHOP STORE MARKET TAILOR SALON GARAGE CLINIC TRAVEL TOUR HOTEL RESORT HOMESTAY CATERING WEDDING DESIGN CODE APP WEBSITE DIGITAL ONLINE SELLER TRADER BUILDER MAKER CRAFT HANDLOOM COIR RUBBER COCONUT PEPPER CARDAMOM COFFEE CHAI SNACK KITCHEN FOOD JUICE FRESH ORGANIC GREEN SOLAR POWER TECH ROBOT DRONE DATA CLOUD PIXEL VIDEO PHOTO MUSIC DANCE ARTIST WRITER TUTOR COACH TRAINER FITNESS YOGA HEALTH PHARMA DOCTOR NURSE LAB SCHOOL COLLEGE CAMPUS STUDENT INTERN FRESHER SALARY BONUS SAVING INVEST FUNDING INVESTOR ANGEL PITCH DECK VALUE EQUITY ASSET CAPITAL BANK LOAN TENDER CONTRACT ORDER BILL RECEIPT STAMP SEAL CERTIFICATE LICENCE PERMIT COMPLIANCE AUDIT FILING RETURN DEADLINE PENALTY NOTICE SAFE SECURE PROTECT SHIELD LIMIT LIABILITY PRIVATE PUBLIC FAMILY BROTHER SISTER FRIEND COUPLE NEIGHBOUR VILLAGE TOWN CITY STREET JUNCTION BRIDGE HARBOUR PORT CARGO COURIER PARCEL DELIVERY FLEET TAXI AUTO BIKE TRUCK BOAT CRUISE FISH PRAWN DAIRY MILK HONEY RICE PADDY MANGO BANANA JACKFRUIT CASHEW TEA GARDEN NURSERY FLOWER PRINT PRESS MEDIA NEWS RADIO PODCAST CHANNEL CREATOR INFLUENCER REEL STORY VIRAL TREND FUTURE VISION MISSION GOAL TARGET WIN RISE BOOST SCALE EXPAND GLOBAL LOCAL NATIVE ROOTS ORIGIN PIONEER LEADER CAPTAIN CHIEF BOSS""".split()
+def with_kw(s, man):
+    s = dict(s); reg = man.setdefault("kwmap", {}); base = s["cta"][0].split()[0]
+    kw = next((k for k, v in reg.items() if v["item"] == s["id"]), None)
+    if not kw:
+        want = (s.get("kw") or "").upper()
+        cands = ([want] if want.isalpha() and len(want) >= 4 else []) + KW_POOL + [f"{w}{n}" for n in range(2, 50) for w in KW_POOL]
+        kw = next(k for k in cands if k not in reg and k not in ("START", "NAME", "AFTER", "CHECKLIST"))
+        reg[kw] = dict(item=s["id"], base=base)
+    s["cta_caption"] = f"{base} അല്ലെങ്കിൽ {kw} എന്ന് കമന്റ് ചെയ്യൂ"
+    s["cta"] = (f"{base} / {kw}", "എന്ന് കമന്റ് ചെയ്യൂ\n" + s["cta"][1]); s["kw"] = kw; s["base"] = base
+    return s
+
 def build_carousels(man, target):
     import carousel
     made = {c["id"] for c in man.setdefault("carousels", [])}
     stock = sum(1 for c in man["carousels"] if not c.get("posted"))
     for c in [c for c in load_carousels() if c["id"] not in made][:max(0, target - stock)]:
+        c = with_kw(c, man)
         files = carousel.make(c, f"{LIB}/media", seed=abs(hash(c["id"])) % 3)
-        cap = c["hook"].replace("\n", " ") + "\n\n" + c["cta"][0] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #keralabusiness #entrepreneur"
-        man["carousels"].append(dict(id=c["id"], segment=c["segment"], images=[f"media/{os.path.basename(p)}" for p in files], caption=cap, posted=None))
+        cap = c["hook"].replace("\n", " ") + "\n\n" + c["cta_caption"] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #keralabusiness #entrepreneur"
+        man["carousels"].append(dict(id=c["id"], segment=c["segment"], images=[f"media/{os.path.basename(p)}" for p in files], caption=cap, kw=c["kw"], base=c["base"], posted=None))
         print("carousel", c["id"], len(files), flush=True)
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
 
@@ -146,6 +161,7 @@ def main():
         mod = {"duo3d": "duo3d", "chat": "chat", "list": "listreel"}[s["kind"]]
         build = importlib.import_module(mod).build
         if s["kind"] == "duo3d": s = place(s, man)
+        s = with_kw(s, man)
         out = f"{LIB}/media/{s['id']}.mp4"
         try: info = build(s, out, seed=abs(hash(s["id"])) % 10000)
         except Exception as e:   # one bad script must not lose the whole night's work
@@ -155,8 +171,8 @@ def main():
         cover.story(s, info["cover_frame"], f"{LIB}/media/{s['id']}_story.jpg")
         man.setdefault("stories", [])
         man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"])]
-        cap = s["hook"].replace("\n", " ") + "\n\n" + s["cta"][0] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #business #entrepreneur #pvtltd #keralabusiness"
-        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None,
+        cap = s["hook"].replace("\n", " ") + "\n\n" + s["cta_caption"] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #business #entrepreneur #pvtltd #keralabusiness"
+        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None, kw=s["kw"], base=s["base"],
             video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)

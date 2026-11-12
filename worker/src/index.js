@@ -234,6 +234,11 @@ function editDist(a, b) {   // Damerau-Levenshtein (adjacent swaps count as one 
   }
   return d[a.length][b.length];
 }
+async function uniqueKw(env, text) {
+  const toks = (text.toUpperCase().match(/[A-Z]+[0-9]*/g) || []).filter(t => t.length >= 3); if (!toks.length) return null;
+  try { const map = (await manifest(env)).kwmap || {}; for (const t of toks) if (map[t] && KEYWORDS.includes(map[t].base)) return { kw: t, ...map[t] }; } catch (e) {}
+  return null;
+}
 function matchKeyword(text) {
   for (const [re, kw] of KW_ML) if (re.test(text)) return kw;
   const w = (text.toLowerCase().match(/[a-z]+/g) || []);
@@ -337,7 +342,8 @@ async function handleWebhook(env, body) {
         if (pk) { meta.pending_kw = pk; await env.STATE.delete(`pk:${meta.username.toLowerCase()}`); }
       }
       if (!meta.pending_kw) {   // keyword typed straight into DMs or as a story reply (contact stories ask for this)
-        const dk = ev.message.text.trim().split(/\s+/).length <= 4 ? matchKeyword(ev.message.text) : null;
+        const short = ev.message.text.trim().split(/\s+/).length <= 4;
+        const dk = short ? ((await uniqueKw(env, ev.message.text))?.base || matchKeyword(ev.message.text)) : null;
         if (dk) { meta.pending_kw = dk; meta.follow_asks = 0; await log(env, `keyword ${dk} via DM from @${meta.username || uid}`); }
       }
       let reply, buttons = [];
@@ -382,7 +388,9 @@ async function handleWebhook(env, body) {
       await log(env, `comment from @${who}${ch.value.parent_id ? " (reply in thread)" : ""}: ${ch.value.text.slice(0, 60)}`);
       if ((ch.value.from?.id && ch.value.from.id === env.IG_USER_ID) || (ch.value.from?.username || "").toLowerCase() === OWN_USERNAME) continue;   // our own comments
       const item = await mediaToItem(env, ch.value.media?.id); await bumpPost(env, item, "comments");
-      const k0 = matchKeyword(ch.value.text); if (!k0) continue; const m = [k0, k0];
+      const uq = await uniqueKw(env, ch.value.text);                 // the post's own keyword ("LAUNCH") maps to its general one
+      const k0 = uq ? uq.base : matchKeyword(ch.value.text); if (!k0) continue; const m = [k0, k0];
+      if (uq) { await bumpPost(env, item, "kw:" + uq.kw); await log(env, `own keyword ${uq.kw} (${uq.base}, post ${uq.item})`); }
       await bumpPost(env, item, "kw:" + m[1].toUpperCase());
       if (ch.value.from?.id) {                                       // remember where this person came from, per keyword
         const mk = `m:${ch.value.from.id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
@@ -488,7 +496,13 @@ export default {
     const now = IST(); const h = now.getUTCHours(), mi = now.getUTCMinutes();
     const slot = SLOTS_IST.find(([sh, sm]) => sh === h && Math.abs(sm - mi) < 5);
     const day = now.toISOString().slice(0, 10);
-    try { await pollInbox(env); } catch (e) { await log(env, `ERROR poll ${e.message}`); }
+    ctx.waitUntil((async () => {                                    // check the inbox every 10 s so replies feel instant
+      const t0 = Date.now();
+      for (let k = 0; k < 6; k++) {
+        try { await pollInbox(env); } catch (e) { await alertOnce(env, "pollerr", `⚠️ Inbox check failing: ${e.message}`); }
+        const wait = t0 + (k + 1) * 10000 - Date.now(); if (k < 5 && wait > 0) await new Promise(r => setTimeout(r, wait));
+      }
+    })());
     try {
       if (slot) {
         const k = `slot:${day}:${slot[0]}:${slot[1]}`;
