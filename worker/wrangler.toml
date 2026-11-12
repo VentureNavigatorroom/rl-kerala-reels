@@ -13,6 +13,6 @@ binding = "STATE"
 id = "__KV_ID__"
 
 [vars]
-GRAPH = "https://graph.instagram.com/v24.0"
+GRAPH = "https://graph.facebook.com/v24.0"
 IG_USER_ID = "17841417749063213"
 LIB_BASE = "https://venturenavigatorroom.github.io/rl-kerala-reels"
