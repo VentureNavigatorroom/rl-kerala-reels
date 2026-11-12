@@ -29,7 +29,10 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg libraqm0
           pip install -q torch --index-url https://download.pytorch.org/whl/cpu
-          pip install -q "git+https://github.com/huggingface/parler-tts.git" soundfile pillow numpy protobuf sentencepiece
+          pip install -q "git+https://github.com/huggingface/parler-tts.git" soundfile pillow numpy
+          pip install -q --force-reinstall --no-deps torchaudio --index-url https://download.pytorch.org/whl/cpu
+          pip install -q -U protobuf sentencepiece
+          python -c "import torch, torchaudio, parler_tts; print(torch.__version__, torchaudio.__version__)"
       - name: Build reels
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
