@@ -250,7 +250,7 @@ function matchKeyword(text) {
 const qr = titles => titles.map(t => ({ content_type: "text", title: t, payload: t.toUpperCase() }));
 // DMs go out through the Instagram-login app ("Rejectionlist", token kept in KV) when it is connected; otherwise the publisher app.
 async function igMsg(env, body) {
-  const tok = await env.STATE.get("ig_login_token");
+  const tok = null;   // sender ids from the inbox poll belong to the publisher app, so send with it
   if (!tok) return graph(env, `${env.IG_USER_ID}/messages`, body);
   const r = await fetch("https://graph.instagram.com/v24.0/me/messages", { method: "POST", body: new URLSearchParams({ ...body, access_token: tok }) });
   const j = await r.json(); if (!j.error) return j;
@@ -291,10 +291,10 @@ async function bumpPost(env, item, field, n = 1) {        // live engagement cou
 }
 
 async function pollInbox(env) {
-  const tok = await env.STATE.get("ig_login_token"); if (!tok) return;
-  const since = +(await env.STATE.get("poll_since") || (Date.now() - 10 * 60e3));
-  const url = `https://graph.instagram.com/v24.0/me/conversations?platform=instagram&limit=15&fields=updated_time,messages.limit(6){id,message,from,created_time}&access_token=${encodeURIComponent(tok)}`;
-  const j = await (await fetch(url)).json(); if (j.error) { await log(env, `ERROR inbox poll: ${j.error.message}`); return; }
+  const since = +(await env.STATE.get("poll_since") || (Date.now() - 15 * 60e3));
+  let j;   // the publisher app's token can read the inbox
+  try { j = await graph(env, `${env.IG_USER_ID}/conversations`, { platform: "instagram", limit: "15", fields: "updated_time,messages.limit(6){id,message,from,created_time}" }, "GET"); }
+  catch (e) { await log(env, `ERROR inbox poll: ${e.message}`); return; }
   const evs = [];
   for (const c of j.data || []) {
     if (Date.parse(c.updated_time) < since - 120e3) continue;
