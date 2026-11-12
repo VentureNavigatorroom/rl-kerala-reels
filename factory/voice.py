@@ -4,7 +4,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.environ.get("VOICE_CACHE", f"{ROOT}/.voice_cache")
 os.makedirs(CACHE, exist_ok=True)
 
-FEMALE = {"അനു", "ഫാത്തിമ", "അഞ്ജലി", "മീര", "ലക്ഷ്മി", "അമ്മ", "നിമ്മി", "ഗ്രീഷ്മ", "സാറ", "ദിവ്യ", "റിയ", "ആതിര"}
+FEMALE = {"അനു", "ഫാത്തിമ", "അഞ്ജലി", "മീര", "ലക്ഷ്മി", "അമ്മ", "നിമ്മി", "ഗ്രീഷ്മ", "സാറ", "ദിവ്യ", "റിയ", "ആതിര", "നേഹ", "സ്നേഹ", "ഷബ്ന", "ജിഷ", "ആൻസി", "നസ്രിൻ", "ഉമ്മ", "ചേച്ചി"}
 STYLE = "speaks casually and expressively at a slightly fast pace with a natural, conversational delivery. The recording is close-sounding with very little background noise, like chatting with a friend."
 VOICES = {
     "F1": f"Anjali {STYLE} Her pitch is moderate.",

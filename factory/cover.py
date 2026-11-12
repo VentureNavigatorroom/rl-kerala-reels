@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 from common import *
 
-BADGE = {"duo3d": ("ചായക്കട കഥ", (204, 92, 52)), "chat": ("ചാറ്റ് സ്റ്റോറി", (47, 91, 234)), "list": ("ചെക്ക്‌ലിസ്റ്റ്", (34, 139, 84))}
+BADGE = {"duo3d": ("ഒരു ചെറിയ കഥ", (204, 92, 52)), "chat": ("ചാറ്റ് സ്റ്റോറി", (47, 91, 234)), "list": ("ചെക്ക്‌ലിസ്റ്റ്", (34, 139, 84))}
 
 def make(s, frame, out):
     im = frame.convert("RGBA").resize((W, H)).filter(ImageFilter.GaussianBlur(5 if s["kind"] == "duo3d" else 22))
