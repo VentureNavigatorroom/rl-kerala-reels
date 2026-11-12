@@ -329,6 +329,7 @@ async function handleWebhook(env, body) {
       const mid = ev.message?.mid || ev.postback?.mid; if (mid) { if (await env.STATE.get(`dup:${mid}`)) continue; await env.STATE.put(`dup:${mid}`, "1", { expirationTtl: 86400 }); }
       if (ev.postback && !ev.message) ev.message = { text: ev.postback.title || ev.postback.payload || "" };   // button taps of other kinds
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
+      { const tk = `dup:t:${ev.sender.id}:${ev.message.text.slice(0, 40)}`; if (await env.STATE.get(tk)) continue; await env.STATE.put(tk, "1", { expirationTtl: 60 }); }   // same message seen by webhook and by inbox check
       const uid = ev.sender.id; const key = `t:${uid}`;
       if (/^\s*delete\s*$/i.test(ev.message.text)) {                  // data deletion request (see /privacy)
         await env.STATE.delete(key); await env.STATE.delete(`m:${uid}`);
