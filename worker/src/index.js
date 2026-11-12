@@ -1,7 +1,7 @@
 // rl-kerala-autopilot: runs 24/7 on Cloudflare, independent of Claude.
 //  - cron: posts reels (with cover, trial reels when allowed) and Stories at IST slots from the GitHub Pages library
 //  - cron: pulls insights daily and rewrites content-mix weights (optimiser)
-//  - webhook: answers Instagram DMs / keyword comments with a Malayalam-first qualifying bot, stores leads
+//  - webhook: answers Instagram DMs / keyword comments with a English qualifying bot, stores leads
 // Secrets (wrangler secret / dashboard): IG_TOKEN, IG_USER_ID, VERIFY_TOKEN, ADMIN_KEY
 // Vars: LIB_BASE (GitHub Pages base URL of library/), GRAPH (graph API base)
 // KV binding: STATE
@@ -164,8 +164,8 @@ async function optimise(env) {
 }
 
 // ---------------- DM bot ----------------
-const BOT_SYSTEM = `You are the automated assistant of rejectionlist.kerala, a company-registration service in Kerala, India.
-Rules: Reply in the user's language (Malayalam or English), short and friendly, max 3 sentences. Say you are an automated assistant if asked.
+const BOT_SYSTEM = `You reply to Instagram DMs for rejectionlist.kerala, a company-registration service in Kerala, India.
+Rules: Always reply in simple, friendly English (even if the user writes in Malayalam or Manglish), short, max 3 sentences. Write like the rejectionlist.kerala team; do not introduce yourself as an assistant, AI or bot and do not mention automation. If the user directly asks whether this is a bot or a real person, do not claim to be human: say these chats give quick answers and a team member will call them personally.
 NEVER state any price, fee, cost, discount or government fee; if asked, say the team will share the exact quote on a call after understanding the business.
 Never give legal advice beyond general facts. If someone sends a proposed company name, give a first review using only these rules: not similar (even in sound) to an existing company or LLP, no clash with a registered trademark, words like Bank or Insurance need special approval, keep 2-3 backups. Say clearly that you cannot confirm availability and that final availability is confirmed when the application is filed. Then continue qualifying.
 Goal: qualify the lead by asking, one at a time:
@@ -175,13 +175,13 @@ When you have all six, thank them and say a team member will call. Output only t
 
 // Fallback when Cloudflare's free AI allowance is used up or the model errors: fixed rules + fixed question order.
 const FALLBACK_Q = [
-  "നിങ്ങളുടെ ബിസിനസ് എന്താണ്? ചുരുക്കി പറയാമോ?",
-  "എത്ര ഫൗണ്ടർമാർ ഉണ്ട്? ആരെങ്കിലും NRI ആണോ?",
-  "ബിസിനസിന് ഇപ്പോൾ വരുമാനമോ ക്ലയന്റുകളോ ഫണ്ടിംഗോ ഉണ്ടോ?",
-  "എത്ര പെട്ടെന്ന് രജിസ്റ്റർ ചെയ്യണം?",
-  "ഞങ്ങളുടെ ടീം വിളിക്കാൻ ഫോൺ നമ്പർ തരാമോ?",
-  "കോൾ മലയാളത്തിലോ ഇംഗ്ലീഷിലോ?",
-  "നന്ദി! 🙏 ഞങ്ങളുടെ ടീം ഉടൻ വിളിക്കും.",
+  "What does your business do? Tell us in a line or two.",
+  "How many founders are there? Is anyone an NRI?",
+  "Does the business already have income, clients or funding?",
+  "How soon do you want to register?",
+  "Could you share a phone number so our team can call you?",
+  "Would you prefer the call in Malayalam or English?",
+  "Thank you! 🙏 Our team will call you shortly.",
 ];
 function fallbackReply(thread) {
   const last = thread[thread.length - 1]?.content || "";
@@ -189,10 +189,10 @@ function fallbackReply(thread) {
   let pre = "";
   if (/\b(pvt|ltd|private|limited|llp|opc)\b/i.test(last) || /പ്രൈവറ്റ്|ലിമിറ്റഡ്/.test(last)) {
     const hits = ["bank", "insurance", "ബാങ്ക്", "ഇൻഷുറൻസ്"].filter(x => last.toLowerCase().includes(x));
-    pre = hits.length ? `"${hits[0]}" പോലുള്ള വാക്കുകൾക്ക് പ്രത്യേക അനുമതി വേണം, അതുകൊണ്ട് റിജക്ട് ആകാൻ സാധ്യതയുണ്ട്. ` : "ഈ പേരിൽ നിയന്ത്രിത വാക്കുകൾ കാണുന്നില്ല. നിലവിലുള്ള കമ്പനികളുമായോ ട്രേഡ്മാർക്കുമായോ സാമ്യമില്ലെന്ന് ഉറപ്പാക്കണം. ";
-    pre += "അന്തിമ ലഭ്യത അപേക്ഷിക്കുമ്പോൾ ഉറപ്പാകും.\n\n";
+    pre = hits.length ? `Words like "${hits[0]}" need special approval, so this name could be rejected. ` : "No restricted words in this name. It must also not be similar to an existing company, LLP or registered trademark. ";
+    pre += "Final availability is confirmed only when the application is filed.\n\n";
   }
-  if (/price|fee|cost|charge|rate|എത്ര രൂപ|ചാർജ്|ഫീസ്/i.test(last)) pre = "ബിസിനസ് മനസ്സിലാക്കിയ ശേഷം ഞങ്ങളുടെ ടീം കോളിൽ കൃത്യമായ ക്വോട്ട് പറയും. ";
+  if (/price|fee|cost|charge|rate|എത്ര രൂപ|ചാർജ്|ഫീസ്/i.test(last)) pre = "Our team will share the exact quote on a call once they understand your business. ";
   return pre + FALLBACK_Q[Math.min(asked, FALLBACK_Q.length - 1)];
 }
 async function botReply(env, thread) {
@@ -292,12 +292,12 @@ async function handleWebhook(env, body) {
 
 // Fixed, fully automatic first replies. Each keyword delivers what the post promised, with no human work.
 // Legal content only from the checked fact list; no prices; no promise of a manual availability check.
-const PUBLIC_REPLY = "നന്ദി! വിവരങ്ങൾ അയക്കാൻ ഞങ്ങൾക്ക് ഒരു \"Hi\" DM ചെയ്യൂ, ഉടനെ മറുപടി തരാം.";
+const PUBLIC_REPLY = "Thanks! Send us a \"Hi\" in DM and we'll send it across right away.";
 const KEYWORD_REPLY = {
-  START: "ഹായ്! 👋 ഞാൻ rejectionlist.kerala-യുടെ ഓട്ടോമേറ്റഡ് അസിസ്റ്റന്റ് ആണ്.\n\nചുരുക്കത്തിൽ:\n• ഒറ്റയ്ക്കാണെങ്കിൽ: OPC (വൺ പേഴ്സൺ കമ്പനി)\n• 2+ പേർ, ഭാവിയിൽ ഫണ്ടിംഗ്: പ്രൈവറ്റ് ലിമിറ്റഡ്\n• പാർട്ണർമാർ, ഫണ്ടിംഗ് പ്ലാൻ ഇല്ല: LLP-യും നോക്കാം\n\nനിങ്ങൾക്ക് ഏതാണ് ശരി എന്ന് പറഞ്ഞുതരാം. നിങ്ങളുടെ ബിസിനസ് എന്താണ്?",
-  NAME: "ഹായ്! 👋 പേര് റിജക്ട് ആകാതിരിക്കാൻ:\n\n1. നിലവിലുള്ള കമ്പനിയുടെയോ LLP-യുടെയോ പേരിനോട് സാമ്യം (ഉച്ചാരണത്തിൽ പോലും) പാടില്ല\n2. രജിസ്റ്റേർഡ് ട്രേഡ്മാർക്കുമായി ക്ലാഷ് പാടില്ല\n3. Bank, Insurance പോലുള്ള വാക്കുകൾക്ക് പ്രത്യേക അനുമതി വേണം\n4. 2–3 ബാക്കപ്പ് പേരുകൾ കരുതുക\n\nമനസ്സിലുള്ള പേര് അയച്ചാൽ ഈ നിയമങ്ങൾ വെച്ച് ഒരു ആദ്യ റിവ്യൂ തരാം. അന്തിമ ലഭ്യത അപേക്ഷയുടെ സമയത്ത് ഉറപ്പാകും.",
-  AFTER: "ഹായ്! 👋 രജിസ്ട്രേഷന് ശേഷമുള്ള ചെക്ക്‌ലിസ്റ്റ്:\n\n✅ 30 ദിവസത്തിനുള്ളിൽ: ആദ്യ ഓഡിറ്ററെ നിയമിക്കുക\n✅ കമ്പനി പേരിൽ കറന്റ് അക്കൗണ്ട് തുറക്കുക\n✅ 180 ദിവസത്തിനുള്ളിൽ: ബിസിനസ് തുടങ്ങിയ ഡിക്ലറേഷൻ (INC-20A). മിസ്സ് ആയാൽ കമ്പനിക്ക് 50,000 രൂപ പിഴ\n✅ എല്ലാ വർഷവും ആനുവൽ ഫയലിംഗ്, വരുമാനം ഇല്ലെങ്കിലും. താമസിച്ചാൽ ഓരോ ഫോമിനും ദിവസം 100 രൂപ\n\nനിങ്ങളുടെ കമ്പനി രജിസ്റ്റർ ചെയ്തിട്ട് എത്ര നാളായി?",
-  CHECKLIST: "ഹായ്! 👋 രജിസ്ട്രേഷന് വേണ്ട ഡോക്യുമെന്റ്സ്:\n\n📄 ഓരോ ഡയറക്ടർക്കും: പാൻ, ആധാർ/ഐഡി, അഡ്രസ്സ് പ്രൂഫ് (ബാങ്ക് സ്റ്റേറ്റ്‌മെന്റ്/ബിൽ), ഫോട്ടോ\n🏠 ഓഫീസിന്: പുതിയ കറന്റ്/വാട്ടർ ബിൽ + ഉടമയുടെ NOC (വീടായാലും മതി)\n📝 2–3 കമ്പനി പേരുകൾ\n\nപ്രൈവറ്റ് ലിമിറ്റഡിന് കുറഞ്ഞത് 2 ഡയറക്ടർമാർ (ഒരാൾ ഇന്ത്യയിൽ താമസിക്കുന്നയാൾ). എത്ര ഫൗണ്ടർമാർ ഉണ്ട്?",
+  START: "Hi! 👋 Thanks for reaching out to rejectionlist.kerala.\n\nIn short:\n• Starting alone: OPC (One Person Company)\n• 2+ founders, may raise funding later: Private Limited\n• Partners, no funding plans: LLP is also an option\n\nWe'll help you pick the right one. What does your business do?",
+  NAME: "Hi! 👋 How to keep your company name from being rejected:\n\n1. It must not be similar (even in sound) to an existing company or LLP name\n2. It must not clash with a registered trademark\n3. Words like Bank or Insurance need special approval\n4. Keep 2–3 backup names ready\n\nSend us the name you have in mind and we'll give a first review against these rules. Final availability is confirmed when the application is filed.",
+  AFTER: "Hi! 👋 Your checklist after registration:\n\n✅ Within 30 days: appoint the first auditor\n✅ Open a current account in the company's name\n✅ Within 180 days: file the commencement of business declaration (INC-20A). Missing it means a penalty of Rs 50,000 on the company\n✅ Annual filings every year, even with zero revenue. Late fee of Rs 100 per day per form\n\nHow long ago was your company registered?",
+  CHECKLIST: "Hi! 👋 Documents needed for registration:\n\n📄 For each director: PAN, Aadhaar/ID, address proof (bank statement or utility bill), photo\n🏠 For the office: a recent electricity/water bill + owner's NOC (your home works too)\n📝 2–3 company name options\n\nA Private Limited needs at least 2 directors (one must live in India). How many founders are there?",
 };
 
 const postKind = (env, what) => what === "reel" ? postReel(env) : what === "story" ? postStory(env) : postCarousel(env);
