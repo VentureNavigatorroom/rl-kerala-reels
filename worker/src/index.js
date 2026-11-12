@@ -295,7 +295,7 @@ async function handleWebhook(env, body) {
       if (ch.field !== "comments" || !ch.value?.text) continue;
       const who = ch.value.from?.username || ch.value.from?.id || "?";
       await log(env, `comment from @${who}${ch.value.parent_id ? " (reply in thread)" : ""}: ${ch.value.text.slice(0, 60)}`);
-      if (ch.value.from?.id && ch.value.from.id === env.IG_USER_ID) continue;   // our own comments
+      if ((ch.value.from?.id && ch.value.from.id === env.IG_USER_ID) || (ch.value.from?.username || "").toLowerCase() === OWN_USERNAME) continue;   // our own comments
       const item = await mediaToItem(env, ch.value.media?.id); await bumpPost(env, item, "comments");
       const m = ch.value.text.match(/\b(START|NAME|AFTER|CHECKLIST)\b/i); if (!m) continue;
       await bumpPost(env, item, "kw:" + m[1].toUpperCase());
@@ -324,7 +324,8 @@ async function handleWebhook(env, body) {
 
 // Fixed, fully automatic first replies. Each keyword delivers what the post promised, with no human work.
 // Legal content only from the checked fact list; no prices; no promise of a manual availability check.
-const PUBLIC_REPLY = "Thanks! Send us a \"Hi\" in DM and we'll send it across right away.";
+const OWN_USERNAME = "rejectionlist.kerala";
+const PUBLIC_REPLY = "Thanks! 🙌 Message us \"Hi\" (tap Message on our profile, or search rejectionlist.kerala in your DMs) and we'll send it right away.";
 // Public note under the comment (varied so it never looks like a copy-paste bot) tells people where the DM is.
 const PUBLIC_DONE = [
   "Sent you a DM 📩 Not in your inbox? Check message requests, including hidden requests / spam.",
