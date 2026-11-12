@@ -220,6 +220,32 @@ async function igProfile(env, igsid) {
   try { const p = await graph(env, igsid, { fields: "username,is_user_follow_business" }, "GET"); return { username: p.username || null, follows: typeof p.is_user_follow_business === "boolean" ? p.is_user_follow_business : null }; }
   catch (e) { await log(env, `profile lookup failed: ${e.message}`); return { username: null, follows: null }; }
 }
+// Keyword matching that tolerates typos, spacing, case, and Malayalam spellings
+// (e.g. "strat", "Satrt🙏", "chek list", "nmae", "സ്റ്റാർട്ട്"), without firing on ordinary words like "star", "game" or "alter".
+const KEYWORDS = ["START", "NAME", "AFTER", "CHECKLIST"];
+const KW_ML = [[/സ്റ്റാർ?ട്ട?്?|സ്റ്റാട്ട്/, "START"], [/നെയിം|നേം|നെയിമ്/, "NAME"], [/ആഫ്റ്റർ|ആഫ്ടർ/, "AFTER"], [/ചെക്ക്[\s\u200c\u200d]*ലിസ്റ്റ്|ചെക്ലിസ്റ്റ്/, "CHECKLIST"]];
+const KW_STOP = new Set(["star", "stars", "stat", "stats", "smart", "stark", "tart", "starts", "same", "came", "game", "fame", "lame", "tame", "made", "dame", "nam", "alter", "afer", "hater"]);
+function editDist(a, b) {   // Damerau-Levenshtein (adjacent swaps count as one edit)
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+  }
+  return d[a.length][b.length];
+}
+function matchKeyword(text) {
+  for (const [re, kw] of KW_ML) if (re.test(text)) return kw;
+  const w = (text.toLowerCase().match(/[a-z]+/g) || []);
+  const toks = [...w, ...w.slice(1).map((x, i) => w[i] + x)];   // "check list" -> "checklist"
+  const long = w.length > 4;   // in a long comment only a clear keyword counts, and "after" only when written AFTER
+  for (const t of toks) for (const kw of KEYWORDS) if (t === kw.toLowerCase() && !(long && kw === "AFTER" && !/\bAFTER\b/.test(text))) return kw;   // exact first
+  for (const t of toks) {
+    if (t.length < 3 || KW_STOP.has(t)) continue;
+    for (const kw of long ? ["CHECKLIST"] : KEYWORDS) if (editDist(t, kw.toLowerCase()) <= (kw.length >= 8 ? 2 : 1)) return kw;
+  }
+  return null;
+}
 // Tap-to-reply buttons (Instagram quick replies, max 13, title max 20 chars). A tap arrives as a normal text message.
 const qr = titles => titles.map(t => ({ content_type: "text", title: t, payload: t.toUpperCase() }));
 async function sendMsg(env, recipient, text, buttons = []) {
@@ -269,6 +295,10 @@ async function handleWebhook(env, body) {
         const pk = await env.STATE.get(`pk:${meta.username.toLowerCase()}`);
         if (pk) { meta.pending_kw = pk; await env.STATE.delete(`pk:${meta.username.toLowerCase()}`); }
       }
+      if (!meta.pending_kw) {   // keyword typed straight into DMs or as a story reply (contact stories ask for this)
+        const dk = ev.message.text.trim().split(/\s+/).length <= 4 ? matchKeyword(ev.message.text) : null;
+        if (dk) { meta.pending_kw = dk; meta.follow_asks = 0; await log(env, `keyword ${dk} via DM from @${meta.username || uid}`); }
+      }
       let reply, buttons = [];
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {
         // soft follow gate: ask to follow, re-check when they say they did, and after two tries send it anyway (never block a lead)
@@ -308,7 +338,7 @@ async function handleWebhook(env, body) {
       await log(env, `comment from @${who}${ch.value.parent_id ? " (reply in thread)" : ""}: ${ch.value.text.slice(0, 60)}`);
       if ((ch.value.from?.id && ch.value.from.id === env.IG_USER_ID) || (ch.value.from?.username || "").toLowerCase() === OWN_USERNAME) continue;   // our own comments
       const item = await mediaToItem(env, ch.value.media?.id); await bumpPost(env, item, "comments");
-      const m = ch.value.text.match(/\b(START|NAME|AFTER|CHECKLIST)\b/i); if (!m) continue;
+      const k0 = matchKeyword(ch.value.text); if (!k0) continue; const m = [k0, k0];
       await bumpPost(env, item, "kw:" + m[1].toUpperCase());
       if (ch.value.from?.id) {                                       // remember where this person came from, per keyword
         const mk = `m:${ch.value.from.id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
