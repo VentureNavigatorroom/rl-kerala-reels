@@ -8,6 +8,7 @@ import cover
 
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
+POSTER_V = 2   # bump when the poster look changes: unposted posters get re-rendered
 VERSION = 5   # bump when voices/look change: unposted reels from older versions get rebuilt
 
 def load_bank():
@@ -64,12 +65,16 @@ def load_posters():
 def build_posters(man, target):
     import poster
     made = {p["id"] for p in man.setdefault("posters", [])}
+    bank = {p["id"]: p for p in load_posters()}
+    for q in man["posters"]:   # look v2: the CTA line under the keyword pill shows the whole promise (v1 cut it in half)
+        if not q.get("posted") and q.get("pv", 1) < POSTER_V and q["id"] in bank:
+            poster.make(bank[q["id"]], f"{LIB}/media/{q['id']}.jpg"); q["pv"] = POSTER_V; print("poster rebuilt", q["id"], flush=True)
     stock = sum(1 for p in man["posters"] if not p.get("posted"))
     for p in [p for p in load_posters() if p["id"] not in made][:max(0, target - stock)]:
         p = with_kw(p, man)
         poster.make(p, f"{LIB}/media/{p['id']}.jpg")
         cap = p["caption"] + "\n\n" + p["cta_caption"] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #keralabusiness #entrepreneur"
-        man["posters"].append(dict(id=p["id"], segment=p["segment"], layout=p["layout"], image=f"media/{p['id']}.jpg", caption=cap, kw=p["kw"], base=p["base"], point=p["caption"].split("\n")[0], posted=None))
+        man["posters"].append(dict(id=p["id"], segment=p["segment"], layout=p["layout"], image=f"media/{p['id']}.jpg", caption=cap, kw=p["kw"], base=p["base"], point=p["caption"].split("\n")[0], posted=None, pv=POSTER_V))
         print("poster", p["id"], flush=True)
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
 

@@ -20,3 +20,11 @@ Shift up to ~60% of a batch toward a clear winner (~1.5x median on 5+ posts); ke
 - Rule check: 1 posting day (need 14) and 0 judged posts (need 40). No shift.
 - Changes made: none. Batch 07 kept balanced (freelancer 6, cofounders 6, proprietor 7, nri 7, salaried 7, solo 7); 29 duo3d scripts in 29 different locations, including all 14 locations used only once before.
 - Watch next: proprietor duo3d vs others once 5+ proprietor posts are 2+ days old; whether NRI chat comments turn into DMs; first reach numbers.
+
+## 2026-11-13 (run 3): observe only
+- Data (insights updated 2026-11-13T11:18 IST): 9 posts (12-13 Nov), judged at 0-0.8 days; 0 posts at 2+ days. Reach now reported. Optimiser n_posts 0.
+- Reels: d401 (proprietor duo3d, beach) reach 128, 5 keyword comments, 30 DMs, 2 leads (1 high-intent, 1 NRI, 1 budget-likely) = still the only leads. Other reels reach 99-119 (c002 nri chat 104 with 5 keyword comments, 0 DMs; c104 99; d301 nri gulf 119; c001 102; l406 just posted), no DMs/leads.
+- Carousels: k001 reach 1, k002 0, k003 0 (0.1-0.7 days). Reels get ~100 non-follower reach each; carousels almost none so far. Watch whether this persists at 2+ days (could be follower-only distribution on a new account, or an insights-reading gap for albums).
+- Rule check: 2 posting days (need 14), 0 judged posts (need 40). No shift.
+- Changes made: none to the mix. batch08 (freelancer 7, cofounders 7, salaried 6) + batch09 (proprietor 7, nri 7, solo 6) = 40 scripts, 30 duo3d in 30 different least-used locations. Only nudge: proprietor scripts in batch09 open on concrete money-on-the-table moments (orders, contracts, equity offers), the pattern of d401, without reusing its catering situation; proprietor share kept at 7/40 (not a shift).
+- Watch next: proprietor duo3d vs others once 5+ are 2+ days old; carousel reach; NRI chat comments turning into DMs.

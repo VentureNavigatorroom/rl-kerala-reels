@@ -22,7 +22,7 @@ def _footer(im, p, acc, fg):
     d = ImageDraw.Draw(im)
     kw = p["cta"][0]; pill = _pill(kw, 52, acc, THEMES[p["layout"]][0] if p["layout"] != "myth" else (255, 255, 255))
     y = PH - 300; im.paste(pill, ((PW - pill.width) // 2, y), pill)
-    sb = block(p["cta"][1].split("\n")[0], 40, fg, maxw=860, wt=600); im.paste(sb, ((PW - sb.width) // 2, y + pill.height + 18), sb)
+    sb = block(p["cta"][1].replace("\n", " "), 32, fg, maxw=860, wt=600, lh=1.3); im.paste(sb, ((PW - sb.width) // 2, y + pill.height + 18), sb)   # the whole promise, not just its first half
     tdraw(d, (PW - tlen("@" + BRAND, 32, 600)) / 2, PH - 44, "@" + BRAND, 32, tuple(int(c * 0.75) for c in fg) if fg != INK else (120, 120, 120), 600)
 
 def make(p, out):
