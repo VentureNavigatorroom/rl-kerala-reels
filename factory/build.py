@@ -5,6 +5,7 @@ import os, sys, json, glob, importlib.util, time, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import ROOT
 import cover
+import captions
 
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
@@ -48,7 +49,7 @@ def build_carousels(man, target):
     for c in [c for c in load_carousels() if c["id"] not in made][:max(0, target - stock)]:
         c = with_kw(c, man)
         files = carousel.make(c, f"{LIB}/media", seed=abs(hash(c["id"])) % 3)
-        cap = c["hook"].replace("\n", " ") + "\n\n" + c["cta_caption"] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #keralabusiness #entrepreneur"
+        cap = captions.caption(c, c["hook"].replace("\n", " "))
         man["carousels"].append(dict(id=c["id"], segment=c["segment"], images=[f"media/{os.path.basename(p)}" for p in files], caption=cap, kw=c["kw"], base=c["base"], point=c["end"].replace("\n", " "), posted=None))
         print("carousel", c["id"], len(files), flush=True)
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
@@ -73,7 +74,7 @@ def build_posters(man, target):
     for p in [p for p in load_posters() if p["id"] not in made][:max(0, target - stock)]:
         p = with_kw(p, man)
         poster.make(p, f"{LIB}/media/{p['id']}.jpg")
-        cap = p["caption"] + "\n\n" + p["cta_caption"] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #keralabusiness #entrepreneur"
+        cap = captions.caption(p, p["caption"].split("\n")[0])
         man["posters"].append(dict(id=p["id"], segment=p["segment"], layout=p["layout"], image=f"media/{p['id']}.jpg", caption=cap, kw=p["kw"], base=p["base"], point=p["caption"].split("\n")[0], posted=None, pv=POSTER_V))
         print("poster", p["id"], flush=True)
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
@@ -153,6 +154,20 @@ def sync_posted(man):
         if p.get("posted") and now - p["posted"] > 86400 and os.path.exists(f"{LIB}/{p['image']}"): os.remove(f"{LIB}/{p['image']}")
     # posted carousels stay listed (without media) so the builder never makes them again
 
+def recaption(man):
+    """Give every unposted reel, carousel and poster the current three-language caption (cheap: no re-render)."""
+    banks = {"items": {x["id"]: x for x in load_bank()}, "carousels": {x["id"]: x for x in load_carousels()}, "posters": {x["id"]: x for x in load_posters()}}
+    n = 0
+    for key, bank in banks.items():
+        for it in man.get(key, []):
+            sc = bank.get(it["id"])
+            if it.get("posted") or not sc or not it.get("kw"): continue
+            sc = dict(sc, kw=it["kw"], base=it.get("base") or sc["cta"][0].split()[0])
+            head = sc["caption"].split("\n")[0] if key == "posters" else sc["hook"].replace("\n", " ")
+            cap = captions.caption(sc, head)
+            if it.get("caption") != cap: it["caption"] = cap; n += 1
+    print("captions refreshed:", n, flush=True)
+
 def place(s, man):
     """Pick the location: scripts tied to one of the 4 original settings rotate through every compatible place,
     preferring places used least recently, so consecutive reels never look the same."""
@@ -174,6 +189,8 @@ def main():
     only = [a for a in sys.argv[1:] if not a.startswith("-")]
     bank, man = load_bank(), manifest()
     sync_posted(man)
+    try: recaption(man)
+    except Exception as e: print("recaption failed:", repr(e), flush=True)
     # v4 changed only how acronyms are spoken: rebuild just the unposted reels whose lines contain one, re-tag the rest
     # v5 fixed voice gender (many women's names were voiced male): rebuild just the unposted reels whose voices change
     from voice import HAS_ACR, FEMALE_V4, voice_for
@@ -230,7 +247,7 @@ def main():
         cover.story(s, info["cover_frame"], f"{LIB}/media/{s['id']}_story.jpg")
         man.setdefault("stories", [])
         man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"])]
-        cap = s["hook"].replace("\n", " ") + "\n\n" + s["cta_caption"] + " 👇\n\n#companyregistration #kerala #startupkerala #malayali #business #entrepreneur #pvtltd #keralabusiness"
+        cap = captions.caption(s, s["hook"].replace("\n", " "))
         man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
             video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
