@@ -83,7 +83,8 @@ def spoken(text):
     text = re.sub(r"(?<![\d,])1\s+(ലക്ഷം|കോടി)", r"ഒരു \1", text)                                    # 1 ലക്ഷം -> ഒരു ലക്ഷം
     text = latin(text)
     text = numbers(text)
-    text = re.sub(r"-(?=[ഀ-ൿ])", "", text)
+    text = re.sub(r"(?<=[\u0d00-\u0d7f])-(?=[\u0d00-\u0d7f])", " ", text)   # പെയ്ഡ്-അപ്പ് -> two words, not one
+    text = re.sub(r"-(?=[\u0d00-\u0d7f])", "", text)
     text = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]", "", text)   # emoji are not spoken
     text = re.sub(r"\s*/\s*", " ഒരു ", text)                     # 1,000 രൂപ / ദിവസം -> ... ഒരു ദിവസം
     text = re.sub(r"\s*\+\s*", ", പിന്നെ ", text)               # ബിൽ + NOC -> ബിൽ, പിന്നെ ...
