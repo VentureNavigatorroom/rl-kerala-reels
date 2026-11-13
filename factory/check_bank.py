@@ -69,7 +69,7 @@ for f in sorted(glob.glob(f"{ROOT}/bank/*.py")):
 
 # 4b. every rupee amount must be a statutory penalty (or penalty arithmetic / a quiz's wrong option already reviewed).
 #     A new amount fails here: if it really is penalty maths from the checked facts, add it to RUPEE_OK.
-RUPEE_OK = {"0", "100", "1,000", "6,000", "30,000", "50,000", "2,50,000", "1 ലക്ഷം", "10 ലക്ഷം", "ഒരു", "നൂറ്", "ആയിരം", "അമ്പതിനായിരം", "ഒരു ലക്ഷം"}
+RUPEE_OK = {"0", "100", "1,000", "6,000", "30,000", "50,000", "2,50,000", "1 ലക്ഷം", "10 ലക്ഷം", "ഒരു", "നൂറ്", "ആയിരം", "അമ്പതിനായിരം", "ഒരു ലക്ഷം", "ഇരുപതിനായിരം"}
 RUPEE = re.compile(r"(\S+(?: ലക്ഷം)?) രൂപ")
 def texts(x):   # every string inside an item
     if isinstance(x, str): yield x

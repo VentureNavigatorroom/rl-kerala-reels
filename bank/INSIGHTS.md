@@ -13,3 +13,10 @@ Shift up to ~60% of a batch toward a clear winner (~1.5x median on 5+ posts); ke
 - Optimiser weights: n_posts 0, empty.
 - Changes made: none. Batch 06 kept segments balanced (freelancer 7, cofounders 7, proprietor 7, nri 8, salaried 6, solo 5) and spread over 27 least-used locations.
 - Watch next: whether proprietor duo3d keeps converting once 5+ proprietor posts are 2+ days old; NRI chat reels getting comments but no DMs.
+
+## 2026-11-13 (run 2): observe only
+- Data (insights updated 2026-11-13T07:18): still the same 6 posts, all posted 12 Nov, judged at 0.2–0.5 days; 0 posts at 2+ days; reach/views still null. Optimiser n_posts 0.
+- Leads total 2, both from d401 (proprietor, duo3d, beach): 5 keyword comments, 30 DMs, 2 leads (1 high-intent, 1 NRI, 1 budget-likely). c002 (nri chat): 5 keyword comments, 0 DMs. Others: 0.
+- Rule check: 1 posting day (need 14) and 0 judged posts (need 40). No shift.
+- Changes made: none. Batch 07 kept balanced (freelancer 6, cofounders 6, proprietor 7, nri 7, salaried 7, solo 7); 29 duo3d scripts in 29 different locations, including all 14 locations used only once before.
+- Watch next: proprietor duo3d vs others once 5+ proprietor posts are 2+ days old; whether NRI chat comments turn into DMs; first reach numbers.
