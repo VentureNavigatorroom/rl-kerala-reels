@@ -2,7 +2,7 @@
 Run: python3 factory/check_bank.py   (also runs in GitHub on every push that touches bank/ or factory/)"""
 import os, re, sys, glob
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import build, duo3d, voice
+import build, duo3d, voice, topics
 
 ROOT = build.ROOT
 errs = []
@@ -49,12 +49,16 @@ for s in banks["reels"]:
 # 3. every reel, carousel and poster ends with one of the keyword CTAs
 import importlib.util
 _b1 = importlib.util.spec_from_file_location("b1", f"{ROOT}/bank/batch01.py"); _m = importlib.util.module_from_spec(_b1); _b1.loader.exec_module(_m)
-ctas = {_m.CTA_START, _m.CTA_NAME, _m.CTA_AFTER, _m.CTA_DOCS}
-for name in ("reels", "carousels", "posters"):
+ctas = {"co": {_m.CTA_START, _m.CTA_NAME, _m.CTA_AFTER, _m.CTA_DOCS}, **{t: set(v) for t, v in topics.CTAS.items()}}
+PREFIX = {"gst": "g", "inv": "v"}
+for name in ("reels", "carousels", "posters", "stories"):
     for x in banks[name]:
-        if tuple(x.get("cta") or ()) not in ctas: err(f"{x['id']}: cta is not one of CTA_START / CTA_NAME / CTA_AFTER / CTA_DOCS")
+        t = x.get("topic") or "co"
+        if name != "stories" and tuple(x.get("cta") or ()) not in ctas[t]: err(f"{x['id']}: cta is not one of the {t} topic's CTAs (topics.py / batch01.py)")
+        if x.get("segment") and x["segment"] not in topics.SEGMENTS[t]: err(f"{x['id']}: segment {x['segment']} is not a {t} segment (topics.SEGMENTS)")
+        if t in PREFIX and not x["id"].startswith(PREFIX[t]): err(f"{x['id']}: {t} ids must start with '{PREFIX[t]}' (unique across topics)")
 for t in banks["stories"]:
-    if t["kind"] == "contact" and t["kw"] not in ("START", "NAME", "AFTER", "CHECKLIST"): err(f"{t['id']}: unknown keyword {t['kw']}")
+    if t["kind"] == "contact" and t["kw"] not in topics.BASES[t.get("topic") or "co"]: err(f"{t['id']}: keyword {t['kw']} is not one of its topic's keywords")
 for p in banks["posters"]:
     if p["layout"] not in ("fact", "myth", "deadline", "check"): err(f"{p['id']}: unknown layout {p['layout']}")
 
@@ -66,16 +70,19 @@ for x in banks["reels"]:
 
 # 4. no rupee sign and no service-price words in any bank text (statutory late fee "ലേറ്റ് ഫീ" is allowed)
 PRICE = re.compile(r"(^|[\s\"'(.,!?])(വില|വിലയ്ക്ക്|ഫീസ്|ചാർജ്|ചാർജ്ജ്|ഡിസ്കൗണ്ട്|ഓഫർ\s*വില|price|fee|fees|discount|cheap|affordable)($|[\s\"'),.!?])", re.I)
-for f in sorted(glob.glob(f"{ROOT}/bank/*.py")):
+for f in sorted(glob.glob(f"{ROOT}/bank/*.py") + glob.glob(f"{ROOT}/bank/*/*.py")):
     for k, line in enumerate(open(f, encoding="utf-8"), 1):
         if line.lstrip().startswith("#"): continue
+        line = re.sub(r"(?i)late[ -]fees?", "", line)   # statutory GST / ROC late fees are facts, not prices
         if "₹" in line: err(f"{os.path.basename(f)}:{k}: ₹ symbol")
         m = PRICE.search(line)
         if m: err(f"{os.path.basename(f)}:{k}: price word '{m.group(2)}' (only statutory penalties may appear)")
 
 # 4b. every rupee amount must be a statutory penalty (or penalty arithmetic / a quiz's wrong option already reviewed).
 #     A new amount fails here: if it really is penalty maths from the checked facts, add it to RUPEE_OK.
-RUPEE_OK = {"0", "100", "1,000", "6,000", "30,000", "50,000", "2,50,000", "1 ലക്ഷം", "10 ലക്ഷം", "ഒരു", "നൂറ്", "ആയിരം", "അമ്പതിനായിരം", "ഒരു ലക്ഷം", "ഇരുപതിനായിരം"}
+RUPEE_OK = {"0", "100", "1,000", "6,000", "30,000", "50,000", "2,50,000", "1 ലക്ഷം", "10 ലക്ഷം", "ഒരു", "നൂറ്", "ആയിരം", "അമ്പതിനായിരം", "ഒരു ലക്ഷം", "ഇരുപതിനായിരം",
+            # GST (topics.FACTS_GST): thresholds, penalty, late fees and their caps
+            "40 ലക്ഷം", "20 ലക്ഷം", "50 ലക്ഷം", "10,000", "പതിനായിരം", "50", "20", "500", "2,000", "അമ്പത്", "ഇരുപത്", "നാല്പത് ലക്ഷം", "ഇരുപത് ലക്ഷം"}
 RUPEE = re.compile(r"(\S+(?: ലക്ഷം)?) രൂപ")
 def texts(x):   # every string inside an item
     if isinstance(x, str): yield x

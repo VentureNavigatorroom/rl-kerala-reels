@@ -7,25 +7,31 @@ from common import ROOT
 import cover
 import speak_ml
 import captions
+import topics
 
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
 POSTER_V = 2   # bump when the poster look changes: unposted posters get re-rendered
 VERSION = 8   # bump when voices/look change: unposted reels from older versions get rebuilt
 
+def _load(prefix, attr):
+    """Every topic's bank files (bank/<prefix>*.py, bank/gst/<prefix>*.py, bank/inv/<prefix>*.py); each entry is tagged with its topic."""
+    out = []
+    for t, d in topics.DIRS.items():
+        for f in sorted(glob.glob(f"{ROOT}/{d}/{prefix}*.py")):
+            spec = importlib.util.spec_from_file_location(f"{t}_{os.path.basename(f)[:-3]}", f); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+            out += [dict(x, topic=x.get("topic", t)) for x in getattr(m, attr)]
+    return out
+def topic_of(x): return x.get("topic") or "co"
+def per_topic(target): return {t: int(round(target * sh)) for t, sh in topics.SHARE.items()}
+
 def load_bank():
-    S = []
-    for f in sorted(glob.glob(f"{ROOT}/bank/batch*.py")):
-        spec = importlib.util.spec_from_file_location(os.path.basename(f)[:-3], f); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-        S += m.S
+    S = _load("batch", "S")
     ids = [s["id"] for s in S]; assert len(ids) == len(set(ids)), "duplicate script ids"
     return S
 
 def load_carousels():
-    C = []
-    for f in sorted(glob.glob(f"{ROOT}/bank/carousels*.py")):
-        spec = importlib.util.spec_from_file_location(os.path.basename(f)[:-3], f); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-        C += m.C
+    C = _load("carousels", "C")
     ids = [c["id"] for c in C]; assert len(ids) == len(set(ids)), "duplicate carousel ids"
     return C
 
@@ -37,7 +43,7 @@ def with_kw(s, man):
     if not kw:
         want = (s.get("kw") or "").upper()
         cands = ([want] if want.isalpha() and len(want) >= 4 else []) + KW_POOL + [f"{w}{n}" for n in range(2, 50) for w in KW_POOL]
-        kw = next(k for k in cands if k not in reg and k not in ("START", "NAME", "AFTER", "CHECKLIST"))
+        kw = next(k for k in cands if k not in reg and k not in topics.ALL_BASES)
         reg[kw] = dict(item=s["id"], base=base)
     s["cta_caption"] = f"{base} അല്ലെങ്കിൽ {kw} എന്ന് കമന്റ് ചെയ്യൂ"
     s["cta"] = (f"{base} / {kw}", "എന്ന് കമന്റ് ചെയ്യൂ\n" + s["cta"][1]); s["kw"] = kw; s["base"] = base
@@ -46,20 +52,20 @@ def with_kw(s, man):
 def build_carousels(man, target):
     import carousel
     made = {c["id"] for c in man.setdefault("carousels", [])}
-    stock = sum(1 for c in man["carousels"] if not c.get("posted"))
-    for c in [c for c in load_carousels() if c["id"] not in made][:max(0, target - stock)]:
+    todo = []
+    for t, tt in per_topic(target).items():
+        stock = sum(1 for c in man["carousels"] if not c.get("posted") and topic_of(c) == t)
+        todo += [c for c in load_carousels() if c["id"] not in made and topic_of(c) == t][:max(0, tt - stock)]
+    for c in todo:
         c = with_kw(c, man)
         files = carousel.make(c, f"{LIB}/media", seed=abs(hash(c["id"])) % 3)
         cap = captions.caption(c, c["hook"].replace("\n", " "))
-        man["carousels"].append(dict(id=c["id"], segment=c["segment"], images=[f"media/{os.path.basename(p)}" for p in files], caption=cap, kw=c["kw"], base=c["base"], point=c["end"].replace("\n", " "), posted=None))
+        man["carousels"].append(dict(id=c["id"], topic=topic_of(c), segment=c["segment"], images=[f"media/{os.path.basename(p)}" for p in files], caption=cap, kw=c["kw"], base=c["base"], point=c["end"].replace("\n", " "), posted=None))
         print("carousel", c["id"], len(files), flush=True)
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
 
 def load_posters():
-    P = []
-    for f in sorted(glob.glob(f"{ROOT}/bank/posters*.py")):
-        spec = importlib.util.spec_from_file_location(os.path.basename(f)[:-3], f); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-        P += m.P
+    P = _load("posters", "P")
     ids = [p["id"] for p in P]; assert len(ids) == len(set(ids)), "duplicate poster ids"
     for p in P: assert p["layout"] in ("fact", "myth", "deadline", "check"), p["id"]
     return P
@@ -71,35 +77,36 @@ def build_posters(man, target):
     for q in man["posters"]:   # look v2: the CTA line under the keyword pill shows the whole promise (v1 cut it in half)
         if not q.get("posted") and q.get("pv", 1) < POSTER_V and q["id"] in bank:
             poster.make(bank[q["id"]], f"{LIB}/media/{q['id']}.jpg"); q["pv"] = POSTER_V; print("poster rebuilt", q["id"], flush=True)
-    stock = sum(1 for p in man["posters"] if not p.get("posted"))
-    for p in [p for p in load_posters() if p["id"] not in made][:max(0, target - stock)]:
+    todo = []
+    for t, tt in per_topic(target).items():
+        stock = sum(1 for p in man["posters"] if not p.get("posted") and topic_of(p) == t)
+        todo += [p for p in load_posters() if p["id"] not in made and topic_of(p) == t][:max(0, tt - stock)]
+    for p in todo:
         p = with_kw(p, man)
         poster.make(p, f"{LIB}/media/{p['id']}.jpg")
         cap = captions.caption(p, p["caption"].split("\n")[0])
-        man["posters"].append(dict(id=p["id"], segment=p["segment"], layout=p["layout"], image=f"media/{p['id']}.jpg", caption=cap, kw=p["kw"], base=p["base"], point=p["caption"].split("\n")[0], posted=None, pv=POSTER_V))
+        man["posters"].append(dict(id=p["id"], topic=topic_of(p), segment=p["segment"], layout=p["layout"], image=f"media/{p['id']}.jpg", caption=cap, kw=p["kw"], base=p["base"], point=p["caption"].split("\n")[0], posted=None, pv=POSTER_V))
         print("poster", p["id"], flush=True)
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
 
 def load_stories():
-    T = []
-    for f in sorted(glob.glob(f"{ROOT}/bank/stories*.py")):
-        spec = importlib.util.spec_from_file_location(os.path.basename(f)[:-3], f); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-        T += m.T
+    T = _load("stories", "T")
     ids = [t["id"] for t in T]; assert len(ids) == len(set(ids)), "duplicate story ids"
     return T
 
 def build_stories(man, target):
     """Standalone stories. A quiz becomes two queued stories (question, then answer)."""
     made = {x.get("src") for x in man.setdefault("stories", []) if x.get("src")}
-    stock = sum(1 for x in man["stories"] if not x.get("posted") and x.get("src"))
+    tgt = per_topic(target)
+    stock = {tp: sum(1 for x in man["stories"] if not x.get("posted") and x.get("src") and topic_of(x) == tp) for tp in tgt}
     for t in [t for t in load_stories() if t["id"] not in made]:
-        if stock >= target: break
+        if stock[topic_of(t)] >= tgt[topic_of(t)]: continue
         parts = ["q", "answer"] if t["kind"] == "quiz" else [None]
         for p in parts:
             sid = f"s_{t['id']}" + ("_a" if p == "answer" else "")
             cover.story_card(t, f"{LIB}/media/{sid}.jpg", part=p)
-            man["stories"].append(dict(id=sid, image=f"media/{sid}.jpg", src=t["id"], segment=t.get("segment"), kind=t["kind"] if p != "answer" else "answer", after=f"s_{t['id']}" if p == "answer" else None))
-            stock += 1
+            man["stories"].append(dict(id=sid, image=f"media/{sid}.jpg", src=t["id"], topic=topic_of(t), segment=t.get("segment"), kind=t["kind"] if p != "answer" else "answer", after=f"s_{t['id']}" if p == "answer" else None))
+            stock[topic_of(t)] += 1
     json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
 
 def manifest():
@@ -240,9 +247,11 @@ def main():
     for name, fn, env, dflt in (("carousels", build_carousels, "CAROUSEL_TARGET", "70"), ("stories", build_stories, "STORY_TARGET", "70"), ("posters", build_posters, "POSTER_TARGET", "70")):
         try: fn(man, int(os.environ.get(env, dflt)))
         except Exception as e: print(f"{name} build failed:", repr(e), flush=True); run_fail.append(f"{name}: {e!r}")
-    stock = sum(1 for i in man["items"] if not i.get("posted"))
+    stock = {t: sum(1 for i in man["items"] if not i.get("posted") and topic_of(i) == t) for t in topics.DIRS}
     if only: todo = [s for s in bank if s["id"] in only]
-    else: todo = pick(bank, man, max(0, target - stock))
+    else:   # each topic tops up its own stock; the lists are interleaved so the time budget is shared fairly
+        lists = [pick([s for s in bank if topic_of(s) == t], man, max(0, n - stock[t])) for t, n in per_topic(target).items()]
+        todo = [x for row in __import__("itertools").zip_longest(*lists) for x in row if x]
     print(f"stock {stock}, building {len(todo)}", flush=True)
     t0 = time.time()
     for s in todo:
@@ -259,9 +268,9 @@ def main():
         cover.make(s, info["cover_frame"], f"{LIB}/media/{s['id']}.jpg")
         cover.story(s, info["cover_frame"], f"{LIB}/media/{s['id']}_story.jpg")
         man.setdefault("stories", [])
-        man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"])]
+        man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"], topic=topic_of(s))]
         cap = captions.caption(s, s["hook"].replace("\n", " "))
-        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
+        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], topic=topic_of(s), kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
             video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)
@@ -269,7 +278,10 @@ def main():
     cl = len([c for c in load_carousels() if c["id"] not in {c["id"] for c in man.get("carousels", [])}])
     tl = len([t for t in load_stories() if t["id"] not in {x.get("src") for x in man.get("stories", [])}])
     pl = len([p for p in load_posters() if p["id"] not in {x["id"] for x in man.get("posters", [])}])
-    man["bank_left"] = dict(reel_scripts=left, carousels=cl, stories=tl, posters=pl); json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+    man["bank_left"] = dict(reel_scripts=left, carousels=cl, stories=tl, posters=pl)
+    built_ids = {x["id"] for k in ("items", "carousels", "posters") for x in man.get(k, [])} | {x.get("src") for x in man.get("stories", [])}
+    man["bank_left_by_topic"] = {t: {name: len([x for x in fn() if topic_of(x) == t and x["id"] not in built_ids]) for name, fn in (("reel_scripts", load_bank), ("carousels", load_carousels), ("stories", load_stories), ("posters", load_posters))} for t in topics.DIRS}
+    man["stock_by_topic"] = {t: {k: sum(1 for x in man.get(k, []) if not x.get("posted") and topic_of(x) == t) for k in ("items", "carousels", "posters", "stories")} for t in topics.DIRS}; json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
     # delete media no longer referenced by the manifest (old-version reels, pruned posts)
     keep = set()
     def walk(o):

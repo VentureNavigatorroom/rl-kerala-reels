@@ -8,34 +8,67 @@
 
 // Daily volume rises in stages (owner's plan, Nov 2026). A stage starts on its date unless KV "stage_hold" is set
 // (the monitor sets it when reach per post drops sharply or Instagram flags the account), or KV "stage_force" picks one.
-const STAGES = [
-  { from: "2026-11-01", reel: 5, carousel: 5, story: 5, poster: 0 },
+// Three topics share the one account but are run as if each had its own: own stages, stock, keywords, DM flow and lead label.
+// co = company registration (since 1 Nov), gst = GST registration and inv = investor agreements (both from 20 Nov, same ramp).
+const RAMP = (d0, d1, d2, d3, d4) => [
+  { from: d0, reel: 5, carousel: 5, story: 5, poster: 0 },
   // owner, 13 Nov: 0 followers so carousels/posters reach ~nobody; keep them at stage-0 numbers and give the planned increase to reels
-  { from: "2026-11-14", reel: 13, carousel: 5, story: 5, poster: 0 },
-  { from: "2026-11-21", reel: 21, carousel: 5, story: 5, poster: 0 },
-  { from: "2026-11-28", reel: 29, carousel: 5, story: 5, poster: 0 },
-  { from: "2026-12-05", reel: 35, carousel: 5, story: 5, poster: 0 },
+  { from: d1, reel: 13, carousel: 5, story: 5, poster: 0 },
+  { from: d2, reel: 21, carousel: 5, story: 5, poster: 0 },
+  { from: d3, reel: 29, carousel: 5, story: 5, poster: 0 },
+  { from: d4, reel: 35, carousel: 5, story: 5, poster: 0 },
 ];
+const TOPICS = {
+  co: { label: "COMPANY REG", noun: "company registration", storyShift: 0, stages: RAMP("2026-11-01", "2026-11-14", "2026-11-21", "2026-11-28", "2026-12-05") },
+  gst: { label: "GST", noun: "GST registration", storyShift: 22, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
+  inv: { label: "INVESTOR AGREEMENT", noun: "investor agreement", storyShift: 44, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
+};
+const STAGES = TOPICS.co.stages;
+const topicOf = x => (x && TOPICS[x.topic]) ? x.topic : "co";
+// Instagram allows 100 API posts per rolling 24 h (stories count; checked 14 Nov: quota_total 100). Keep a margin for retries.
+// When the topics together ask for more, posters go first, then carousels (down to 1 per topic, new topics first),
+// then reels of the new topics; company registration's reels are never cut.
+const DAILY_CAP = 96;
 const STORY_TIMES = [[8, 10], [13, 5], [18, 10], [20, 15], [22, 10]];   // story logic picks teaser / tip / quiz / contact by hour
-async function stageNow(env, day) {
-  const f = await env.STATE.get("stage_force"); if (f !== null && STAGES[+f]) return { i: +f, ...STAGES[+f] };
-  let i = 0; STAGES.forEach((st, k) => { if (day >= st.from) i = k; });
-  const hold = await env.STATE.get("stage_hold"); if (hold !== null && +hold < i) i = +hold;   // hold = highest stage allowed
-  return { i, ...STAGES[i] };
+async function stageNow(env, day, topic = "co") {
+  const ST = TOPICS[topic].stages, sfx = topic === "co" ? "" : "_" + topic;
+  const f = await env.STATE.get("stage_force" + sfx); if (f !== null && ST[+f]) return { i: +f, ...ST[+f] };
+  if (day < ST[0].from) return null;                                             // topic not started yet
+  let i = 0; ST.forEach((st, k) => { if (day >= st.from) i = k; });
+  for (const hk of ["stage_hold", "stage_hold" + sfx]) { const hold = await env.STATE.get(hk); if (hold !== null && +hold < i) i = +hold; }   // hold = highest stage allowed
+  return { i, ...ST[i] };
 }
-function slotsFor(st) {   // spread feed posts 07:05-22:45 IST, types interleaved, never within 12 min of a story
-  const out = STORY_TIMES.slice(0, st.story).map(([h, m]) => [h, m, "story"]);
-  const n = { reel: st.reel, carousel: st.carousel, poster: st.poster }, tot = st.reel + st.carousel + st.poster, seq = [], used = { reel: 0, carousel: 0, poster: 0 };
-  for (let k = 0; k < tot; k++) {   // pick the type furthest behind its share
-    const t = Object.keys(n).filter(x => used[x] < n[x]).sort((a, b) => used[a] / n[a] - used[b] / n[b])[0]; seq.push(t); used[t]++;
-  }
-  const start = 7 * 60 + 5, end = 22 * 60 + 45, storyMin = out.map(([h, m]) => h * 60 + m); let last = -99;
-  seq.forEach((t, k) => {
+async function planDay(env, day) {
+  const cap = +(await env.STATE.get("daily_cap") || DAILY_CAP); const stages = {}, plan = {};
+  for (const t of Object.keys(TOPICS)) { const st = await stageNow(env, day, t); if (st) { stages[t] = st; plan[t] = { reel: st.reel, carousel: st.carousel, story: st.story, poster: st.poster }; } }
+  const total = () => Object.values(plan).reduce((a, p) => a + p.reel + p.carousel + p.story + p.poster, 0);
+  const order = Object.keys(plan).sort((a, b) => (a === "co") - (b === "co"));   // new topics trimmed first
+  for (const t of order) while (total() > cap && plan[t].poster > 0) plan[t].poster--;
+  let cut = true; while (total() > cap && cut) { cut = false; for (const t of order) if (total() > cap && plan[t].carousel > 1) { plan[t].carousel--; cut = true; } }
+  const news = order.filter(t => t !== "co");
+  cut = true; while (total() > cap && cut) { cut = false; for (const t of news) if (total() > cap && plan[t].reel > 1) { plan[t].reel--; cut = true; } }
+  return { cap, stages, plan, total: total() };
+}
+function slotsFor(P) {   // P = planDay result (or one stage, old style). Feed posts spread 06:30-23:15 IST, topics and types interleaved
+  if (!P.plan) P = { plan: { co: P } };
+  const out = [];
+  for (const [t, p] of Object.entries(P.plan)) STORY_TIMES.slice(0, p.story).forEach(([h, m]) => { const x = h * 60 + m + TOPICS[t].storyShift; out.push([Math.floor(x / 60), x % 60, "story", t]); });
+  const feed = [];   // each post gets a position in its own topic+type series; merging by position interleaves everything evenly
+  for (const [t, p] of Object.entries(P.plan)) for (const k of ["reel", "carousel", "poster"]) for (let j = 0; j < p[k]; j++) feed.push({ pos: (j + 0.5) / p[k], k, t });
+  feed.sort((a, b) => a.pos - b.pos || (a.t < b.t ? -1 : 1));
+  const multi = Object.keys(P.plan).length > 1;   // company registration alone keeps its 07:05-22:45 day
+  const tot = feed.length, start = multi ? 6 * 60 + 30 : 7 * 60 + 5, end = multi ? 23 * 60 + 15 : 22 * 60 + 45, storyMin = out.map(([h, m]) => h * 60 + m); let last = -99;
+  const gap = tot > 40 ? 8 : 11, clear = tot > 40 ? 4 : 12;
+  feed.forEach((f, k) => {
     let m = Math.round(start + (end - start) * (k + 0.5) / tot);
-    while (storyMin.some(x => Math.abs(x - m) < 12) || m - last < 11) m++;
-    last = m; out.push([Math.floor(m / 60), m % 60, t]);
+    while (storyMin.some(x => Math.abs(x - m) < clear) || m - last < gap) m++;
+    last = m; out.push([Math.floor(m / 60), m % 60, f.k, f.t]);
   });
   return out.sort((a, b) => a[0] * 60 + a[1] - b[0] * 60 - b[1]);
+}
+async function quotaLeft(env) {   // posts left in Instagram's rolling 24 h window (null if Instagram won't say)
+  try { const r = await graph(env, `${env.IG_USER_ID}/content_publishing_limit`, { fields: "config,quota_usage" }, "GET"); const d = r.data?.[0]; return (d?.config?.quota_total ?? 100) - (d?.quota_usage ?? 0); }
+  catch (e) { return null; }
 }
 const TRIAL_SHARE = 0.4; // share of reels posted as trial reels (non-followers first) while the feature is available
 
@@ -76,13 +109,13 @@ async function waitReady(env, id) {
   }
   throw new Error("container not ready in time");
 }
-async function postReel(env) {
+async function postReel(env, topic = "co") {
   const m = await manifest(env); const posted = await kv(env, "posted", {});
-  const w = await kv(env, "weights", null);
-  const avail = m.items.filter(i => !posted[i.id]);
-  if (!avail.length) { await log(env, "NO STOCK: library empty"); await discord(env, "⚠️ Reel library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
-  if (avail.length < 35 && IST().getUTCHours() === 7 && IST().getUTCMinutes() < 30) await discord(env, `⚠️ Backup below 1 week: ${avail.length} reels left (target 70 = 2 weeks). Ask Claude to write more scripts.`);
-  const recent = Object.values(posted).sort((a, b) => b.t - a.t).slice(0, 2);
+  const w = await kv(env, "weights", null); const L = TOPICS[topic].label;
+  const avail = m.items.filter(i => !posted[i.id] && topicOf(i) === topic);
+  if (!avail.length) { await log(env, `NO STOCK: ${topic} reel library empty`); await alertOnce(env, "noreel_" + topic, `⚠️ [${L}] Reel library is empty. Nothing to post. Check the factory on GitHub.`); return; }
+  if (avail.length < 35 && IST().getUTCHours() === 7 && IST().getUTCMinutes() < 30) await alertOnce(env, "lowreel_" + topic, `⚠️ [${L}] Reel backup is low: ${avail.length} left. The refill task writes more scripts automatically.`);
+  const recent = Object.values(posted).filter(p => topicOf(p) === topic).sort((a, b) => b.t - a.t).slice(0, 2);
   const score = i => (w?.kind?.[i.kind] ?? 1) * (w?.segment?.[i.segment] ?? 1) * (recent.some(r => r.kind === i.kind) ? 0.5 : 1) * (0.8 + Math.random() * 0.4);
   const it = avail.sort((a, b) => score(b) - score(a))[0];
   const p = { media_type: "REELS", video_url: `${env.LIB_BASE}/${it.video}`, cover_url: `${env.LIB_BASE}/${it.cover}`, caption: fixCaption(it.caption), share_to_feed: "true" };
@@ -97,42 +130,42 @@ async function postReel(env) {
   }
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
-  posted[it.id] = { media: pub.id, t: Date.now(), kind: it.kind, segment: it.segment, scene: it.scene || null, trial: asTrial && !(await kv(env, "trial_unavailable", false)) };
-  await kvPut(env, "posted", posted); await log(env, `reel ${it.id} posted (${pub.id})${posted[it.id].trial ? " as trial" : ""}`);
+  posted[it.id] = { media: pub.id, t: Date.now(), topic, kind: it.kind, segment: it.segment, scene: it.scene || null, trial: asTrial && !(await kv(env, "trial_unavailable", false)) };
+  await kvPut(env, "posted", posted); await log(env, `${topic} reel ${it.id} posted (${pub.id})${posted[it.id].trial ? " as trial" : ""}`);
 }
-async function postStory(env) {
+async function postStory(env, topic = "co") {
   // daily mix: 1 new-reel teaser, then tip / quiz question / quiz answer / contact card, so people follow and reply
   const m = await manifest(env); const done = await kv(env, "stories", {});
-  const posted = await kv(env, "posted", {});
-  const all = (m.stories || []).filter(s => !done[s.id] && (!s.after || done[s.after]));
+  const posted = await kv(env, "posted", {}); const reelTopic = Object.fromEntries((m.items || []).map(i => [i.id, topicOf(i)]));
+  const all = (m.stories || []).filter(s => !done[s.id] && (!s.after || done[s.after]) && (s.topic ? s.topic : s.reel ? reelTopic[s.reel] || "co" : "co") === topic);
   const teasers = all.filter(s => s.reel && posted[s.reel]);           // only tease reels already live
   const others = all.filter(s => !s.reel);
   const hour = IST().getUTCHours();
   const pendingAnswer = others.find(s => s.after);
   let s = hour < 9 ? teasers[0] : (pendingAnswer || others.find(x => x.kind === (hour < 14 ? "tip" : hour < 19 ? "quiz" : "contact")) || others[0] || teasers[0]);
-  if (!s) { await log(env, "NO STORY STOCK"); await alertOnce(env, "nostory", "⚠️ Story library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
+  if (!s) { await log(env, `NO STORY STOCK (${topic})`); await alertOnce(env, "nostory_" + topic, `⚠️ [${TOPICS[topic].label}] Story library is empty. Nothing to post. Check the factory on GitHub.`); return; }
   const c = await graph(env, `${env.IG_USER_ID}/media`, { media_type: "STORIES", image_url: `${env.LIB_BASE}/${s.image}` });
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
   done[s.id] = { media: pub.id, t: Date.now() }; await kvPut(env, "stories", done);
-  posted[s.id] = { media: pub.id, t: Date.now(), kind: "story", segment: s.segment || null, story_kind: s.kind || "teaser" }; await kvPut(env, "posted", posted);
-  await log(env, `story ${s.id} posted`);
+  posted[s.id] = { media: pub.id, t: Date.now(), topic, kind: "story", segment: s.segment || null, story_kind: s.kind || "teaser" }; await kvPut(env, "posted", posted);
+  await log(env, `${topic} story ${s.id} posted`);
 }
 
-async function postCarousel(env) {
+async function postCarousel(env, topic = "co") {
   const m = await manifest(env); const posted = await kv(env, "posted", {});
   const extra = await kv(env, "extra_carousels", []);              // stop-gap stock pushed by Claude when the library has none
-  const avail = [...(m.carousels || []), ...extra.filter(e => !(m.carousels || []).some(c => c.id === e.id))].filter(c => !posted[c.id]);
-  if (!avail.length) { await log(env, "NO CAROUSEL STOCK"); await alertOnce(env, "nocarousel", "⚠️ Carousel library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
-  const recent = Object.values(posted).filter(p => p.kind === "carousel").sort((a, b) => b.t - a.t)[0];
+  const avail = [...(m.carousels || []), ...extra.filter(e => !(m.carousels || []).some(c => c.id === e.id))].filter(c => !posted[c.id] && topicOf(c) === topic);
+  if (!avail.length) { await log(env, `NO CAROUSEL STOCK (${topic})`); await alertOnce(env, "nocarousel_" + topic, `⚠️ [${TOPICS[topic].label}] Carousel library is empty. Nothing to post. Check the factory on GitHub.`); return; }
+  const recent = Object.values(posted).filter(p => p.kind === "carousel" && topicOf(p) === topic).sort((a, b) => b.t - a.t)[0];
   const c = avail.find(x => !recent || x.segment !== recent.segment) || avail[0];
   const kids = [];
   for (const img of c.images.slice(0, 10)) kids.push((await graph(env, `${env.IG_USER_ID}/media`, { image_url: img.startsWith("http") ? img : `${env.LIB_BASE}/${img}`, is_carousel_item: "true" })).id);
   const box = await graph(env, `${env.IG_USER_ID}/media`, { media_type: "CAROUSEL", children: kids.join(","), caption: fixCaption(c.caption) });
   await waitReady(env, box.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: box.id });
-  posted[c.id] = { media: pub.id, t: Date.now(), kind: "carousel", segment: c.segment };
-  await kvPut(env, "posted", posted); await log(env, `carousel ${c.id} posted (${pub.id})`);
+  posted[c.id] = { media: pub.id, t: Date.now(), topic, kind: "carousel", segment: c.segment };
+  await kvPut(env, "posted", posted); await log(env, `${topic} carousel ${c.id} posted (${pub.id})`);
 }
 
 // Instagram allows at most 5 hashtags per post (Dec 2025) and 2,200 characters: enforce both on every caption we publish.
@@ -140,16 +173,16 @@ function fixCaption(c) {
   let n = 0; c = String(c || "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, m => (++n <= 5 ? m : "")).replace(/[ \t]+\n/g, "\n").trimEnd();
   return c.slice(0, 2200);
 }
-async function postPoster(env) {   // single 4:5 image post
+async function postPoster(env, topic = "co") {   // single 4:5 image post
   const m = await manifest(env); const posted = await kv(env, "posted", {});
-  const avail = (m.posters || []).filter(p => !posted[p.id]);
-  if (!avail.length) { await log(env, "NO POSTER STOCK"); await alertOnce(env, "noposter", "⚠️ Poster library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
-  const recent = Object.values(posted).filter(p => p.kind === "poster").sort((a, b) => b.t - a.t)[0];
+  const avail = (m.posters || []).filter(p => !posted[p.id] && topicOf(p) === topic);
+  if (!avail.length) { await log(env, `NO POSTER STOCK (${topic})`); await alertOnce(env, "noposter_" + topic, `⚠️ [${TOPICS[topic].label}] Poster library is empty. Nothing to post. Check the factory on GitHub.`); return; }
+  const recent = Object.values(posted).filter(p => p.kind === "poster" && topicOf(p) === topic).sort((a, b) => b.t - a.t)[0];
   const p = avail.find(x => !recent || (x.layout !== recent.layout && x.segment !== recent.segment)) || avail.find(x => !recent || x.layout !== recent.layout) || avail[0];
   const c = await graph(env, `${env.IG_USER_ID}/media`, { image_url: `${env.LIB_BASE}/${p.image}`, caption: fixCaption(p.caption) });
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
-  posted[p.id] = { media: pub.id, t: Date.now(), kind: "poster", segment: p.segment, layout: p.layout };
+  posted[p.id] = { media: pub.id, t: Date.now(), topic, kind: "poster", segment: p.segment, layout: p.layout };
   await kvPut(env, "posted", posted); await log(env, `poster ${p.id} posted (${pub.id})`);
 }
 
@@ -180,7 +213,7 @@ async function snapshot(env) {
     } catch (e) { v = { error: String(e.message).slice(0, 80) }; }
     const ev = await kv(env, `ev:${id}`, { comments: 0, keyword: {}, leads: 0, dms: 0 });
     const posted_ist = IST(new Date(p.t));
-    const row = { day, id, kind: p.kind, segment: p.segment, scene: p.scene || null, layout: p.layout || null, trial: !!p.trial,
+    const row = { day, id, topic: topicOf(p), kind: p.kind, segment: p.segment, scene: p.scene || null, layout: p.layout || null, trial: !!p.trial,
       posted_at: posted_ist.toISOString().slice(0, 16), weekday: posted_ist.getUTCDay(), slot: posted_ist.toISOString().slice(11, 16),
       age_days: Math.round(age * 10) / 10, ...v, keyword_comments: Object.values(ev.keyword).reduce((a, b) => a + b, 0), keywords: ev.keyword, dms: ev.dms, leads: ev.leads };
     const k = `snap:${id}`; const hist = await kv(env, k, []); hist.push(row); await kvPut(env, k, hist.slice(-31));
@@ -217,8 +250,8 @@ async function optimise(env) {
   await kvPut(env, "weights", weights); await kvPut(env, "slot_report", slotRep);
   await log(env, `optimiser: ${JSON.stringify(weights)}`);
   if (IST().getUTCDay() === 1) {                                           // Monday summary to Discord
-    const top = [...rows].sort((a, b) => b.score - a.score).slice(0, 3).map(r => `${r.id} (${r.kind}/${r.segment}, ${r.slot}): reach ${r.reach}, shares ${r.shares || 0}, keyword ${r.keyword_comments}, leads ${r.leads}`).join("\n");
-    await discord(env, `📈 Weekly insights (${rows.length} posts judged)\nTop posts:\n${top || "not enough data yet"}\nMix weights: ${JSON.stringify({ kind: weights.kind, segment: weights.segment })}\nTimes are only being measured for now; no time changes until 3+ weeks of data.`);
+    const top = Object.keys(TOPICS).map(t => { const r3 = rows.filter(r => topicOf(r) === t).sort((a, b) => b.score - a.score).slice(0, 3); return r3.length ? `[${TOPICS[t].label}]\n` + r3.map(r => `${r.id} (${r.kind}/${r.segment}, ${r.slot}): reach ${r.reach}, shares ${r.shares || 0}, keyword ${r.keyword_comments}, leads ${r.leads}`).join("\n") : ""; }).filter(Boolean).join("\n");
+    await discord(env, `📈 Weekly insights (${rows.length} posts judged)\nTop posts per topic:\n${top || "not enough data yet"}\nMix weights: ${JSON.stringify({ kind: weights.kind, segment: weights.segment })}\nTimes are only being measured for now; no time changes until 3+ weeks of data.`);
   }
 }
 
@@ -242,11 +275,47 @@ const FALLBACK_Q = [
   "Would you prefer the call in Malayalam or English?",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
-function fallbackReply(thread) {
+const RULES_COMMON = `Rules: Always reply in simple, friendly English (even if the user writes in Malayalam or Manglish), short, max 3 sentences. Write like the rejectionlist.kerala team; do not introduce yourself as an assistant, AI or bot and do not mention automation. If the user directly asks whether this is a bot or a real person, do not claim to be human: say these chats give quick answers and a team member will call them personally.
+NEVER state any price, fee, cost, discount or our charges; if asked, say the team will share the exact quote on a call after understanding their case. Never give legal or tax advice beyond general facts.`;
+const BOT_GST = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that handles GST registration (and company registration and investor agreements).
+${RULES_COMMON}
+General facts you may use: in Kerala GST registration is needed once yearly turnover crosses Rs 40 lakh for goods or Rs 20 lakh for services; selling goods to other states needs GST from the first sale whatever the turnover; selling goods on Amazon, Flipkart or Meesho needs GST from the first sale too, except a small seller below the limit who sells only within Kerala may use a PAN-based enrolment if the marketplace allows it; anyone may register voluntarily (B2B clients often want a GSTIN); a proprietor needs PAN, Aadhaar with its linked mobile, a photo, business address proof and bank proof. Do not judge someone's exact liability; say the team will check it on the call.
+Goal: qualify the lead by asking, one at a time:
+1) what the business sells or does, and whether it is a proprietorship, partnership, LLP or company, 2) roughly how much turnover this year or expected, 3) whether they sell to other states or through online marketplaces, 4) how soon they need the GSTIN, 5) their phone number, 6) preferred language for the call: Malayalam or English.
+When you have all six, thank them and say a team member will call. Output only the reply text.`;
+const BOT_INV = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that drafts investor agreements (term sheets, share subscription and shareholders' agreements) for both founders raising money and people investing (and also does company and GST registration).
+${RULES_COMMON}
+General facts you may use: only a private limited company can take equity investment; a term sheet is mostly non-binding except clauses like confidentiality and exclusivity; the shareholders' agreement sets rights such as board seats, share transfer limits and exits, and the company's articles must be updated for those rights to bind the company; shares must be allotted within 60 days of receiving the money; foreign or NRI investment on repatriation basis must be reported to RBI within 30 days of allotment. Never say whether a specific deal is fair or safe; the team will review it on the call.
+Goal: qualify the lead by asking, one at a time:
+1) are they a founder raising money or an investor putting money in, 2) is the company already a private limited company (and what does it do), 3) who is investing: friends and family, angel, NRI or foreign investor, or a fund, 4) how soon the deal needs to close, 5) their phone number, 6) preferred language for the call: Malayalam or English.
+When you have all six, thank them and say a team member will call. Output only the reply text.`;
+const FALLBACK_GST = [
+  "What does your business sell or do? Is it a proprietorship, partnership, LLP or company?",
+  "Roughly how much turnover do you have this year, or expect?",
+  "Do you sell to other states, or through Amazon, Flipkart, Meesho or similar?",
+  "How soon do you need the GST number?",
+  "Could you share a phone number so our team can call you?",
+  "Would you prefer the call in Malayalam or English?",
+  "Thank you! 🙏 Our team will call you shortly.",
+];
+const FALLBACK_INV = [
+  "Are you a founder raising money, or an investor putting money into a company?",
+  "Is the company already a private limited company? What does it do?",
+  "Who is investing: friends and family, an angel, an NRI or foreign investor, or a fund?",
+  "How soon does the deal need to close?",
+  "Could you share a phone number so our team can call you?",
+  "Would you prefer the call in Malayalam or English?",
+  "Thank you! 🙏 Our team will call you shortly.",
+];
+const BOT = { co: () => ({ sys: BOT_SYSTEM, fq: FALLBACK_Q }), gst: () => ({ sys: BOT_GST, fq: FALLBACK_GST }), inv: () => ({ sys: BOT_INV, fq: FALLBACK_INV }) };
+function fallbackReply(thread, topic = "co") {
+  const FALLBACK_Q = BOT[topic]().fq;
   const last = thread[thread.length - 1]?.content || "";
-  const asked = thread.filter(m => m.role === "assistant" && FALLBACK_Q.includes(m.content)).length;
+  const said = thread.filter(m => m.role === "assistant").map(m => m.content).join("\n");   // keyword replies already ask some of these
+  let asked = FALLBACK_Q.findIndex(q => !said.includes(q.split(/[?!]/)[0].split(" ").slice(0, 4).join(" ")));
+  if (asked < 0) asked = FALLBACK_Q.length - 1;
   let pre = "";
-  if (/\b(pvt|ltd|private|limited|llp|opc)\b/i.test(last) || /പ്രൈവറ്റ്|ലിമിറ്റഡ്/.test(last)) {
+  if (topic === "co" && /\b(pvt|ltd|private|limited|llp|opc)\b/i.test(last) || /പ്രൈവറ്റ്|ലിമിറ്റഡ്/.test(last)) {
     const hits = ["bank", "insurance", "ബാങ്ക്", "ഇൻഷുറൻസ്"].filter(x => last.toLowerCase().includes(x));
     pre = hits.length ? `Words like "${hits[0]}" need special approval, so this name could be rejected. ` : "No restricted words in this name. It must also not be similar to an existing company, LLP or registered trademark. ";
     pre += "Final availability is confirmed only when the application is filed.\n\n";
@@ -254,33 +323,38 @@ function fallbackReply(thread) {
   if (/price|fee|cost|charge|rate|എത്ര രൂപ|ചാർജ്|ഫീസ്/i.test(last)) pre = "Our team will share the exact quote on a call once they understand your business. ";
   return pre + FALLBACK_Q[Math.min(asked, FALLBACK_Q.length - 1)];
 }
-async function botReply(env, thread) {
+async function botReply(env, thread, topic = "co") {
   try {
-    const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: BOT_SYSTEM }, ...thread.slice(-12)], max_tokens: 220 });
+    const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: BOT[topic]().sys }, ...thread.slice(-12)], max_tokens: 220 });
     const t = (r.response || "").trim(); if (t) return t;
   } catch (e) { await log(env, `AI unavailable, using fallback: ${String(e.message).slice(0, 80)}`); }
-  return fallbackReply(thread);
+  return fallbackReply(thread, topic);
 }
-const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed)/i;
-function regexLead(thread) {   // no AI: read each answer that follows our question
+const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing)/i;
+function regexLead(thread, topic = "co") {   // no AI: read each answer that follows our question
   const users = thread.filter(m => m.role === "user" && !BTN.test(m.content.trim()));
   const all = users.map(m => m.content).join(" \n ");
   const phone = (all.replace(/[\s-]/g, "").match(/(?:\+?91)?[6-9]\d{9}/) || [""])[0];
-  const ans = re => { for (let i = 0; i < thread.length - 1; i++) if (thread[i].role === "assistant" && re.test(thread[i].content)) { const n = thread.slice(i + 1).find(m => m.role === "user"); if (n && !BTN.test(n.content.trim()) && !/^\+?\d[\d\s-]{8,}$/.test(n.content.trim())) return n.content.slice(0, 120); } return ""; };
-  const business = ans(/what does your business do|business do\?/i) || users[0]?.content?.slice(0, 120) || "";
-  const traction = ans(/income|clients|funding/i), timeline = ans(/how soon|when .*register|timeline/i);
+  const ans = re => { for (let i = thread.length - 2; i >= 0; i--) if (thread[i].role === "assistant" && re.test(thread[i].content)) { const n = thread.slice(i + 1).find(m => m.role === "user"); if (n && !BTN.test(n.content.trim()) && !/^\+?\d[\d\s-]{8,}$/.test(n.content.trim())) return n.content.slice(0, 120); } return ""; };
+  const business = ans(/what does your business (do|sell)|business do\?|founder raising money|private limited company\? what/i) || users[0]?.content?.slice(0, 120) || "";
+  const traction = ans(/income|clients|funding|turnover|who is investing/i), timeline = ans(/how soon|when .*register|timeline|deal need/i);
   const strong = traction && !/^(no|not|nothing|illa|ഇല്ല)/i.test(traction.trim()), soon = /asap|soon|immediately|this (week|month)|now|urgent|ഉടൻ/i.test(timeline);
-  return { business, founders: ans(/how many founders|founders/i), nri: /nri|gulf|dubai|saudi|qatar|ഗൾഫ്|ദുബായ്|സൗദി|ഖത്തർ|മസ്കറ്റ്/i.test(all), traction, timeline,
+  return { topic, business, role: ans(/founder raising money/i), interstate: ans(/other states|amazon/i), founders: ans(/how many founders|founders/i), nri: /nri|gulf|dubai|saudi|qatar|ഗൾഫ്|ദുബായ്|സൗദി|ഖത്തർ|മസ്കറ്റ്/i.test(all), traction, timeline,
     phone, language: /english|ഇംഗ്ലീഷ്/i.test(all) ? "English" : /malayalam|മലയാളം/i.test(all) ? "Malayalam" : "", intent: !phone ? "low" : strong && soon ? "high" : "medium", can_afford_30k: strong ? "likely" : "unclear", reason: "Summary made without AI; open the chat for details" };
 }
-async function extractLead(env, thread) {
+const LEAD_SCHEMA = {
+  co: `{"business":"","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  gst: `{"business":"what they sell and the business type","founders":"","nri":false,"traction":"turnover this year or expected","interstate":"sells to other states / online marketplaces?","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  inv: `{"role":"founder raising | investor investing","business":"company and what it does, Pvt Ltd or not","founders":"","nri":false,"traction":"who is investing (friends/family, angel, NRI/foreign, fund)","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+};
+async function extractLead(env, thread, topic = "co") {
   let r;
   try { r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
-    { role: "system", content: `From this conversation, output JSON only: {"business":"","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}. "can_afford_30k" judges from traction, funding, urgency and team, never from asking about money.` },
+    { role: "system", content: `From this conversation, output JSON only: ${LEAD_SCHEMA[topic]}. "nri" is true if the person or an investor lives abroad. "can_afford_30k" judges from traction, funding, urgency and team, never from asking about money.` },
     { role: "user", content: thread.map(m => `${m.role}: ${m.content}`).join("\n") }], max_tokens: 300 }); }
-  catch (e) { return regexLead(thread); }
-  try { const j = typeof r.response === "object" && r.response ? r.response : JSON.parse(String(r.response || "").match(/\{[\s\S]*\}/)[0]); const rx = regexLead(thread);
-    return { ...j, phone: j.phone || rx.phone, language: j.language || rx.language }; } catch { return regexLead(thread); }
+  catch (e) { return regexLead(thread, topic); }
+  try { const j = typeof r.response === "object" && r.response ? r.response : JSON.parse(String(r.response || "").match(/\{[\s\S]*\}/)[0]); const rx = regexLead(thread, topic);
+    return { ...j, topic, phone: j.phone || rx.phone, language: j.language || rx.language }; } catch { return regexLead(thread, topic); }
 }
 async function igProfile(env, igsid) {
   try { const p = await graph(env, igsid, { fields: "username,is_user_follow_business" }, "GET"); return { username: p.username || null, follows: typeof p.is_user_follow_business === "boolean" ? p.is_user_follow_business : null }; }
@@ -288,9 +362,13 @@ async function igProfile(env, igsid) {
 }
 // Keyword matching that tolerates typos, spacing, case, and Malayalam spellings
 // (e.g. "strat", "Satrt🙏", "chek list", "nmae", "സ്റ്റാർട്ട്"), without firing on ordinary words like "star", "game" or "alter".
-const KEYWORDS = ["START", "NAME", "AFTER", "CHECKLIST"];
-const KW_ML = [[/സ്റ്റാർ?ട്ട?്?|സ്റ്റാട്ട്/, "START"], [/നെയിം|നേം|നെയിമ്/, "NAME"], [/ആഫ്റ്റർ|ആഫ്ടർ/, "AFTER"], [/ചെക്ക്[\s\u200c\u200d]*ലിസ്റ്റ്|ചെക്ലിസ്റ്റ്/, "CHECKLIST"]];
-const KW_STOP = new Set(["star", "stars", "stat", "stats", "smart", "stark", "tart", "starts", "same", "came", "game", "fame", "lame", "tame", "made", "dame", "nam", "alter", "afer", "hater"]);
+const KW_TOPIC = { START: "co", NAME: "co", AFTER: "co", CHECKLIST: "co", GST: "gst", LIMIT: "gst", PENALTY: "gst", INVEST: "inv", TERMSHEET: "inv", FUNDING: "inv" };
+const KEYWORDS = Object.keys(KW_TOPIC);
+const KW_UPPER_IN_LONG = new Set(["AFTER", "GST", "LIMIT", "PENALTY", "INVEST", "FUNDING", "TERMSHEET"]);   // ordinary words: in a long comment they count only when written in capitals
+const KW_NOFUZZ = new Set(["GST"]);   // too short to guess typos safely
+const KW_ML = [[/സ്റ്റാർ?ട്ട?്?|സ്റ്റാട്ട്/, "START"], [/നെയിം|നേം|നെയിമ്/, "NAME"], [/ആഫ്റ്റർ|ആഫ്ടർ/, "AFTER"], [/ചെക്ക്[\s\u200c\u200d]*ലിസ്റ്റ്|ചെക്ലിസ്റ്റ്/, "CHECKLIST"],
+  [/ജി[\s.]*എസ്[\s.]*ടി|ജിഎസ്ടി/, "GST"], [/ലിമിറ്റ്(?![\u0D00-\u0D7F])/, "LIMIT"], [/പെനാൽ?റ്റി/, "PENALTY"], [/ഇൻവെസ്റ്റ്(?![\u0D00-\u0D7F])/, "INVEST"], [/ടേം[\s\u200c]*ഷീറ്റ്/, "TERMSHEET"], [/ഫണ്ടിം?ഗ്/, "FUNDING"]];
+const KW_STOP = new Set(["star", "stars", "stat", "stats", "smart", "stark", "tart", "starts", "same", "came", "game", "fame", "lame", "tame", "made", "dame", "nam", "alter", "afer", "hater", "invent", "invents", "finding", "fending", "funding's", "limbo", "lima", "omit", "vomit", "penalt", "gift"]);
 function editDist(a, b) {   // Damerau-Levenshtein (adjacent swaps count as one edit)
   const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
   for (let j = 1; j <= b.length; j++) d[0][j] = j;
@@ -300,9 +378,10 @@ function editDist(a, b) {   // Damerau-Levenshtein (adjacent swaps count as one 
   }
   return d[a.length][b.length];
 }
-async function uniqueKw(env, text) {
+async function uniqueKw(env, text, item = null) {
   const toks = (text.toUpperCase().match(/[A-Z]+[0-9]*/g) || []).filter(t => t.length >= 3); if (!toks.length) return null;
-  try { const map = (await manifest(env)).kwmap || {}; for (const t of toks) if (map[t] && KEYWORDS.includes(map[t].base)) return { kw: t, ...map[t] }; } catch (e) {}
+  // an own keyword that is also a general keyword of another topic (old posts used INVEST, LIMIT...) counts only on its own post
+  try { const map = (await manifest(env)).kwmap || {}; for (const t of toks) if (map[t] && KEYWORDS.includes(map[t].base) && (!KW_TOPIC[t] || map[t].item === item)) return { kw: t, ...map[t] }; } catch (e) {}
   return null;
 }
 function matchKeyword(text) {
@@ -310,10 +389,10 @@ function matchKeyword(text) {
   const w = (text.toLowerCase().match(/[a-z]+/g) || []);
   const toks = [...w, ...w.slice(1).map((x, i) => w[i] + x)];   // "check list" -> "checklist"
   const long = w.length > 4;   // in a long comment only a clear keyword counts, and "after" only when written AFTER
-  for (const t of toks) for (const kw of KEYWORDS) if (t === kw.toLowerCase() && !(long && kw === "AFTER" && !/\bAFTER\b/.test(text))) return kw;   // exact first
+  for (const t of toks) for (const kw of KEYWORDS) if (t === kw.toLowerCase() && !(long && KW_UPPER_IN_LONG.has(kw) && !new RegExp(`\\b${kw}\\b`).test(text.replace(/TERM\s+SHEET/g, "TERMSHEET")))) return kw;   // exact first
   for (const t of toks) {
     if (t.length < 3 || KW_STOP.has(t)) continue;
-    for (const kw of long ? ["CHECKLIST"] : KEYWORDS) if (editDist(t, kw.toLowerCase()) <= (kw.length >= 8 ? 2 : 1)) return kw;
+    for (const kw of long ? ["CHECKLIST"] : KEYWORDS.filter(k => !KW_NOFUZZ.has(k))) if (editDist(t, kw.toLowerCase()) <= (kw.length >= 8 ? 2 : 1)) return kw;
   }
   return null;
 }
@@ -358,7 +437,7 @@ async function monitorAllowed(req, u) {
   if (req.method !== "POST") return false;
   const b = await req.clone().json().catch(() => ({}));
   if (p === "/ops/run") return ["slots", "snapshot", "optimise", "poll", "nudge"].includes(b.what) && !b.id;
-  if (p === "/ops/flag") return b.k === "stage_hold";
+  if (p === "/ops/flag") return /^stage_hold(_gst|_inv)?$/.test(b.k);
   if (p === "/ops/graph") return (b.method || "GET") === "GET";
   return false;
 }
@@ -380,7 +459,7 @@ async function bumpPost(env, item, field, n = 1) {        // live engagement cou
 // Someone who only commented cannot be DM'd a second time, so they get one public reply under their comment instead.
 const NUDGE_AT = [2, 9, 22].map(h => h * 3600e3), NUDGE_GAP = 3 * 3600e3, NUDGE_MAX_TOTAL = 6, NUDGE_COMMENT_AT = 3 * 3600e3;
 const NUDGE_OPEN = [
-  "Hey, just checking in 👋 We were halfway through your company registration chat and didn't want to leave you hanging.",
+  "Hey, just checking in 👋 We were halfway through your {noun} chat and didn't want to leave you hanging.",
   "Hi again 🙂 No rush at all. One quick answer and we can take this forward for you.",
   "Last check from our side 🙏 If you'd still like our team to call you, just reply here and we'll pick up where we stopped.",
 ];
@@ -392,13 +471,14 @@ const OPT_OUT = /^\s*(stop|unsubscribe|not interested|no thanks|no thank you|don
 function nudgeText(thread, meta, n) {   // check-in line + the exact step they stopped on, so a reply continues the normal flow
   const lastA = [...thread].reverse().find(m => m.role === "assistant")?.content || "";
   if (/will call you/i.test(lastA)) return null;                       // flow already finished
-  const open = NUDGE_OPEN[Math.min(n, NUDGE_OPEN.length - 1)];
+  const topic = TOPICS[meta?.topic] ? meta.topic : "co";
+  const open = NUDGE_OPEN[Math.min(n, NUDGE_OPEN.length - 1)].replace("{noun}", TOPICS[topic].noun);
   if (meta?.pending_kw) return { text: `${open}\n\nYour guide is ready. Follow @rejectionlist.kerala, then tap the button below and we'll send it right away.`, buttons: ["I've followed ✅"] };
   const qLine = lastA.split("\n").reverse().find(l => l.includes("?")) || "";               // the question(s) they were last asked, as written
   let q = (qLine.match(/[^.!?•✅📄🏠📝]*\?/gu) || []).map(x => x.trim()).filter(Boolean).join(" ");
   if (!q && /name you have in mind/i.test(lastA)) q = "Which company name do you have in mind? Send it here and we'll give it a first review.";
   if (!q) q = "Shall we continue? Reply here and we'll pick up right where we stopped.";
-  const buttons = /malayalam or english/i.test(q) ? ["Malayalam", "English"] : Object.values(KEYWORD_REPLY).some(r => lastA.endsWith(r.slice(-60))) ? NEXT_BUTTONS : [];
+  const buttons = /malayalam or english/i.test(q) ? ["Malayalam", "English"] : Object.values(KEYWORD_REPLY).some(r => lastA.endsWith(r.slice(-60))) ? NEXT[topic] : [];
   return { text: `${open}\n\n${q}`, buttons };
 }
 function nudgeStat(nx, field) { const day = IST().toISOString().slice(0, 10); if (nx._s?.day !== day) nx._s = { day }; nx._s[field] = (nx._s[field] || 0) + 1; }
@@ -448,7 +528,7 @@ async function processNudges(env, force = null) {
       await log(env, `check-in ${e.n + 1} sent to @${meta.username || id}`);
       if (L?.phone && !L.alerted && L.intent !== "low") {                          // gave a number but stopped: still worth a call
         const all = await kv(env, "leads", {}); if (all[id]) { all[id].alerted = true; await kvPut(env, "leads", all); leads = all; }
-        await discord(env, `🔔 **Lead stopped midway, but left a number** (${L.intent} intent)\n📞 ${L.phone}  ·  🗣 ${L.language || "not answered"}\n🏢 ${L.business || "?"}\n📍 Came from: ${L.source_item || "?"}\nThey went quiet about ${Math.round(age / 3600e3)} h ago; a check-in message has been sent.\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
+        await discord(env, `🔔 **[${TOPICS[L.topic]?.label || TOPICS.co.label}] Lead stopped midway, but left a number** (${L.intent} intent)\n📞 ${L.phone}  ·  🗣 ${L.language || "not answered"}\n🏢 ${L.business || "?"}\n📍 Came from: ${L.source_item || "?"}\nThey went quiet about ${Math.round(age / 3600e3)} h ago; a check-in message has been sent.\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
       }
     } catch (err) { await log(env, `ERROR check-in ${id}: ${String(err.message).slice(0, 90)}`); ops[id] = null; }
   }
@@ -500,7 +580,7 @@ async function handleWebhook(env, body) {
         await sendDM(env, uid, bye); await log(env, `opt-out from ${uid}`); continue;
       }
       if (meta.no_nudge) delete meta.no_nudge;                       // they started talking again
-      if (ev.message.reply_to?.story?.id) meta.sources.push({ via: "story_reply", media: ev.message.reply_to.story.id, t: Date.now() });
+      if (ev.message.reply_to?.story?.id) { meta.sources.push({ via: "story_reply", media: ev.message.reply_to.story.id, t: Date.now() }); if (!meta.topic) meta.topic = await itemTopic(env, await mediaToItem(env, ev.message.reply_to.story.id)); }
       if (!meta.sources.length) meta.sources.push({ via: "dm", t: Date.now() });
       await kvPut(env, `m:${uid}`, meta);
       const src = meta.sources[0]; if (src.media) await bumpPost(env, await mediaToItem(env, src.media), "dms");
@@ -516,6 +596,8 @@ async function handleWebhook(env, body) {
         const dk = short ? ((await uniqueKw(env, ev.message.text))?.base || matchKeyword(ev.message.text)) : null;
         if (dk) { meta.pending_kw = dk; meta.follow_asks = 0; await log(env, `keyword ${dk} via DM from @${meta.username || uid}`); }
       }
+      if (meta.pending_kw && KW_TOPIC[meta.pending_kw]) meta.topic = KW_TOPIC[meta.pending_kw];
+      const topic = TOPICS[meta.topic] ? meta.topic : "co";
       let reply, buttons = [];
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {
         // soft follow gate: ask to follow, re-check when they say they did, and after two tries send it anyway (never block a lead)
@@ -528,30 +610,30 @@ async function handleWebhook(env, body) {
           reply = pre ? KEYWORD_REPLY[meta.pending_kw].replace(/^Here you go!/, pre) : KEYWORD_REPLY[meta.pending_kw];
           for (const k2 of meta.pending_more || []) if (KEYWORD_REPLY[k2]) reply += "\n\n———\n\nYou also asked on another post:\n\n" + KEYWORD_REPLY[k2].replace(/^Here you go!\s*/, "");
           delete meta.pending_more;
-          buttons = NEXT_BUTTONS;
+          buttons = NEXT[topic];
           await log(env, `sent ${meta.pending_kw} resource to @${meta.username || uid} (follows: ${prof.follows})`);
           delete meta.pending_kw; meta.follow_asks = 0; meta.served = true;
         }
         await kvPut(env, `m:${uid}`, meta);
-      } else { await kvPut(env, `m:${uid}`, meta); reply = await botReply(env, thread); }
+      } else { await kvPut(env, `m:${uid}`, meta); reply = await botReply(env, thread, topic); }
       thread.push({ role: "assistant", content: reply });
       await kvPut(env, key, thread); await sendDM(env, uid, reply, buttons);
       let flowDone = false;
       const uMsgs = thread.filter(m => m.role === "user"); const pIdx = uMsgs.findIndex(m => /\d{10}/.test(m.content.replace(/\D/g, "")));
       if (pIdx >= 0 || thread.length >= 12) {
-        const lead = await extractLead(env, thread);
+        const lead = await extractLead(env, thread, topic);
         if (lead) {
           const leads = await kv(env, "leads", {}); const prev = leads[uid];
           const meta2 = await kv(env, `m:${uid}`, { sources: [] }); const s0 = meta2.sources[0] || {};
           const fromItem = s0.media ? await mediaToItem(env, s0.media) : "direct";
           flowDone = !!(lead.phone && lead.language);
           const ready = lead.phone && (lead.language || uMsgs.length - 1 - pIdx >= 2);   // wait for the call language (or two more messages) so the alert is complete
-          leads[uid] = { ...lead, alerted: prev?.alerted || false, ig_user: uid, source_item: fromItem, source_keyword: s0.keyword || null, source_via: s0.via || "dm", status: prev?.status || "new", updated: IST().toISOString().slice(0, 16) };
+          leads[uid] = { ...lead, topic, alerted: prev?.alerted || false, ig_user: uid, source_item: fromItem, source_keyword: s0.keyword || null, source_via: s0.via || "dm", status: prev?.status || "new", updated: IST().toISOString().slice(0, 16) };
           await kvPut(env, "leads", leads); await log(env, `lead ${uid}: ${lead.intent}/${lead.can_afford_30k} from ${fromItem}`);
           if (!prev) await bumpPost(env, fromItem, "leads");
           if (ready && !prev?.alerted && lead.intent !== "low") {
             leads[uid].alerted = true; await kvPut(env, "leads", leads);
-            await discord(env, `🔔 **New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`, true);
+            await discord(env, `🔔 **[${TOPICS[topic].label}] New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}${lead.role ? "\n🧭 " + lead.role : ""}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders || "-"}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}${lead.interstate ? "\n🚚 " + lead.interstate : ""}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`, true);
           }
         }
       }
@@ -570,12 +652,13 @@ async function handleWebhook(env, body) {
       await log(env, `comment from @${who}${ch.value.parent_id ? " (reply in thread)" : ""}: ${ch.value.text.slice(0, 60)}`);
       if ((ch.value.from?.id && ch.value.from.id === env.IG_USER_ID) || (ch.value.from?.username || "").toLowerCase() === OWN_USERNAME) continue;   // our own comments
       const item = await mediaToItem(env, ch.value.media?.id); await bumpPost(env, item, "comments");
-      const uq = await uniqueKw(env, ch.value.text);                 // the post's own keyword ("LAUNCH") maps to its general one
+      const uq = await uniqueKw(env, ch.value.text, item);                 // the post's own keyword ("LAUNCH") maps to its general one
       const k0 = uq ? uq.base : matchKeyword(ch.value.text); if (!k0) { await commentReply(env, ch.value, item); continue; } const m = [k0, k0];
       if (uq) { await bumpPost(env, item, "kw:" + uq.kw); await log(env, `own keyword ${uq.kw} (${uq.base}, post ${uq.item})`); }
       await bumpPost(env, item, "kw:" + m[1].toUpperCase());
       if (ch.value.from?.id) {                                       // remember where this person came from, per keyword
         const mk = `m:${ch.value.from.id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
+        meta.topic = KW_TOPIC[m[1].toUpperCase()] || meta.topic;
         if (!meta.sources.some(s => s.comment === ch.value.id)) meta.sources.push({ via: "comment", keyword: m[1].toUpperCase(), media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() });
         await kvPut(env, mk, meta);
       }
@@ -588,7 +671,7 @@ async function handleWebhook(env, body) {
           : await sendMsg(env, { comment_id: ch.value.id }, directReply(env, kw, item, hook, point));
         if (!inbound && r.recipient_id) { const tk = `t:${r.recipient_id}`; const th = await kv(env, tk, []); th.push({ role: "assistant", content: directReply(env, kw, item, hook, point) }); await kvPut(env, tk, th); }   // so the AI knows what was already sent
         if (r.recipient_id) { const mk = `m:${r.recipient_id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
-          if (inbound && meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); if (inbound) meta.pending_kw = kw; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
+          if (inbound && meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); if (inbound) meta.pending_kw = kw; meta.topic = KW_TOPIC[kw] || meta.topic; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
         await log(env, `private reply to ${kw} comment`);
         try { const nid = r.recipient_id || `c:${ch.value.id}`; const nx = await kv(env, "nudge", {});
           if (!nx[nid]?.li) { nx[nid] = { c: ch.value.id, t: Date.now(), u: ch.value.from?.username || null, f: ch.value.from?.id || null }; await kvPut(env, "nudge", nx); } } catch (e8) {}
@@ -617,9 +700,9 @@ const PUBLIC_DONE = [
 // Every other genuine comment gets one short public reply (AI, with fixed fallbacks). Spam gets none; emoji-only gets a fixed one.
 const CREPLY_CAP = 150;   // per IST day, well under Instagram's comment-spam limits
 const CREPLY_EMOJI = ["🙌", "❤️ Thank you!", "😊🙏", "Thank you! 🙌"];
-const CREPLY_EN = ["Thank you! 🙌", "Glad this helped 😊 Comment START if you want our free guide.", "Thanks a lot! 🙏 DM us anytime if you need help with registration.", "Appreciate it 😊 More tips coming every day!"];
-const CREPLY_ML = ["നന്ദി! 🙌", "വളരെ സന്തോഷം 😊 Free guide വേണമെങ്കിൽ START എന്ന് comment ചെയ്യൂ.", "Thank you! 🙏 എന്ത് സംശയവും DM ചെയ്യാം."];
-const CREPLY_SYS = `You reply publicly to an Instagram comment for @rejectionlist.kerala, a Kerala company-registration team. Write ONE friendly reply, 1-2 short sentences, under 180 characters, in the same language and script the commenter used (Malayalam script, Manglish or English). Warm, a little humour, relevant to their comment and the post. Sometimes (not always) invite them to comment START for the free guide or to DM us. Never mention any price, fee, cost, discount, offer, "cheap" or "affordable". Never give legal facts, rules, numbers or timelines; at most say our team can help. Never say you are human, AI, a bot or an assistant. Output only the reply text, no quotes.`;
+const CREPLY_EN = ["Thank you! 🙌", "Glad this helped 😊 Comment the keyword from the post if you want our free guide.", "Thanks a lot! 🙏 DM us anytime if you need help.", "Appreciate it 😊 More tips coming every day!"];
+const CREPLY_ML = ["നന്ദി! 🙌", "വളരെ സന്തോഷം 😊 Free guide വേണമെങ്കിൽ post-ലെ keyword comment ചെയ്യൂ.", "Thank you! 🙏 എന്ത് സംശയവും DM ചെയ്യാം."];
+const CREPLY_SYS = `You reply publicly to an Instagram comment for @rejectionlist.kerala, a Kerala team that helps with company registration, GST registration and investor agreements. Write ONE friendly reply, 1-2 short sentences, under 180 characters, in the same language and script the commenter used (Malayalam script, Manglish or English). Warm, a little humour, relevant to their comment and the post. Sometimes (not always) invite them to comment the post's keyword (given below) for the free guide, or to DM us. Never mention any price, fee, cost, discount, offer, "cheap" or "affordable". Never give legal facts, rules, numbers or timelines; at most say our team can help. Never say you are human, AI, a bot or an assistant. Output only the reply text, no quotes.`;
 const pick = a => a[Math.floor(Math.random() * a.length)];
 function commentKind(text) {   // "spam" | "emoji" (emoji/punctuation/tags only) | "text"
   const t = String(text || "");
@@ -641,9 +724,9 @@ async function commentReply(env, c, item) {   // c = webhook comment value; neve
   const ml = /[\u0D00-\u0D7F]/.test(c.text);
   let msg = kind === "emoji" ? pick(CREPLY_EMOJI) : "";
   if (!msg) {
-    let hook = "", point = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); point = it?.point || ""; } catch (e0) {}
+    let hook = "", point = "", kwBase = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); point = it?.point || ""; kwBase = it?.base || ""; } catch (e0) {}
     try { const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: CREPLY_SYS },
-      { role: "user", content: `Post hook: ${hook.slice(0, 120) || "?"}\nPost point: ${point.slice(0, 200) || "?"}\nComment: ${c.text.slice(0, 300)}` }], max_tokens: 90 });
+      { role: "user", content: `Post hook: ${hook.slice(0, 120) || "?"}\nPost point: ${point.slice(0, 200) || "?"}\nPost keyword: ${kwBase || "START"}\nComment: ${c.text.slice(0, 300)}` }], max_tokens: 90 });
       msg = cleanReply(r.response); } catch (e) { await log(env, `AI unavailable for comment reply: ${String(e.message).slice(0, 80)}`); }
     if (!msg) msg = pick(ml ? CREPLY_ML : CREPLY_EN);
   }
@@ -652,7 +735,7 @@ async function commentReply(env, c, item) {   // c = webhook comment value; neve
   try { await graph(env, `${target}/replies`, { message: msg }); await env.STATE.put(ck, String(n + 1), { expirationTtl: 172800 }); await env.STATE.put(uk, String(un + 1), { expirationTtl: 172800 }); await log(env, `comment reply: @${u || c.from?.id || "?"}`); }
   catch (e) { await log(env, `comment reply failed: ${e.message}`); }
 }
-const STORY_THANKS = "Thanks a lot for sharing us in your story! 🙌 If you or a friend need help with company registration, just reply here.";
+const STORY_THANKS = "Thanks a lot for sharing us in your story! 🙌 If you or a friend need help with company registration, GST registration or an investor agreement, just reply here.";
 async function storyMention(env, uid) {   // one thank-you DM per person per 7 days; not a lead message
   if (!uid || await env.STATE.get(`sm:${uid}`)) return;
   try { await sendDM(env, uid, STORY_THANKS); await env.STATE.put(`sm:${uid}`, "1", { expirationTtl: 7 * 86400 });
@@ -660,9 +743,11 @@ async function storyMention(env, uid) {   // one thank-you DM per person per 7 d
     await log(env, `story mention thanks: ${uid}`); }
   catch (e) { await log(env, `story mention thanks failed: ${e.message}`); }
 }
-const FOLLOW_ASK = "Almost there! 🙌 Please follow @rejectionlist.kerala (we share a useful company-registration tip every day), then tap the button below and we'll send it right away.";
+const FOLLOW_ASK = "Almost there! 🙌 Please follow @rejectionlist.kerala (we share useful tips every day on company registration, GST and investor agreements), then tap the button below and we'll send it right away.";
 const FOLLOW_RECHECK = "Hmm, we can't see your follow yet 🤔 Open our profile, tap Follow, then tap the button again.";
 const NEXT_BUTTONS = ["Talk to our team", "Which type suits me?", "Documents needed"];
+const NEXT = { co: NEXT_BUTTONS, gst: ["Talk to our team", "Do I need GST?", "GST documents"], inv: ["Talk to our team", "I'm raising funds", "I'm investing"] };
+async function itemTopic(env, item) { try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || []), ...(mf.stories || [])].find(i => i.id === item); return it?.topic || (it?.reel ? topicOf((mf.items || []).find(i => i.id === it.reel)) : "co"); } catch (e) { return "co"; } }
 // First private reply is short and asks for a reply: a reply moves the chat into their main inbox,
 // then the full resource (KEYWORD_REPLY) follows.
 const BASE = "https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev";
@@ -710,23 +795,40 @@ const KEYWORD_OPENER = {
   NAME: "Hi! 👋 Thanks for your comment. Want our tips to keep your company name from getting rejected? Tap the button below.",
   AFTER: "Hi! 👋 Thanks for your comment. Want the checklist for the first 180 days after registration? Tap the button below.",
   CHECKLIST: "Hi! 👋 Thanks for your comment. Want the list of documents you need for registration? Tap the button below.",
+  GST: "Hi! 👋 Thanks for your comment. Want our quick guide on when you need GST registration? Tap the button below.",
+  LIMIT: "Hi! 👋 Thanks for your comment. Want the GST turnover limits and the cases where GST is needed from day one? Tap the button below.",
+  PENALTY: "Hi! 👋 Thanks for your comment. Want the list of GST penalties and late fees to avoid? Tap the button below.",
+  INVEST: "Hi! 👋 Thanks for your comment. Want our checklist of the agreements to sign before money comes in? Tap the button below.",
+  TERMSHEET: "Hi! 👋 Thanks for your comment. Want our guide on what a term sheet binds you to? Tap the button below.",
+  FUNDING: "Hi! 👋 Thanks for your comment. Want the legal steps after an investor says yes? Tap the button below.",
 };
 const KEYWORD_REPLY = {
   START: "Here you go!\n\nIn short:\n• Starting alone: OPC (One Person Company)\n• 2+ founders, may raise funding later: Private Limited\n• Partners, no funding plans: LLP is also an option\n\nWe'll help you pick the right one. What does your business do?",
   NAME: "Here you go! How to keep your company name from being rejected:\n\n1. It must not be similar (even in sound) to an existing company or LLP name\n2. It must not clash with a registered trademark\n3. Words like Bank or Insurance need special approval\n4. Keep 2–3 backup names ready\n\nSend us the name you have in mind and we'll give a first review against these rules. Final availability is confirmed when the application is filed.",
   AFTER: "Here you go! Your checklist after registration:\n\n✅ Within 30 days: appoint the first auditor\n✅ Open a current account in the company's name\n✅ Within 180 days: file the commencement of business declaration (INC-20A). Missing it means a penalty of Rs 50,000 on the company\n✅ Annual filings every year, even with zero revenue. Late fee of Rs 100 per day per form\n\nHow long ago was your company registered?",
   CHECKLIST: "Here you go! Documents needed for registration:\n\n📄 For each director: PAN, Aadhaar/ID, address proof (bank statement or utility bill), photo\n🏠 For the office: a recent electricity/water bill + owner's NOC (your home works too)\n📝 2–3 company name options\n\nA Private Limited needs at least 2 directors (one must live in India). How many founders are there?",
+  GST: "Here you go! When you need GST registration (Kerala):\n\n✅ Turnover above Rs 40 lakh a year for goods, or Rs 20 lakh for services\n✅ From the first sale, whatever the turnover: selling goods to another state, including online to buyers in other states (Amazon, Flipkart, Meesho)\n✅ Below the limit and selling online only within Kerala: a PAN-based enrolment may be enough, if the marketplace allows it\n✅ Anyone can also register voluntarily (many B2B clients ask for your GSTIN)\n\n📄 A proprietor needs: PAN, Aadhaar with its linked mobile, photo, business address proof, bank proof\n\nWhat does your business sell or do?",
+  LIMIT: "Here you go! GST limits in Kerala:\n\n📊 Goods: registration needed above Rs 40 lakh turnover a year\n📊 Services: above Rs 20 lakh a year\n⚠️ No limit applies (GST from day one) if you sell goods to other states, including online orders from other states\n🧾 Composition scheme (simpler, lower rate, no input credit): up to Rs 1.5 crore for goods, Rs 50 lakh for services\n\nRoughly how much turnover do you expect this year?",
+  PENALTY: "Here you go! GST penalties to avoid:\n\n⚠️ Not registering when you must: the tax you should have collected, 18% interest, and a penalty of Rs 10,000 or 10% of the tax due, whichever is higher\n⚠️ Late GSTR-3B: Rs 50 a day (Rs 20 a day for a nil return), even if there were no sales\n⚠️ Unpaid tax: 18% a year interest\n\nIs your business already GST-registered?",
+  INVEST: "Here you go! Before an investor's money comes in:\n\n📝 Term sheet: the agreed terms, mostly non-binding\n📝 Share subscription agreement: the money, the shares, the conditions\n📝 Shareholders' agreement: board seat, share transfer limits, exits\n🏢 Update the company's articles so those rights bind the company\n⏱ Allot shares within 60 days of receiving the money\n\nOnly a private limited company can take equity investment. Are you a founder raising money, or an investor putting money in?",
+  TERMSHEET: "Here you go! What a term sheet binds you to:\n\n🔓 Usually NOT binding: valuation, amount, board seats, other commercial terms\n🔒 Usually binding from signing: confidentiality, exclusivity (no talking to other investors for a set period), costs, governing law\n\nRead the exclusivity period carefully before you sign. Are you a founder or an investor?",
+  FUNDING: "Here you go! Legal steps after an investor says yes:\n\n1. Sign the term sheet\n2. Share subscription + shareholders' agreements\n3. Board and shareholder approvals, offer letter (PAS-4), money into a separate bank account\n4. Allot shares within 60 days, file PAS-3 within 15 days of allotment (the money can be used only after that)\n5. NRI or foreign investor on repatriation basis: report to RBI (FC-GPR) within 30 days of allotment\n\nAre you a founder raising money, or an investor putting money in?",
 };
 
-const postKind = (env, what) => what === "reel" ? postReel(env) : what === "story" ? postStory(env) : what === "poster" ? postPoster(env) : postCarousel(env);
+async function postKind(env, what, topic = "co") {
+  const left = await quotaLeft(env);   // never run into Instagram's 24 h limit: skip and log instead
+  if (left !== null && left <= 1) { await log(env, `SKIP ${topic} ${what}: Instagram 24 h posting limit nearly used (${left} left)`); await alertOnce(env, "quota", `⚠️ Instagram's 24-hour posting limit is nearly used; skipped a ${TOPICS[topic].label} ${what}. Planned volume will be lowered by the monitor if this repeats.`); return; }
+  return what === "reel" ? postReel(env, topic) : what === "story" ? postStory(env, topic) : what === "poster" ? postPoster(env, topic) : postCarousel(env, topic);
+}
 
 // ---------------- entry points ----------------
 export default {
   async scheduled(ev, env, ctx) {
     const now = IST(); const h = now.getUTCHours(), mi = now.getUTCMinutes();
     const day = now.toISOString().slice(0, 10);
-    const stage = await stageNow(env, day);
-    const slot = slotsFor(stage).find(([sh, sm]) => sh === h && mi >= sm && mi - sm < 5);
+    const plan = await planDay(env, day);
+    let slot = null;   // slots can sit 4 min apart now: take the first due one not yet done
+    for (const x of slotsFor(plan)) { const xm = x[0] * 60 + x[1], nm = h * 60 + mi; if (nm >= xm && nm - xm < 5 && !(await env.STATE.get(`slot:${day}:${x[0]}:${x[1]}`))) { slot = x; break; } }
     if (await env.STATE.get("poll_inbox")) ctx.waitUntil((async () => {   // backup route, off while Meta delivers DMs by webhook                                    // check the inbox every 10 s so replies feel instant
       const t0 = Date.now();
       for (let k = 0; k < 6; k++) {
@@ -739,28 +841,29 @@ export default {
         const k = `slot:${day}:${slot[0]}:${slot[1]}`;
         if (!(await env.STATE.get(k))) {
           await env.STATE.put(k, "1", { expirationTtl: 172800 });
-          try { await postKind(env, slot[2]); }
+          try { await postKind(env, slot[2], slot[3]); }
           catch (e) {   // one retry ~10 min later covers most temporary Instagram errors
-            await kvPut(env, "retry", { what: slot[2], at: Date.now() + 10 * 60e3 });
-            await log(env, `ERROR ${slot[2]} post failed, retrying in 10 min: ${e.message}`);
-            await discord(env, `⚠️ ${slot[2]} post failed, retrying in 10 min: ${e.message}`);
+            await kvPut(env, "retry", { what: slot[2], topic: slot[3], at: Date.now() + 10 * 60e3 });
+            await log(env, `ERROR ${slot[3]} ${slot[2]} post failed, retrying in 10 min: ${e.message}`);
+            await discord(env, `⚠️ [${TOPICS[slot[3]].label}] ${slot[2]} post failed, retrying in 10 min: ${e.message}`);
           }
         }
       }
       const retry = await kv(env, "retry", null);
       if (retry && Date.now() >= retry.at) {
         await env.STATE.delete("retry");
-        try { await postKind(env, retry.what); await log(env, `retry of ${retry.what} succeeded`); }
+        try { await postKind(env, retry.what, retry.topic || "co"); await log(env, `retry of ${retry.what} succeeded`); }
         catch (e) { throw new Error(`${retry.what} retry also failed: ${e.message}`); }
       }
       try { await processNudges(env); } catch (eN) { await log(env, `ERROR check-ins: ${String(eN.message).slice(0, 90)}`); }
       if (h === 3 && mi === 1) { await snapshot(env); await optimise(env); await refreshIgToken(env); }
       if (h === 21 && mi === 41) {
-        const posted = await kv(env, "posted", {}); const today = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day).length;
+        const posted = await kv(env, "posted", {}); const todayP = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day); const today = todayP.length;
         const leads = Object.values(await kv(env, "leads", {})).filter(l => (l.updated || "").startsWith(day));
+        const per = Object.keys(plan.plan).map(t => `[${TOPICS[t].label}] ${todayP.filter(p => topicOf(p) === t).length} posts, ${leads.filter(l => (l.topic || "co") === t).length} leads`).join("\n");
         const errs = (await kv(env, "log", [])).filter(l => l.startsWith(day) && /ERROR|NO .*STOCK/.test(l)).length;
         const nx = await kv(env, "nudge", {}); const ns = nx._s?.day === day ? nx._s : {}; const waiting = Object.keys(nx).filter(k => k !== "_s").length;
-        await discord(env, `📊 Daily report ${day}: ${today} posts · ${leads.length} leads today · ${errs} problems\n💬 Check-ins: ${ns.sent || 0} DMs + ${ns.pub || 0} comment replies sent · ${ns.back || 0} people came back · ${waiting} chats still waiting`);
+        await discord(env, `📊 Daily report ${day}: ${today} posts · ${leads.length} leads today · ${errs} problems\n${per}\n💬 Check-ins: ${ns.sent || 0} DMs + ${ns.pub || 0} comment replies sent · ${ns.back || 0} people came back · ${waiting} chats still waiting`);
       }
     } catch (e) { await log(env, `ERROR ${e.message}`); await discord(env, `❌ Autopilot error: ${e.message}`); }
   },
@@ -791,9 +894,10 @@ export default {
         await log(env, `follow-up sent to ${id}`); return json({ ok: true, sent: true, hours_left_in_window: left / 3600e3 });
       }
       if (u.pathname === "/ops/nudge") return json(await kv(env, "nudge", {}));
-      if (u.pathname === "/ops/run" && req.method === "POST") { const { what, id } = await req.json(); if (what === "nudge") return json(await processNudges(env, id || null)); if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env);
-        if (what === "poll") { await pollInbox(env); return json({ ok: true }); } if (what === "reel") await postReel(env); if (what === "story") await postStory(env); if (what === "carousel") await postCarousel(env); if (what === "poster") await postPoster(env);
-        if (what === "slots") { const d = IST().toISOString().slice(0, 10); const st = await stageNow(env, u.searchParams.get("day") || d); return json({ stage: st, slots: slotsFor(st) }); } return json({ ok: true }); }
+      if (u.pathname === "/ops/run" && req.method === "POST") { const { what, id, topic: tq } = await req.json(); if (what === "nudge") return json(await processNudges(env, id || null)); if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env);
+        if (what === "poll") { await pollInbox(env); return json({ ok: true }); } const tp = TOPICS[tq] ? tq : "co";
+        if (["reel", "story", "carousel", "poster"].includes(what)) await postKind(env, what, tp);
+        if (what === "slots") { const d = IST().toISOString().slice(0, 10); const P = await planDay(env, u.searchParams.get("day") || d); return json({ ...P, slots: slotsFor(P) }); } return json({ ok: true }); }
       if (u.pathname === "/ops/graph" && req.method === "POST") {      // diagnostics: one Graph API call with the app's token
         const { path, params, method, ig } = await req.json();   // ig: true = Instagram-login app token on graph.instagram.com
         const g = new URL(ig ? `https://graph.instagram.com/v24.0/${path}` : `${env.GRAPH}/${path}`); const b = new URLSearchParams({ ...(params || {}), access_token: ig ? await env.STATE.get("ig_login_token") : env.IG_TOKEN });
@@ -803,7 +907,7 @@ export default {
         const { token } = await req.json(); const r = await (await fetch(`https://graph.instagram.com/v24.0/me?fields=user_id,username&access_token=${encodeURIComponent(token)}`)).json();
         if (r.error) return json({ ok: false, error: r.error.message }); await env.STATE.put("ig_login_token", token); await env.STATE.put("ig_login_token_set", String(Date.now())); return json({ ok: true, username: r.username, user_id: r.user_id });
       }
-      if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (["stage_hold", "stage_force"].includes(k)) { v === null || v === undefined || v === "" ? await env.STATE.delete(k) : await env.STATE.put(k, String(+v)); return json({ ok: true, k, v }); }
+      if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (/^stage_(hold|force)(_gst|_inv)?$/.test(k) || k === "daily_cap") { v === null || v === undefined || v === "" ? await env.STATE.delete(k) : await env.STATE.put(k, String(+v)); return json({ ok: true, k, v }); }
         if (!["dm_inbound", "poll_inbox"].includes(k)) return json({ ok: false }); v ? await env.STATE.put(k, "1") : await env.STATE.delete(k); return json({ ok: true, k, v: !!v }); }
       if (u.pathname === "/ops/extra" && req.method === "POST") { const { carousels } = await req.json(); await kvPut(env, "extra_carousels", carousels || []); return json({ ok: true, n: (carousels || []).length }); }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
@@ -824,13 +928,13 @@ export default {
         if (p.kind === "story") continue;
         const h = await kv(env, `snap:${id}`, []); const r = h.find(x => x.age_days >= 2) || h[h.length - 1] || {};
         const L = leads.filter(l => l.source_item === id);
-        posts.push({ id, kind: p.kind, segment: p.segment || null, scene: p.scene || null, layout: p.layout || null, posted_at: IST(new Date(p.t)).toISOString().slice(0, 16), judged_at_days: r.age_days ?? null,
+        posts.push({ id, topic: topicOf(p), kind: p.kind, segment: p.segment || null, scene: p.scene || null, layout: p.layout || null, posted_at: IST(new Date(p.t)).toISOString().slice(0, 16), judged_at_days: r.age_days ?? null,
           reach: r.reach ?? null, views: r.views ?? null, shares: r.shares ?? null, saved: r.saved ?? null, likes: r.likes ?? null, comments: r.comments ?? null,
           keyword_comments: r.keyword_comments ?? null, dms: r.dms ?? null, leads: L.length, high_intent: L.filter(l => l.intent === "high").length, nri_leads: L.filter(l => l.nri).length, budget_likely: L.filter(l => l.can_afford_30k === "likely").length });
       }
       const nx = await kv(env, "nudge", {});
       return json({ updated: IST().toISOString().slice(0, 16), weights: await kv(env, "weights", null), slot_report: await kv(env, "slot_report", null),
-        leads_total: leads.length, leads_by_segment_of_post: leads.reduce((a, l) => { const p = posted[l.source_item]; const k = p?.segment || "direct"; a[k] = (a[k] || 0) + 1; return a; }, {}),
+        leads_total: leads.length, leads_by_topic: leads.reduce((a, l) => { const k = l.topic || "co"; a[k] = (a[k] || 0) + 1; return a; }, {}), leads_by_segment_of_post: leads.reduce((a, l) => { const p = posted[l.source_item]; const k = p?.segment || "direct"; a[k] = (a[k] || 0) + 1; return a; }, {}),
         checkins_today: nx._s || null, posts });
     }
     if (u.pathname === "/public/posted") return json([...Object.keys(await kv(env, "posted", {})), ...Object.keys(await kv(env, "stories", {}))]); // builder reads this to know stock (reels, carousels, stories)
