@@ -24,13 +24,13 @@ TOPIC = {
         en="Documents for company registration in India: PAN and Aadhaar of every director, address proof, photo, a recent utility bill for the office and the owner's NOC. Your home address can be the registered office.",
         mg="Company registration-nu documents enthokke venam? Oro director-nteyum PAN, Aadhaar, address proof, photo, office current bill, owner-nte NOC. Veedinte address-um office aakkam."),
 }
-SEGMENT = {
-    "freelancer": dict(ml="ഫ്രീലാൻസിൽ നിന്ന് സ്വന്തം കമ്പനിയിലേക്ക് മാറാൻ ആലോചിക്കുന്നവർക്ക്.", en="For freelancers ready to turn their work into a registered company.", mg="Freelancing-il ninnu swantham company-lekku maaraan plan ullavarkku."),
-    "cofounders": dict(ml="കൂട്ടുകാരുമായി ചേർന്ന് സ്റ്റാർട്ടപ്പ് തുടങ്ങുന്നവർക്ക്.", en="For co-founders starting a startup together.", mg="Friends-umaayi chernnu startup thudangunnavarkku."),
-    "proprietor": dict(ml="ഷോപ്പോ ചെറിയ ബിസിനസോ നടത്തുന്നവർക്ക്.", en="For shop owners and small business owners in Kerala.", mg="Shop allenkil small business nadathunnavarkku."),
-    "salaried": dict(ml="ജോലിയോടൊപ്പം സൈഡ് ബിസിനസ് തുടങ്ങുന്നവർക്ക്.", en="For salaried professionals starting a side business.", mg="Job-inte koode side business thudangunnavarkku."),
-    "solo": dict(ml="ഒറ്റയ്ക്ക് ബിസിനസ് തുടങ്ങുന്നവർക്ക്.", en="For solo founders starting on their own.", mg="Ottaykku business thudangunnavarkku."),
-    "nri": dict(ml="ഗൾഫിലിരുന്ന് നാട്ടിൽ ബിസിനസ് തുടങ്ങുന്ന NRI-കൾക്ക്.", en="For NRIs in the Gulf starting a business back home in Kerala.", mg="Gulf-il irunnu naattil business thudangunna NRI-kalkku."),
+SEGMENT = {   # who it is for, using the phrases each group searches
+    "freelancer": dict(ml="ഫ്രീലാൻസിൽ നിന്ന് സ്വന്തം കമ്പനിയിലേക്ക് മാറാൻ ആലോചിക്കുന്ന ഫ്രീലാൻസർമാർക്ക്: വലിയ ക്ലയന്റുകൾ കമ്പനി ഡീറ്റെയിൽസ് ചോദിക്കും.", en="For freelancers in Kerala moving from freelancing to a registered company, when bigger clients ask for company details.", mg="Freelancer aano? Freelancing-il ninnu swantham company register cheyyan time aayo ennu nokkaam."),
+    "cofounders": dict(ml="കൂട്ടുകാരുമായി ചേർന്ന് സ്റ്റാർട്ടപ്പ് തുടങ്ങുന്ന കോ-ഫൗണ്ടർമാർക്ക്: ഷെയറും ഫണ്ടിംഗും ആദ്യമേ ശരിയാക്കാം.", en="For co-founders starting a startup in Kerala: get shares and funding plans right from day one.", mg="Friends-umaayi chernnu startup thudangunna co-founders-nu: shares-um funding-um aadyame set aakkaam."),
+    "proprietor": dict(ml="ഷോപ്പോ ചെറിയ ബിസിനസോ പ്രൊപ്രൈറ്റർഷിപ്പായി നടത്തുന്നവർക്ക്: കമ്പനി ആക്കാൻ സമയമായോ?", en="For shop owners and proprietorship businesses in Kerala thinking about converting to a company.", mg="Shop allenkil proprietorship business nadathunnavarkku: company aakkan time aayo?"),
+    "salaried": dict(ml="ജോലിയോടൊപ്പം സൈഡ് ബിസിനസ് തുടങ്ങുന്നവർക്ക്.", en="For salaried professionals in Kerala starting a side business or planning to quit their job.", mg="Job-inte koode side business thudangunnavarkku, allenkil job vittu business plan ullavarkku."),
+    "solo": dict(ml="ഒറ്റയ്ക്ക് ബിസിനസ് തുടങ്ങുന്നവർക്ക്: വൺ പേഴ്സൺ കമ്പനി (OPC) ഒരു വഴിയാണ്.", en="For solo founders: a One Person Company (OPC) lets you start a company on your own.", mg="Ottaykku business thudangunnavarkku: One Person Company (OPC) oru option aanu."),
+    "nri": dict(ml="ഗൾഫിലിരുന്ന് നാട്ടിൽ കമ്പനി തുടങ്ങുന്ന NRI-കൾക്ക്: NRI-ക്കും ഡയറക്ടർ ആകാം.", en="For NRIs in the Gulf starting a company in Kerala: NRIs can be directors and shareholders.", mg="Gulf-il irunnu naattil company thudangunna NRI-kalkku: NRI-kkum director aakaam."),
 }
 CTA = dict(ml="{base} അല്ലെങ്കിൽ {kw} എന്ന് കമന്റ് ചെയ്യൂ, DM-ൽ അയച്ചുതരാം 👇",
            en="Comment {base} or {kw} and we'll send it to your DM 👇",
@@ -60,4 +60,6 @@ def caption(s, head):
         para = body + (" " + g[lang] if g and not s.get("cap_" + lang) else "")
         parts.append(para + "\n" + CTA[lang].format(base=base, kw=kw))
     parts.append(hashtags(s["id"], base, seg))
-    return "\n\n".join(parts)[:2200]
+    out = "\n\n".join(parts)[:2200]
+    assert out.count("#") <= 5, s["id"]
+    return out

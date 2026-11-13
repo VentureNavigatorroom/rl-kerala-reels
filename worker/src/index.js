@@ -85,7 +85,7 @@ async function postReel(env) {
   const recent = Object.values(posted).sort((a, b) => b.t - a.t).slice(0, 2);
   const score = i => (w?.kind?.[i.kind] ?? 1) * (w?.segment?.[i.segment] ?? 1) * (recent.some(r => r.kind === i.kind) ? 0.5 : 1) * (0.8 + Math.random() * 0.4);
   const it = avail.sort((a, b) => score(b) - score(a))[0];
-  const p = { media_type: "REELS", video_url: `${env.LIB_BASE}/${it.video}`, cover_url: `${env.LIB_BASE}/${it.cover}`, caption: it.caption, share_to_feed: "true" };
+  const p = { media_type: "REELS", video_url: `${env.LIB_BASE}/${it.video}`, cover_url: `${env.LIB_BASE}/${it.cover}`, caption: fixCaption(it.caption), share_to_feed: "true" };
   const trialOff = await kv(env, "trial_unavailable", false);
   const asTrial = !trialOff && Math.random() < TRIAL_SHARE;
   let c;
@@ -128,20 +128,25 @@ async function postCarousel(env) {
   const c = avail.find(x => !recent || x.segment !== recent.segment) || avail[0];
   const kids = [];
   for (const img of c.images.slice(0, 10)) kids.push((await graph(env, `${env.IG_USER_ID}/media`, { image_url: img.startsWith("http") ? img : `${env.LIB_BASE}/${img}`, is_carousel_item: "true" })).id);
-  const box = await graph(env, `${env.IG_USER_ID}/media`, { media_type: "CAROUSEL", children: kids.join(","), caption: c.caption });
+  const box = await graph(env, `${env.IG_USER_ID}/media`, { media_type: "CAROUSEL", children: kids.join(","), caption: fixCaption(c.caption) });
   await waitReady(env, box.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: box.id });
   posted[c.id] = { media: pub.id, t: Date.now(), kind: "carousel", segment: c.segment };
   await kvPut(env, "posted", posted); await log(env, `carousel ${c.id} posted (${pub.id})`);
 }
 
+// Instagram allows at most 5 hashtags per post (Dec 2025) and 2,200 characters: enforce both on every caption we publish.
+function fixCaption(c) {
+  let n = 0; c = String(c || "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, m => (++n <= 5 ? m : "")).replace(/[ \t]+\n/g, "\n").trimEnd();
+  return c.slice(0, 2200);
+}
 async function postPoster(env) {   // single 4:5 image post
   const m = await manifest(env); const posted = await kv(env, "posted", {});
   const avail = (m.posters || []).filter(p => !posted[p.id]);
   if (!avail.length) { await log(env, "NO POSTER STOCK"); await alertOnce(env, "noposter", "⚠️ Poster library is empty. Nothing to post. Check the nightly factory on GitHub."); return; }
   const recent = Object.values(posted).filter(p => p.kind === "poster").sort((a, b) => b.t - a.t)[0];
   const p = avail.find(x => !recent || (x.layout !== recent.layout && x.segment !== recent.segment)) || avail.find(x => !recent || x.layout !== recent.layout) || avail[0];
-  const c = await graph(env, `${env.IG_USER_ID}/media`, { image_url: `${env.LIB_BASE}/${p.image}`, caption: p.caption });
+  const c = await graph(env, `${env.IG_USER_ID}/media`, { image_url: `${env.LIB_BASE}/${p.image}`, caption: fixCaption(p.caption) });
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
   posted[p.id] = { media: pub.id, t: Date.now(), kind: "poster", segment: p.segment, layout: p.layout };
