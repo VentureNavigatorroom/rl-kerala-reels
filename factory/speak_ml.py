@@ -66,6 +66,8 @@ SAY = {
 # Malayalam-script words the voice says wrongly, respelled the way it says them right. Filled from the voice-audit
 # reports (misheard in 2+ lines). On-screen text keeps the normal spelling.
 RESPELL = {
+    "ഇൻവോയ്സ്": "ഇൻവോയിസ്",   # invoice: heard as ഇൻഡ്വവൈസ്; audit 13 Nov
+    "സ്റ്റോൾ": "സ്റ്റാൾ",      # stall
     "ഒ": "ഓ",   # letter O in OPC / NOC / ROC: short ഒ ran into the next word (OPC heard as ഓഫീസി, NOC as എന്നോസി); audit 13 Nov
 }
 # Words already checked and found fine (the recogniser just spells them differently). Never flagged again.
@@ -98,7 +100,15 @@ def before_respell(text):
     text = re.sub(r"(?<![\d,])1\s+(ലക്ഷം|കോടി)", r"ഒരു \1", text)                                    # 1 ലക്ഷം -> ഒരു ലക്ഷം
     return latin(text)
 
+EN_NUM = {1: "വൺ", 2: "ടു", 3: "ത്രീ", 4: "ഫോർ", 5: "ഫൈവ്", 6: "സിക്സ്", 7: "സെവൻ", 8: "എയ്റ്റ്", 9: "നൈൻ", 10: "ടെൻ",
+          11: "ഇലവൻ", 12: "ട്വെൽവ്", 13: "തേർട്ടീൻ", 14: "ഫോർട്ടീൻ", 15: "ഫിഫ്റ്റീൻ", 16: "സിക്സ്റ്റീൻ", 17: "സെവന്റീൻ",
+          18: "എയ്റ്റീൻ", 19: "നൈന്റീൻ", 20: "ട്വന്റി", 30: "തേർട്ടി"}
+def _code(m):   # form names are said the English way: INC-20A -> ഐ എൻ സി ട്വന്റി എ (ഇരുപത് എ ran together: audit 13 Nov)
+    n = int(m.group(2))
+    return m.group(1) + " " + EN_NUM.get(n, str(n)) + (" " + LETTER[m.group(3)] if m.group(3) else "") + (m.group(4) or "")
+
 def spoken(text):
+    text = re.sub(r"(?<![A-Za-z])([A-Z]{2,5})-(\d{1,2})([A-Z])?(?![A-Za-z\d])-?(" + ML + ")?", _code, text)
     text = before_respell(text)
     if RESPELL: text = re.sub(ML, lambda m: RESPELL.get(m.group(0), m.group(0)), text)
     text = numbers(text)
