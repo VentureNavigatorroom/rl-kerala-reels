@@ -166,7 +166,9 @@ async function snapshot(env) {
     const age = (Date.now() - p.t) / 86400e3; if (age > 30 || p.kind === undefined) continue;
     let v = {};
     try {
-      const metrics = p.kind === "carousel" || p.kind === "poster" ? "reach,shares,saved,total_interactions,likes,comments" : "reach,views,shares,saved,total_interactions,likes,comments";
+      if (p.kind === "story" && age > 1) continue;   // Instagram keeps story insights for 24 h only
+      const metrics = p.kind === "story" ? "reach,views,replies,shares,total_interactions,follows,profile_visits"   // stories have no saved/likes/comments
+        : p.kind === "carousel" || p.kind === "poster" ? "reach,shares,saved,total_interactions,likes,comments" : "reach,views,shares,saved,total_interactions,likes,comments";
       const r = await insightsGet(env, p.media, metrics);
       v = Object.fromEntries(r.data.map(d => [d.name, d.values?.[0]?.value ?? d.total_value?.value ?? 0]));
     } catch (e) { v = { error: String(e.message).slice(0, 80) }; }
