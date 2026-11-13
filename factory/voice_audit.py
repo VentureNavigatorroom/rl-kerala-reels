@@ -43,14 +43,17 @@ for k, (sid, raw, sp) in enumerate(lines):
     rows.append({"id": sid, "said": sp, "heard": heard, "missed": miss, "audio": wav})
     print(f"{k+1}/{len(lines)} {sid} missed {len(miss)}", flush=True)
 
-flag = {w: v for w, v in bad.items() if len({x['line'] for x in v}) >= 2}
+# words already fixed or already judged fine are never reported again (a fix is permanent)
+flag = {w: v for w, v in bad.items() if len({x['line'] for x in v}) >= 2 and not speak_ml.decided(w)}
+still = {w: v for w, v in bad.items() if len({x['line'] for x in v}) >= 2 and w in speak_ml.RESPELL.values()}   # fixed but still misheard
 total = collections.Counter(w for r in rows for w in toks(r["said"]))
 rep = sorted(({"word": w, "misheard": len(v), "seen": total[w], "heard_as": collections.Counter(x["heard"] for x in v).most_common(3)} for w, v in flag.items()),
              key=lambda r: (-r["misheard"] / max(1, r["seen"]), -r["misheard"]))
-json.dump({"lines": len(rows), "flagged": rep, "rows": rows}, open(f"{OUT}/report.json", "w"), ensure_ascii=False, indent=1)
+json.dump({"lines": len(rows), "flagged": rep, "fixed_but_still_misheard": sorted(still), "rows": rows}, open(f"{OUT}/report.json", "w"), ensure_ascii=False, indent=1)
 with open(f"{OUT}/report.md", "w") as f:
     f.write(f"# Pronunciation audit ({len(rows)} lines)\n\n| word | misheard / seen | heard as |\n|---|---|---|\n")
     for r in rep: f.write(f"| {r['word']} | {r['misheard']}/{r['seen']} | {', '.join(h for h, _ in r['heard_as'])} |\n")
+    if still: f.write("\nAlready respelled but still misheard (try a different respelling, do not add a second entry): " + ", ".join(sorted(still)) + "\n")
 os.makedirs(f"{OUT}/audio", exist_ok=True)
 for r in sorted(rows, key=lambda r: -len(r["missed"]))[:15]: shutil.copy(r["audio"], f"{OUT}/audio/{r['id']}_{len(r['missed'])}.wav")
 print(open(f"{OUT}/report.md").read())

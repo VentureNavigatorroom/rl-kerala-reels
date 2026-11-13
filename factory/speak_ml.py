@@ -67,6 +67,11 @@ SAY = {
 # reports (misheard in 2+ lines). On-screen text keeps the normal spelling.
 RESPELL = {
 }
+# Words already checked and found fine (the recogniser just spells them differently). Never flagged again.
+REVIEWED_OK = set()
+def decided(word):
+    """True when a word has already been fixed (RESPELL / SAY) or judged fine: the audit skips it."""
+    return word in RESPELL or word in RESPELL.values() or word in REVIEWED_OK or word in SAY.values()
 LETTER = dict(zip("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "എ ബി സി ഡി ഇ എഫ് ജി എച്ച് ഐ ജെ കെ എൽ എം എൻ ഒ പി ക്യു ആർ എസ് ടി യു വി ഡബ്ല്യു എക്സ് വൈ സെഡ്".split()))
 
 def latin(text):
