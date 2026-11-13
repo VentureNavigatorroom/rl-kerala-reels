@@ -10,10 +10,11 @@
 // (the monitor sets it when reach per post drops sharply or Instagram flags the account), or KV "stage_force" picks one.
 const STAGES = [
   { from: "2026-11-01", reel: 5, carousel: 5, story: 5, poster: 0 },
-  { from: "2026-11-14", reel: 10, carousel: 6, story: 5, poster: 2 },
-  { from: "2026-11-21", reel: 15, carousel: 8, story: 5, poster: 3 },
-  { from: "2026-11-28", reel: 20, carousel: 10, story: 5, poster: 4 },
-  { from: "2026-12-05", reel: 25, carousel: 10, story: 5, poster: 5 },
+  // owner, 13 Nov: 0 followers so carousels/posters reach ~nobody; keep them at stage-0 numbers and give the planned increase to reels
+  { from: "2026-11-14", reel: 13, carousel: 5, story: 5, poster: 0 },
+  { from: "2026-11-21", reel: 21, carousel: 5, story: 5, poster: 0 },
+  { from: "2026-11-28", reel: 29, carousel: 5, story: 5, poster: 0 },
+  { from: "2026-12-05", reel: 35, carousel: 5, story: 5, poster: 0 },
 ];
 const STORY_TIMES = [[8, 10], [13, 5], [18, 10], [20, 15], [22, 10]];   // story logic picks teaser / tip / quiz / contact by hour
 async function stageNow(env, day) {
