@@ -464,6 +464,7 @@ async function handleWebhook(env, body) {
     for (const ev of entry.messaging || []) {
       const mid = ev.message?.mid || ev.postback?.mid; if (mid) { if (await env.STATE.get(`dup:${mid}`)) continue; await env.STATE.put(`dup:${mid}`, "1", { expirationTtl: 86400 }); }
       if (ev.postback && !ev.message) ev.message = { text: ev.postback.title || ev.postback.payload || "" };   // button taps of other kinds
+      if (ev.message && !ev.message.is_echo && (ev.message.attachments || []).some(a => a?.type === "story_mention")) { await storyMention(env, ev.sender.id); continue; }   // not a lead message
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
       const uid = ev.sender.id; const key = `t:${uid}`;
       if (/^\s*delete\s*$/i.test(ev.message.text)) {                  // data deletion request (see /privacy)
@@ -553,7 +554,7 @@ async function handleWebhook(env, body) {
       if ((ch.value.from?.id && ch.value.from.id === env.IG_USER_ID) || (ch.value.from?.username || "").toLowerCase() === OWN_USERNAME) continue;   // our own comments
       const item = await mediaToItem(env, ch.value.media?.id); await bumpPost(env, item, "comments");
       const uq = await uniqueKw(env, ch.value.text);                 // the post's own keyword ("LAUNCH") maps to its general one
-      const k0 = uq ? uq.base : matchKeyword(ch.value.text); if (!k0) continue; const m = [k0, k0];
+      const k0 = uq ? uq.base : matchKeyword(ch.value.text); if (!k0) { await commentReply(env, ch.value, item); continue; } const m = [k0, k0];
       if (uq) { await bumpPost(env, item, "kw:" + uq.kw); await log(env, `own keyword ${uq.kw} (${uq.base}, post ${uq.item})`); }
       await bumpPost(env, item, "kw:" + m[1].toUpperCase());
       if (ch.value.from?.id) {                                       // remember where this person came from, per keyword
@@ -596,6 +597,52 @@ const PUBLIC_DONE = [
   "Just messaged you! 📩 If you can't see it, look in message requests or the hidden requests (spam) folder.",
   "Check your DMs 📩 Instagram sometimes puts it under requests or hidden requests, so peek there too.",
 ];
+// Every other genuine comment gets one short public reply (AI, with fixed fallbacks). Spam gets none; emoji-only gets a fixed one.
+const CREPLY_CAP = 150;   // per IST day, well under Instagram's comment-spam limits
+const CREPLY_EMOJI = ["🙌", "❤️ Thank you!", "😊🙏", "Thank you! 🙌"];
+const CREPLY_EN = ["Thank you! 🙌", "Glad this helped 😊 Comment START if you want our free guide.", "Thanks a lot! 🙏 DM us anytime if you need help with registration.", "Appreciate it 😊 More tips coming every day!"];
+const CREPLY_ML = ["നന്ദി! 🙌", "വളരെ സന്തോഷം 😊 Free guide വേണമെങ്കിൽ START എന്ന് comment ചെയ്യൂ.", "Thank you! 🙏 എന്ത് സംശയവും DM ചെയ്യാം."];
+const CREPLY_SYS = `You reply publicly to an Instagram comment for @rejectionlist.kerala, a Kerala company-registration team. Write ONE friendly reply, 1-2 short sentences, under 180 characters, in the same language and script the commenter used (Malayalam script, Manglish or English). Warm, a little humour, relevant to their comment and the post. Sometimes (not always) invite them to comment START for the free guide or to DM us. Never mention any price, fee, cost, discount, offer, "cheap" or "affordable". Never give legal facts, rules, numbers or timelines; at most say our team can help. Never say you are human, AI, a bot or an assistant. Output only the reply text, no quotes.`;
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function commentKind(text) {   // "spam" | "emoji" (emoji/punctuation/tags only) | "text"
+  const t = String(text || "");
+  if (/https?:\/\/|www\.|\b[a-z0-9-]+\.(com|in|net|org|ly|io|me|link|xyz)\b|promot|collab|follower|onlyfans|crypto|bitcoin|forex|giveaway|earn (money|\$|₹)|check (my|our) (page|profile|bio)|dm (me|us) for/i.test(t)) return "spam";
+  return /^[\p{P}\p{S}\p{Extended_Pictographic}\p{M}\s\u200c\u200d\ufe0f]*$/u.test(t.replace(/@[\w.]+/g, "")) ? "emoji" : "text";
+}
+function cleanReply(s) {   // sanitise AI output; "" when unusable so the caller falls back
+  let t = String(s || "").replace(/^\s*(reply|response|answer)\s*:\s*/i, "").replace(/["“”«»]/g, "").replace(/^['‘’`\s]+|['‘’`\s]+$/g, "").replace(/@[\w.]+/g, "").replace(/\s+/g, " ").trim();
+  if (!t || /₹|\brs\.?\s*\d|\binr\b|price|\bfees?\b|\bcost|charge|discount|\boffer|cheap|afford|budget|lakh|\d{3,}|section\s*\d|\bact\b|\b(ai|bot|chatbot|chatgpt|assistant|automated|language model|human)\b|ഫീസ്|രൂപ|ചാർജ്|വില/i.test(t)) return "";
+  if (t.length > 200) { t = t.slice(0, 200); const c = Math.max(t.lastIndexOf(". "), t.lastIndexOf("! "), t.lastIndexOf("? ")); t = c > 40 ? t.slice(0, c + 1) : t.replace(/\s+\S*$/, "") + "…"; }
+  return t.length >= 2 ? t : "";
+}
+async function commentReply(env, c, item) {   // c = webhook comment value; never called for our own comments
+  const kind = commentKind(c.text); if (kind === "spam") { await log(env, `comment skipped (spam): @${c.from?.username || "?"}`); return; }
+  const ck = `creply:${IST().toISOString().slice(0, 10)}`; const n = +(await env.STATE.get(ck) || 0);
+  if (n >= CREPLY_CAP) { if (n === CREPLY_CAP) { await env.STATE.put(ck, String(n + 1), { expirationTtl: 172800 }); await log(env, `comment reply cap (${CREPLY_CAP}/day) reached`); } return; }
+  const uk = `cru:${IST().toISOString().slice(0, 10)}:${c.from?.id || c.from?.username || "?"}`; const un = +(await env.STATE.get(uk) || 0);
+  if (un >= 2) return;   // at most 2 replies per person per day, so a "thanks" exchange can't go back and forth
+  const ml = /[\u0D00-\u0D7F]/.test(c.text);
+  let msg = kind === "emoji" ? pick(CREPLY_EMOJI) : "";
+  if (!msg) {
+    let hook = "", point = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); point = it?.point || ""; } catch (e0) {}
+    try { const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: CREPLY_SYS },
+      { role: "user", content: `Post hook: ${hook.slice(0, 120) || "?"}\nPost point: ${point.slice(0, 200) || "?"}\nComment: ${c.text.slice(0, 300)}` }], max_tokens: 90 });
+      msg = cleanReply(r.response); } catch (e) { await log(env, `AI unavailable for comment reply: ${String(e.message).slice(0, 80)}`); }
+    if (!msg) msg = pick(ml ? CREPLY_ML : CREPLY_EN);
+  }
+  const u = c.from?.username;   // Instagram only takes replies on top-level comments: answer a thread reply under its parent, tagging them
+  const target = c.parent_id || c.id; if (c.parent_id && u) msg = `@${u} ${msg}`;
+  try { await graph(env, `${target}/replies`, { message: msg }); await env.STATE.put(ck, String(n + 1), { expirationTtl: 172800 }); await env.STATE.put(uk, String(un + 1), { expirationTtl: 172800 }); await log(env, `comment reply: @${u || c.from?.id || "?"}`); }
+  catch (e) { await log(env, `comment reply failed: ${e.message}`); }
+}
+const STORY_THANKS = "Thanks a lot for sharing us in your story! 🙌 If you or a friend need help with company registration, just reply here.";
+async function storyMention(env, uid) {   // one thank-you DM per person per 7 days; not a lead message
+  if (!uid || await env.STATE.get(`sm:${uid}`)) return;
+  try { await sendDM(env, uid, STORY_THANKS); await env.STATE.put(`sm:${uid}`, "1", { expirationTtl: 7 * 86400 });
+    const th = await kv(env, `t:${uid}`, []); th.push({ role: "assistant", content: STORY_THANKS }); await kvPut(env, `t:${uid}`, th);   // so a reply continues naturally
+    await log(env, `story mention thanks: ${uid}`); }
+  catch (e) { await log(env, `story mention thanks failed: ${e.message}`); }
+}
 const FOLLOW_ASK = "Almost there! 🙌 Please follow @rejectionlist.kerala (we share a useful company-registration tip every day), then tap the button below and we'll send it right away.";
 const FOLLOW_RECHECK = "Hmm, we can't see your follow yet 🤔 Open our profile, tap Follow, then tap the button again.";
 const NEXT_BUTTONS = ["Talk to our team", "Which type suits me?", "Documents needed"];
