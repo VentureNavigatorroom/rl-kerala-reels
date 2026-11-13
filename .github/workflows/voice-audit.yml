@@ -1,6 +1,7 @@
 name: voice-audit
 # Pronunciation audit: speak real script lines, transcribe them with a Malayalam recogniser, report misheard words.
 on:
+  schedule: [{ cron: "30 9 * * *" }]   # 15:00 IST daily, after the 13:00 build has started; the monitor applies the fixes
   workflow_dispatch:
     inputs:
       lines: { description: "how many lines to test", default: "120" }
@@ -29,7 +30,7 @@ jobs:
           pip install -q --force-reinstall --no-deps torchaudio --index-url https://download.pytorch.org/whl/cpu
           pip install -q -U protobuf sentencepiece librosa
       - name: Audit
-        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", AUDIT_LINES: "${{ inputs.lines }}", TTS_THREADS: "4" }
+        env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", AUDIT_LINES: "${{ inputs.lines || '80' }}", AUDIT_NEW_FIRST: "1", TTS_THREADS: "4" }
         run: python factory/voice_audit.py
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

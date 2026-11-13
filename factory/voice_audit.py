@@ -19,7 +19,11 @@ for s in build.load_bank():
         if len(toks(sp)) >= 3: lines.append((s["id"], t, sp))
 random.seed(7); random.shuffle(lines)
 def score(x): return bool(re.search(r"[A-Za-z0-9]", x[1])) * 2 + sum(1 for w in toks(x[2]) if re.search("[ഫഷ]|്റ്റ|്ഡ|ോ", w))
-lines.sort(key=score, reverse=True); lines = lines[:N]
+# daily runs test the newest scripts first (highest batch numbers), so every new batch gets heard once
+order = {sid: k for k, sid in enumerate(reversed([s["id"] for s in build.load_bank()]))}
+if os.environ.get("AUDIT_NEW_FIRST"): lines.sort(key=lambda x: (order.get(x[0], 9e9), -score(x)))
+else: lines.sort(key=score, reverse=True)
+lines = lines[:N]
 
 from transformers import pipeline
 asr = pipeline("automatic-speech-recognition", model="thennal/whisper-medium-ml", device="cpu")

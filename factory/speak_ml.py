@@ -63,6 +63,10 @@ SAY = {
     "company": "കമ്പനി", "director": "ഡയറക്ടർ", "startup": "സ്റ്റാർട്ടപ്പ്", "client": "ക്ലയന്റ്", "freelancer": "ഫ്രീലാൻസർ",
     "3d": "ത്രീ ഡി", "ok": "ഓക്കെ", "okay": "ഓക്കെ", "dm": "ഡി എം", "app": "ആപ്പ്", "online": "ഓൺലൈൻ", "office": "ഓഫീസ്",
 }
+# Malayalam-script words the voice says wrongly, respelled the way it says them right. Filled from the voice-audit
+# reports (misheard in 2+ lines). On-screen text keeps the normal spelling.
+RESPELL = {
+}
 LETTER = dict(zip("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "എ ബി സി ഡി ഇ എഫ് ജി എച്ച് ഐ ജെ കെ എൽ എം എൻ ഒ പി ക്യു ആർ എസ് ടി യു വി ഡബ്ല്യു എക്സ് വൈ സെഡ്".split()))
 
 def latin(text):
@@ -82,6 +86,7 @@ def spoken(text):
     text = re.sub(r"(\d)([A-Z])(?![A-Za-z])-?(" + ML + ")?", lambda m: m.group(1) + " " + LETTER[m.group(2)] + (m.group(3) or ""), text)   # 20A-യും -> 20 എയും
     text = re.sub(r"(?<![\d,])1\s+(ലക്ഷം|കോടി)", r"ഒരു \1", text)                                    # 1 ലക്ഷം -> ഒരു ലക്ഷം
     text = latin(text)
+    if RESPELL: text = re.sub(ML, lambda m: RESPELL.get(m.group(0), m.group(0)), text)
     text = numbers(text)
     text = re.sub(r"(?<=[\u0d00-\u0d7f])-(?=[\u0d00-\u0d7f])", " ", text)   # പെയ്ഡ്-അപ്പ് -> two words, not one
     text = re.sub(r"-(?=[\u0d00-\u0d7f])", "", text)
