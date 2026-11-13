@@ -85,6 +85,11 @@ def spoken(text):
     text = numbers(text)
     text = re.sub(r"-(?=[ഀ-ൿ])", "", text)
     text = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]", "", text)   # emoji are not spoken
+    text = re.sub(r"\s*/\s*", " ഒരു ", text)                     # 1,000 രൂപ / ദിവസം -> ... ഒരു ദിവസം
+    text = re.sub(r"\s*\+\s*", ", പിന്നെ ", text)               # ബിൽ + NOC -> ബിൽ, പിന്നെ ...
+    text = re.sub(r"\s*[()]\s*", ", ", text)                     # brackets become a short pause
+    text = re.sub(r"\s*:\s*", ", ", text).replace("…", ", ").replace("...", ", ")
+    text = re.sub(r"(,\s*)+", ", ", text).strip(" ,")
     return re.sub(r"[ \t]+", " ", text.replace("-", " ")).strip()
 
 def unknown_latin(text):
