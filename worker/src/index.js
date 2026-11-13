@@ -147,6 +147,17 @@ async function postPoster(env) {   // single 4:5 image post
   await kvPut(env, "posted", posted); await log(env, `poster ${p.id} posted (${pub.id})`);
 }
 
+// Reach and other post metrics: the posting token lacks instagram_manage_insights, but the Instagram-login (DM) token
+// has the insights permission, so use it first and fall back to the posting token.
+async function insightsGet(env, media, metrics) {
+  const tok = await env.STATE.get("ig_login_token");
+  if (tok) {
+    const u = new URL(`https://graph.instagram.com/v24.0/${media}/insights`); u.search = new URLSearchParams({ metric: metrics, access_token: tok });
+    const j = await (await fetch(u)).json(); if (!j.error) return j;
+  }
+  return graph(env, `${media}/insights`, { metric: metrics }, "GET");
+}
+
 // ---------------- optimiser ----------------
 async function snapshot(env) {
   // one row per post per day: metrics + where/when it was posted. Kept 60 days. This is the insights database.
@@ -156,7 +167,7 @@ async function snapshot(env) {
     let v = {};
     try {
       const metrics = p.kind === "carousel" || p.kind === "poster" ? "reach,shares,saved,total_interactions,likes,comments" : "reach,views,shares,saved,total_interactions,likes,comments";
-      const r = await graph(env, `${p.media}/insights`, { metric: metrics }, "GET");
+      const r = await insightsGet(env, p.media, metrics);
       v = Object.fromEntries(r.data.map(d => [d.name, d.values?.[0]?.value ?? d.total_value?.value ?? 0]));
     } catch (e) { v = { error: String(e.message).slice(0, 80) }; }
     const ev = await kv(env, `ev:${id}`, { comments: 0, keyword: {}, leads: 0, dms: 0 });
