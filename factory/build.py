@@ -121,8 +121,10 @@ def sync_posted(man):
     url = os.environ.get("POSTED_URL")
     if not url: return
     import urllib.request
-    try: posted = set(json.load(urllib.request.urlopen(url, timeout=30)))
-    except Exception as e: print("could not read posted list:", e); return
+    # Cloudflare refuses Python's default user agent from GitHub runners (HTTP 403), so send a normal one
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (rl-kerala-reel-factory)", "Accept": "application/json"})
+    try: posted = set(json.load(urllib.request.urlopen(req, timeout=30)))
+    except Exception as e: print(f"::error::could not read posted list: {e}"); return
     now = int(time.time())
     for i in man["items"]:
         if i["id"] in posted and not i.get("posted"): i["posted"] = now
