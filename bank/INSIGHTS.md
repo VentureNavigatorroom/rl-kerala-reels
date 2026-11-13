@@ -36,3 +36,11 @@ Shift up to ~60% of a batch toward a clear winner (~1.5x median on 5+ posts); ke
 - Rule check: 2 posting days (need 14), 0 judged posts (need 40). No shift.
 - Changes made: none to the mix. batch10 (freelancer 7, cofounders 7, salaried 6) + batch11 (proprietor 7, nri 7, solo 6) = 40 scripts, 31 duo3d in 31 different locations, the first scripts with their own cap_ml/cap_en/cap_mg search captions. Proprietor scripts again open on a deal waiting to be signed (d401's pattern, new situations), share unchanged at 7/40. carousels09 adds 3 (salaried, proprietor, nri).
 - Watch next: proprietor duo3d vs others once 5+ are 2+ days old; whether carousels get any reach at 2+ days; whether the new situation-specific captions lift reach from search.
+
+## 2026-11-13 (run 5): observe only
+- Data (insights updated 2026-11-13T20:32 IST): 15 posts (12-13 Nov); the oldest are 0.8 days; 0 posts at 2+ days. Optimiser n_posts 0. Metrics for the 6 posts after 12:30 IST 13 Nov not read yet.
+- Reels: d401 (proprietor duo3d, beach) reach 128, views 154, 5 keyword comments, 30 DMs, 2 leads = still the only leads (leads_by_segment: proprietor 2). Other reels reach 99-119 (c002 nri chat 104 with 5 keyword comments, 0 DMs; d301 nri gulf 119; c104 99; c001 102), no DMs/leads. l406 reach 0 at 0 days.
+- Carousels: k001 reach 1, k002 0, k003 0. Reels still get ~100 non-follower reach each; carousels ~0 (consistent with the owner's 13 Nov rule to hold carousels at 5/day).
+- Rule check: 2 posting days (need 14), 0 judged posts (need 40). No shift.
+- Changes made: none to the mix. batch12 (freelancer 7, cofounders 7, salaried 6) + batch13 (proprietor 7, nri 7, solo 6) = 40 scripts, 30 duo3d in 30 different locations (all 19 locations used only 3 times so far are in), all with cap_ml/cap_en/cap_mg. Proprietor scripts again open on money waiting to be signed (d401's pattern, new situations), share unchanged at 7/40. carousels10 adds 3 (cofounders, proprietor, nri).
+- Watch next: proprietor duo3d vs others once 5+ are 2+ days old (earliest ~16-17 Nov); whether carousels get any reach at 2+ days; whether NRI keyword comments ever turn into DMs.
