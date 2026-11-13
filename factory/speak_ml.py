@@ -79,7 +79,7 @@ def latin(text):
 def spoken(text):
     text = re.sub(r"(?<![A-Za-z\d])3D(?![A-Za-z])", "ത്രീ ഡി", text)
     text = re.sub(r"(?<=[A-Za-z])-(?=\d)", " ", text)                                                 # INC-20A -> INC 20A
-    text = re.sub(r"(\d)([A-Z])(?![A-Za-z])", lambda m: m.group(1) + " " + LETTER[m.group(2)], text)   # 20A -> 20 എ
+    text = re.sub(r"(\d)([A-Z])(?![A-Za-z])-?(" + ML + ")?", lambda m: m.group(1) + " " + LETTER[m.group(2)] + (m.group(3) or ""), text)   # 20A-യും -> 20 എയും
     text = re.sub(r"(?<![\d,])1\s+(ലക്ഷം|കോടി)", r"ഒരു \1", text)                                    # 1 ലക്ഷം -> ഒരു ലക്ഷം
     text = latin(text)
     text = numbers(text)
