@@ -28,3 +28,11 @@ Shift up to ~60% of a batch toward a clear winner (~1.5x median on 5+ posts); ke
 - Rule check: 2 posting days (need 14), 0 judged posts (need 40). No shift.
 - Changes made: none to the mix. batch08 (freelancer 7, cofounders 7, salaried 6) + batch09 (proprietor 7, nri 7, solo 6) = 40 scripts, 30 duo3d in 30 different least-used locations. Only nudge: proprietor scripts in batch09 open on concrete money-on-the-table moments (orders, contracts, equity offers), the pattern of d401, without reusing its catering situation; proprietor share kept at 7/40 (not a shift).
 - Watch next: proprietor duo3d vs others once 5+ are 2+ days old; carousel reach; NRI chat comments turning into DMs.
+
+## 2026-11-13 (run 4): observe only
+- Data (insights updated 2026-11-13T15:19 IST): 11 posts (12-13 Nov), judged at 0-0.8 days; 0 posts at 2+ days. Optimiser n_posts 0.
+- Reels: d401 (proprietor duo3d, beach) reach 128, views 154, 5 keyword comments, 30 DMs, 2 leads = still the only leads (leads_by_segment: proprietor 2). Other reels reach 99-119 (c002 nri chat 104 with 5 keyword comments, 0 DMs; d301 nri gulf 119; c104 99; c001 102), no DMs/leads. l406, c006 too new.
+- Carousels: k001 reach 1, k002 0, k003 0, k004 not read yet. Reels keep getting ~100 non-follower reach each; carousels still ~0.
+- Rule check: 2 posting days (need 14), 0 judged posts (need 40). No shift.
+- Changes made: none to the mix. batch10 (freelancer 7, cofounders 7, salaried 6) + batch11 (proprietor 7, nri 7, solo 6) = 40 scripts, 31 duo3d in 31 different locations, the first scripts with their own cap_ml/cap_en/cap_mg search captions. Proprietor scripts again open on a deal waiting to be signed (d401's pattern, new situations), share unchanged at 7/40. carousels09 adds 3 (salaried, proprietor, nri).
+- Watch next: proprietor duo3d vs others once 5+ are 2+ days old; whether carousels get any reach at 2+ days; whether the new situation-specific captions lift reach from search.
