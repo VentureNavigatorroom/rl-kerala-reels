@@ -1,7 +1,7 @@
 """Build reels from the script bank into library/ until the unposted stock reaches the target.
 Runs unattended (GitHub Actions nightly). Picks scripts so content types and ICP segments rotate,
 weighted by library/weights.json (written by the optimiser from real Instagram numbers)."""
-import os, sys, json, glob, importlib.util, time, random
+import os, sys, json, re, glob, importlib.util, time, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import ROOT
 import cover
@@ -10,7 +10,7 @@ import captions
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
 POSTER_V = 2   # bump when the poster look changes: unposted posters get re-rendered
-VERSION = 5   # bump when voices/look change: unposted reels from older versions get rebuilt
+VERSION = 6   # bump when voices/look change: unposted reels from older versions get rebuilt
 
 def load_bank():
     S = []
@@ -154,6 +154,14 @@ def sync_posted(man):
         if p.get("posted") and now - p["posted"] > 86400 and os.path.exists(f"{LIB}/{p['image']}"): os.remove(f"{LIB}/{p['image']}")
     # posted carousels stay listed (without media) so the builder never makes them again
 
+def spoken_texts(sc):
+    """The strings the voice actually reads in a script (dialogue lines, list items, end line)."""
+    out = []
+    for l in sc.get("lines") or []: out.append(l[-1] if isinstance(l, (list, tuple)) else str(l))
+    for it in sc.get("items") or []: out.extend(x for x in (it if isinstance(it, (list, tuple)) else [it]) if isinstance(x, str))
+    if sc.get("end"): out.append(str(sc["end"]))
+    return out
+
 def recaption(man):
     """Give every unposted reel, carousel and poster the current three-language caption (cheap: no re-render)."""
     banks = {"items": {x["id"]: x for x in load_bank()}, "carousels": {x["id"]: x for x in load_carousels()}, "posters": {x["id"]: x for x in load_posters()}}
@@ -192,6 +200,7 @@ def main():
     try: recaption(man)
     except Exception as e: print("recaption failed:", repr(e), flush=True)
     # v4 changed only how acronyms are spoken: rebuild just the unposted reels whose lines contain one, re-tag the rest
+    # v6 says numbers as Malayalam words and English words in Malayalam spelling: rebuild unposted reels that have either
     # v5 fixed voice gender (many women's names were voiced male): rebuild just the unposted reels whose voices change
     from voice import HAS_ACR, FEMALE_V4, voice_for
     import duo3d
@@ -206,6 +215,7 @@ def main():
         sc = byid.get(i["id"])
         if not sc: return False
         if i.get("v", 1) < 4 and HAS_ACR(json.dumps([sc.get("lines"), sc.get("items"), sc.get("end")], ensure_ascii=False)): return True
+        if i.get("v", 1) < 6 and any(re.search(r"\d|[A-Za-z]*[a-z][A-Za-z]*|\b3D\b", t) for t in spoken_texts(sc)): return True   # v6: numbers and English words spoken properly
         return voice_changed(i, sc)
     old = set()
     for i in man["items"]:   # any unposted reel whose names do not match the people drawn in its location

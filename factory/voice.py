@@ -50,11 +50,7 @@ def _load():
 LETTER = dict(zip("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "എ ബി സി ഡി ഇ എഫ് ജി എച്ച് ഐ ജെ കെ എൽ എം എൻ ഒ പി ക്യു ആർ എസ് ടി യു വി ഡബ്ല്യു എക്സ് വൈ സെഡ്".split()))
 AS_WORD = {"START", "AFTER", "NAME", "PAN", "CHECKLIST", "DONE", "STOP"}
 ACR = re.compile(r"(?<![A-Za-z])([A-Z]{2,6})(?![a-z])")
-def spoken(text):
-    text = ACR.sub(lambda m: m.group(1) if m.group(1) in AS_WORD else " ".join(LETTER[c] for c in m.group(1)), text)
-    text = re.sub(r"(\d)([A-Z])(?![A-Za-z])", lambda m: m.group(1) + " " + LETTER[m.group(2)], text)   # 20A -> 20 എ
-    text = re.sub(r"-(?=[\u0d00-\u0d7f])", "", text)   # NRI-ക്ക് -> എൻ ആർ ഐക്ക്
-    return text.replace("-", " ")
+from speak_ml import spoken   # numbers -> Malayalam words, English words -> Malayalam spelling, acronyms letter by letter
 HAS_ACR = lambda t: bool(ACR.search(t)) and any(w not in AS_WORD for w in ACR.findall(t))
 
 def say(text, voice):

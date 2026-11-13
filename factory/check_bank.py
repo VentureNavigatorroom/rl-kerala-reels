@@ -58,6 +58,12 @@ for t in banks["stories"]:
 for p in banks["posters"]:
     if p["layout"] not in ("fact", "myth", "deadline", "check"): err(f"{p['id']}: unknown layout {p['layout']}")
 
+# 3c. every English word the voice reads must have a Malayalam spelling in factory/speak_ml.py SAY (acronyms are spelled out)
+import speak_ml
+for x in banks["reels"]:
+    for t in build.spoken_texts(x):
+        for w in speak_ml.unknown_latin(t): err(f"{x['id']}: the voice cannot say '{w}': add it to SAY in factory/speak_ml.py (Malayalam spelling) or write it in Malayalam")
+
 # 4. no rupee sign and no service-price words in any bank text (statutory late fee "ലേറ്റ് ഫീ" is allowed)
 PRICE = re.compile(r"(^|[\s\"'(.,!?])(വില|വിലയ്ക്ക്|ഫീസ്|ചാർജ്|ചാർജ്ജ്|ഡിസ്കൗണ്ട്|ഓഫർ\s*വില|price|fee|fees|discount|cheap|affordable)($|[\s\"'),.!?])", re.I)
 for f in sorted(glob.glob(f"{ROOT}/bank/*.py")):
