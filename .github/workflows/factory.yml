@@ -1,11 +1,11 @@
 name: reel-factory
-# Builds new reels twice a day (one run makes ~60 reels). Built stock is capped at 250 reels because GitHub Pages
+# Builds new reels twice a day (one run makes ~60 reels). Built stock is capped at 220 reels because GitHub Pages
 # sites are limited to about 1 GB (~2.5 MB per reel); the rest of the two-week backup waits as scripts in bank/.
 on:
   schedule: [{ cron: "30 19 * * *" }, { cron: "30 7 * * *" }]   # 01:00 and 13:00 IST
   workflow_dispatch:
     inputs:
-      stock_target: { description: "reels to keep ready", default: "250" }
+      stock_target: { description: "reels to keep ready", default: "220" }
       time_budget_min: { description: "minutes of building", default: "320" }
 permissions: { contents: write, pages: write, id-token: write }
 concurrency: { group: factory, cancel-in-progress: false }
@@ -55,7 +55,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           POSTED_URL: https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev/public/posted
-          STOCK_TARGET: ${{ inputs.stock_target || '250' }}
+          STOCK_TARGET: ${{ inputs.stock_target || '220' }}
           CAROUSEL_TARGET: "140"
           POSTER_TARGET: "70"
           STORY_TARGET: "70"

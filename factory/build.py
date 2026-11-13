@@ -117,7 +117,7 @@ def pick(bank, man, n):
     return out
 
 def sync_posted(man):
-    """Mark items the Cloudflare poster already published; delete their media after 3 days to keep the repo small."""
+    """Mark items the Cloudflare poster already published; delete their media after 1 day (Instagram copies it at publish; keeps the Pages site under 1 GB at 35 reels a day) to keep the repo small."""
     url = os.environ.get("POSTED_URL")
     if not url: return
     import urllib.request
@@ -128,24 +128,24 @@ def sync_posted(man):
     now = int(time.time())
     for i in man["items"]:
         if i["id"] in posted and not i.get("posted"): i["posted"] = now
-        if i.get("posted") and now - i["posted"] > 3 * 86400:
+        if i.get("posted") and now - i["posted"] > 86400:
             for f in (i["video"], i["cover"], f"media/{i['id']}_story.jpg"):
                 p = f"{LIB}/{f}"
                 if os.path.exists(p): os.remove(p)
     for x in man.get("stories", []):
         if not x.get("src"): continue                     # reel teasers go with their reel
         if x["id"] in posted and not x.get("posted"): x["posted"] = now
-        if x.get("posted") and now - x["posted"] > 3 * 86400 and os.path.exists(f"{LIB}/{x['image']}"): os.remove(f"{LIB}/{x['image']}")
+        if x.get("posted") and now - x["posted"] > 86400 and os.path.exists(f"{LIB}/{x['image']}"): os.remove(f"{LIB}/{x['image']}")
     # standalone stories stay listed after posting so the builder never makes them again; teasers leave with their media
     man["stories"] = [x for x in man.get("stories", []) if x.get("src") or os.path.exists(f"{LIB}/{x['image']}")]
     for c in man.get("carousels", []):
         if c["id"] in posted and not c.get("posted"): c["posted"] = now
-        if c.get("posted") and now - c["posted"] > 3 * 86400:
+        if c.get("posted") and now - c["posted"] > 86400:
             for f in c["images"]:
                 if os.path.exists(f"{LIB}/{f}"): os.remove(f"{LIB}/{f}")
     for p in man.get("posters", []):
         if p["id"] in posted and not p.get("posted"): p["posted"] = now
-        if p.get("posted") and now - p["posted"] > 3 * 86400 and os.path.exists(f"{LIB}/{p['image']}"): os.remove(f"{LIB}/{p['image']}")
+        if p.get("posted") and now - p["posted"] > 86400 and os.path.exists(f"{LIB}/{p['image']}"): os.remove(f"{LIB}/{p['image']}")
     # posted carousels stay listed (without media) so the builder never makes them again
 
 def place(s, man):
