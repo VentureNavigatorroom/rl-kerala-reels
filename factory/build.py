@@ -5,12 +5,13 @@ import os, sys, json, re, glob, importlib.util, time, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import ROOT
 import cover
+import speak_ml
 import captions
 
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
 POSTER_V = 2   # bump when the poster look changes: unposted posters get re-rendered
-VERSION = 6   # bump when voices/look change: unposted reels from older versions get rebuilt
+VERSION = 7   # bump when voices/look change: unposted reels from older versions get rebuilt
 
 def load_bank():
     S = []
@@ -216,6 +217,7 @@ def main():
         if not sc: return False
         if i.get("v", 1) < 4 and HAS_ACR(json.dumps([sc.get("lines"), sc.get("items"), sc.get("end")], ensure_ascii=False)): return True
         if i.get("v", 1) < 6 and any(re.search(r"\d|[A-Za-z]*[a-z][A-Za-z]*|\b3D\b", t) for t in spoken_texts(sc)): return True   # v6: numbers and English words spoken properly
+        if i.get("v", 1) < 7 and any(re.search(r"(?<![\u0d00-\u0d7f])ഒ(?![\u0d00-\u0d7f\u200c\u200d])", speak_ml.before_respell(t)) for t in spoken_texts(sc)): return True   # v7: letter O said as ഓ (OPC, NOC, ROC)
         return voice_changed(i, sc)
     old = set()
     for i in man["items"]:   # any unposted reel whose names do not match the people drawn in its location

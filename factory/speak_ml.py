@@ -66,9 +66,14 @@ SAY = {
 # Malayalam-script words the voice says wrongly, respelled the way it says them right. Filled from the voice-audit
 # reports (misheard in 2+ lines). On-screen text keeps the normal spelling.
 RESPELL = {
+    "ഒ": "ഓ",   # letter O in OPC / NOC / ROC: short ഒ ran into the next word (OPC heard as ഓഫീസി, NOC as എന്നോസി); audit 13 Nov
 }
 # Words already checked and found fine (the recogniser just spells them differently). Never flagged again.
-REVIEWED_OK = set()
+# audit 13 Nov: recogniser joins words (കമ്പനി ആകണം -> കമ്പനിയാകണം), runs spelled letters together (എൽ എൽ പി -> എൽഎൽപി)
+# or spells loanwords its own way (ഫയലിംഗ് -> ഫൈലിങ്, മുമ്പ് -> മുൻപ്); the voice said these right.
+REVIEWED_OK = {
+    "ആകണം", "ഫയലിംഗും", "മാസം", "പിക്ക്", "ഇട്ടോ", "ഐക്കും", "ആയ", "എൽ", "ആക്കാം", "ആർ", "എൻ", "ഫീ", "നാട്ടിൽ", "പിഴ", "അല്ലേ", "ഒക്കെ", "മുമ്പ്", "ഷെയർഹോൾഡർ", "ഇല്ല", "രജിസ്റ്റേർഡ്", "സി", "എ", "ഐ", "ഫയലിംഗ്", "പിക്കും", "വരുമാനം", "അതിന്", "ഒറ്റയ്ക്ക്", "റിജക്ട്", "ആകാം", "പിയോടോ", "ഇരുപത്", "പിയോ", "ഈ", "പി", "എടുക്കാൻ", "നൂറ്", "ഫയൽ", "ഓഫീസ്", "കമ്പനി", "പേര്", "പറ്റില്ല", "രൂപ", "ഷെയർ", "ഒരു", "പക്ഷേ",
+}
 def decided(word):
     """True when a word has already been fixed (RESPELL / SAY) or judged fine: the audit skips it."""
     return word in RESPELL or word in RESPELL.values() or word in REVIEWED_OK or word in SAY.values()
@@ -85,12 +90,16 @@ def latin(text):
     text = re.sub(r"(?<![A-Za-z])(\d?[A-Za-z]+)-?(" + ML + ")?", one, text)
     return text
 
-def spoken(text):
+def before_respell(text):
+    """spoken() up to the RESPELL step: tells which texts a RESPELL entry changes."""
     text = re.sub(r"(?<![A-Za-z\d])3D(?![A-Za-z])", "ത്രീ ഡി", text)
     text = re.sub(r"(?<=[A-Za-z])-(?=\d)", " ", text)                                                 # INC-20A -> INC 20A
     text = re.sub(r"(\d)([A-Z])(?![A-Za-z])-?(" + ML + ")?", lambda m: m.group(1) + " " + LETTER[m.group(2)] + (m.group(3) or ""), text)   # 20A-യും -> 20 എയും
     text = re.sub(r"(?<![\d,])1\s+(ലക്ഷം|കോടി)", r"ഒരു \1", text)                                    # 1 ലക്ഷം -> ഒരു ലക്ഷം
-    text = latin(text)
+    return latin(text)
+
+def spoken(text):
+    text = before_respell(text)
     if RESPELL: text = re.sub(ML, lambda m: RESPELL.get(m.group(0), m.group(0)), text)
     text = numbers(text)
     text = re.sub(r"(?<=[\u0d00-\u0d7f])-(?=[\u0d00-\u0d7f])", " ", text)   # പെയ്ഡ്-അപ്പ് -> two words, not one
