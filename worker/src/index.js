@@ -343,7 +343,19 @@ async function sendDM(env, to, text, buttons = []) { return sendMsg(env, { id: t
 async function opsOk(env, key) {
   if (!key) return false;
   const h = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key)))].map(b => b.toString(16).padStart(2, "0")).join("");
-  return h === env.OPS_KEY_SHA256 || (!!env.OPS_KEY_MONITOR_SHA256 && h === env.OPS_KEY_MONITOR_SHA256);   // owner key or monitor key
+  return h === env.OPS_KEY_SHA256 ? "owner" : (!!env.OPS_KEY_MONITOR_SHA256 && h === env.OPS_KEY_MONITOR_SHA256) ? "monitor" : false;
+}
+// The scheduled tasks' key sits in their task instructions, so it is limited: read status/insights, run read-only jobs,
+// hold or release a volume stage, and make GET-only Graph calls. It cannot change tokens, post, or see lead phone numbers.
+async function monitorAllowed(req, u) {
+  const p = u.pathname;
+  if (req.method === "GET") return ["/ops/status", "/ops/insights", "/ops/nudge", "/ops/leads"].includes(p);
+  if (req.method !== "POST") return false;
+  const b = await req.clone().json().catch(() => ({}));
+  if (p === "/ops/run") return ["slots", "snapshot", "optimise", "poll", "nudge"].includes(b.what) && !b.id;
+  if (p === "/ops/flag") return b.k === "stage_hold";
+  if (p === "/ops/graph") return (b.method || "GET") === "GET";
+  return false;
 }
 async function mediaToItem(env, mediaId) {
   const posted = await kv(env, "posted", {});
@@ -754,8 +766,10 @@ export default {
     }
     if (u.pathname === "/webhook" && req.method === "POST") { const b = await req.json(); ctx.waitUntil(handleWebhook(env, b).catch(e => log(env, `webhook ERROR ${e.message}`))); return new Response("ok"); }
     if (u.pathname.startsWith("/ops/")) {
-      if (!(await opsOk(env, req.headers.get("x-ops-key")))) return new Response("no", { status: 403 });
-      if (u.pathname === "/ops/leads") return json(await kv(env, "leads", {}));
+      const role = await opsOk(env, req.headers.get("x-ops-key"));
+      if (!role || (role === "monitor" && !(await monitorAllowed(req, u)))) return new Response("no", { status: 403 });
+      if (u.pathname === "/ops/leads") { const L = await kv(env, "leads", {}); if (role === "owner") return json(L);
+        return json(Object.fromEntries(Object.entries(L).map(([id, l]) => [id, { has_phone: !!l.phone, language: l.language || "", intent: l.intent, alerted: !!l.alerted, source_item: l.source_item || null, t: l.t || null }]))); }
       if (u.pathname === "/ops/insights") {
         const posted = await kv(env, "posted", {}); const out = {};
         for (const id of Object.keys(posted)) out[id] = { posted: posted[id], events: await kv(env, `ev:${id}`, null), snapshots: await kv(env, `snap:${id}`, []) };
