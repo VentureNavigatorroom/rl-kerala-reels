@@ -715,8 +715,8 @@ export default {
         if (what === "poll") { await pollInbox(env); return json({ ok: true }); } if (what === "reel") await postReel(env); if (what === "story") await postStory(env); if (what === "carousel") await postCarousel(env); if (what === "poster") await postPoster(env);
         if (what === "slots") { const d = IST().toISOString().slice(0, 10); const st = await stageNow(env, u.searchParams.get("day") || d); return json({ stage: st, slots: slotsFor(st) }); } return json({ ok: true }); }
       if (u.pathname === "/ops/graph" && req.method === "POST") {      // diagnostics: one Graph API call with the app's token
-        const { path, params, method } = await req.json();
-        const g = new URL(`${env.GRAPH}/${path}`); const b = new URLSearchParams({ ...(params || {}), access_token: env.IG_TOKEN });
+        const { path, params, method, ig } = await req.json();   // ig: true = Instagram-login app token on graph.instagram.com
+        const g = new URL(ig ? `https://graph.instagram.com/v24.0/${path}` : `${env.GRAPH}/${path}`); const b = new URLSearchParams({ ...(params || {}), access_token: ig ? await env.STATE.get("ig_login_token") : env.IG_TOKEN });
         const r = (method || "GET") === "GET" ? await fetch(`${g}?${b}`) : await fetch(g, { method, body: b }); return json(await r.json());
       }
       if (u.pathname === "/ops/settoken" && req.method === "POST") {   // store the Instagram-login token (never logged)
