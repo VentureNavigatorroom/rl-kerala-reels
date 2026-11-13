@@ -9,7 +9,7 @@ concurrency: { group: voice-audit, cancel-in-progress: true }
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,8 +30,9 @@ jobs:
           pip install -q --force-reinstall --no-deps torchaudio --index-url https://download.pytorch.org/whl/cpu
           pip install -q -U protobuf sentencepiece librosa
       - name: Audit
+        timeout-minutes: 240
         env: { HF_TOKEN: "${{ secrets.HF_TOKEN }}", AUDIT_LINES: "${{ inputs.lines || '80' }}", AUDIT_NEW_FIRST: "1", TTS_THREADS: "4" }
         run: python factory/voice_audit.py
       - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: always()
         with: { name: voice-audit, path: audit }
