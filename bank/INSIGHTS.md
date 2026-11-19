@@ -99,3 +99,18 @@ What changes from 20 Nov, while followers are under 100:
 - **So the bank is now the bottleneck.** Each topic needs about 14-36 new reel scripts a day once it is at full share.
 - **New topics come first.** gst, inv, sui and sk have only 6 scripts each, so the refill should give them most of every run until each has 40+.
 - **The factory now runs 4 times a day.**
+
+## Run 11: 19 Nov 2026, first breakout reel (pulled live from Instagram for all 115 posts)
+
+d904 (16 Nov 09:17; freelancer, park, "a mural artist's orders come only in festival months, so can the company sleep the rest of the year?") reached **1,153** people and got **1,224 views, 6 likes and 4 shares**. Every other reel reached 99-139.
+
+- **Its average watch time (5.9 s) was not higher than the rest.** Shares are what pushed it out: 4 shares against 0-1 on every other post.
+- **Why it was shared:** it busts a belief many people actually hold (no income means no filings). It's about an unusual, vivid local job (a temple mural artist), and its punchline people can repeat: "the brush dries, the fine doesn't".
+- **Totals across all 81 reels:** median watch 4.2 s, 33 likes, 18 shares, 14 saves, **0 comments**. People see the reels but rarely engage, so resonance is still weak.
+- Longest-held reels (9-12 s): d001, d818, d813, d003.
+
+What to change in new writing (all topics, about 40% of each batch until more data comes in):
+- **"Myth people really believe" + an unusual Kerala job + a shareable one-line punch.** Examples: "no sales means no GST return", "family money needs no papers", "DPIIT means no tax", "the KSUM grant comes before the company".
+- **Write the last line to be quoted or forwarded.** Keep it short and rhythmic, with a wordplay twist.
+- **Hooks state the myth as a question** ("can the company sleep?"). That worked better than a plain statement.
+- **Get comments.** End cap_ml/cap_en with a question people can answer in one word (e.g. "your work: seasonal or year-round?"). There are 0 comments so far, and comments are the next signal Instagram rewards.
