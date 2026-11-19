@@ -31,3 +31,8 @@ Real client data from the CRM never goes into this repo. See bank/STORY_THEMES.m
 - **After 14 days, with 10+ judged reels per theme:** shift up to 60% toward the theme with the better reach, shares and keyword comments per 1,000 reach (same rules as audience-led optimisation). Never drop a theme completely.
 - **More situations:** when a theme runs short, research more real questions online (forums, Quora, Reddit r/IndiaTax, r/StartUpIndia, government FAQ pages). Add them to STORY_THEMES.md as F-numbers, anonymised, with no copied text.
 - **Company registration is getting repetitive (owner's feedback):** new co scripts must use the fresh F1-F6 angles or new situations. No more "buyer wants a company" set-ups unless the twist is new.
+
+## Catching up after a pause (owner, 19 Nov)
+If earlier runs were skipped (for example, Claude usage ran out), never assume the last run's state.
+- Every run starts from live numbers: stock, runway, insights, the worker log and workflow runs.
+- First do whatever fell behind: the most urgent topic's scripts first, then any failed workflows, then any missed checkpoint review (22 / 25 Nov). After that, the normal work.

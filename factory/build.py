@@ -12,7 +12,7 @@ import topics
 LIB = f"{ROOT}/library"; os.makedirs(f"{LIB}/media", exist_ok=True)
 MAN = f"{LIB}/manifest.json"
 POSTER_V = 2   # bump when the poster look changes: unposted posters get re-rendered
-VERSION = 8   # bump when voices/look change: unposted reels from older versions get rebuilt
+VERSION = 9   # bump when voices/look change: unposted reels from older versions get rebuilt
 
 def _load(prefix, attr):
     """Every topic's bank files (bank/<prefix>*.py, bank/gst/<prefix>*.py, bank/inv/<prefix>*.py); each entry is tagged with its topic."""
@@ -226,6 +226,7 @@ def main():
         if i.get("v", 1) < 6 and any(re.search(r"\d|[A-Za-z]*[a-z][A-Za-z]*|\b3D\b", t) for t in spoken_texts(sc)): return True   # v6: numbers and English words spoken properly
         if i.get("v", 1) < 7 and any(re.search(r"(?<![\u0d00-\u0d7f])ഒ(?![\u0d00-\u0d7f\u200c\u200d])", speak_ml.before_respell(t)) for t in spoken_texts(sc)): return True   # v7: letter O said as ഓ (OPC, NOC, ROC)
         if i.get("v", 1) < 8 and any(re.search(r"[A-Z]{2,5}-\d|ഇൻവോയ്സ്|സ്റ്റോൾ", t) for t in spoken_texts(sc)): return True   # v8: form codes in English numbers (INC-20A), invoice, stall
+        if i.get("v", 1) < 9 and sc.get("kind") == "list": return True   # v9: list cards shrink to fit above Instagram's caption area (3rd card was hidden)
         return voice_changed(i, sc)
     old = set()
     for i in man["items"]:   # any unposted reel whose names do not match the people drawn in its location
