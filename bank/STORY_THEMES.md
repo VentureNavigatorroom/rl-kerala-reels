@@ -106,3 +106,54 @@ F19. **"Turnover is 8 crore but machinery cost 3 crore."** That's small, not mic
 F20. **"Bank asked for an Udyam certificate for the loan."**
 F21. **"Big company asks: are you MSME-registered?"** Since section 43B(h), buyers ask because paying late costs them their tax deduction.
 F22. **"Registered years ago as Udyog Aadhaar."** It has to move to Udyam.
+
+## More real-enquiry situations for the topics added 19 Nov evening (from the CRM; anonymised; mark theme="crm")
+
+Same confidentiality rule as above:
+- No names, brands, towns, amounts or dates from the CRM.
+- Change the sector, city and numbers.
+- Use the situation only.
+
+### Trademark (tm)
+C1. A transport business ran under one brand name for nearly 20 years and never registered it. Now someone else wants to use it.
+C2. A founder paid an agent to file a trademark, the agent went quiet halfway, and the founder doesn't know the status.
+C3. A brand was still "unnamed" at the idea stage, but the founder had already printed a logo on packaging.
+C4. Two related businesses (for example a sterilisation service and a main company) used similar names, and only one was protected.
+
+### ROC / annual compliance (roc)
+C5. An owner ran two businesses as proprietorships (one in a parent's name) to "avoid compliance". Then an investor needed one clean company.
+C6. A registered company stayed idle for a while and nobody filed; the owner found out only when it was time to raise money.
+C7. A student founder registered a company for a project, then forgot it; yearly filings were still due.
+
+### FSSAI (fssai)
+C8. A gastronomy graduate planning a food truck asked for funding but had no FSSAI or registration yet.
+C9. An ice cream / frozen dessert brand was asked by an investor about "certifications beyond FSSAI" and cold-chain handling.
+C10. An Ayurvedic food supplement brand, run in a family member's name for years, wanted to expand into stores.
+C11. A food delivery or drive-through concept was at the "starting soon" stage, with no food licence planned.
+
+### IEC (iec)
+C12. A founder with family running import and export businesses on both sides (Kerala and the Gulf) wanted to set up trade properly.
+C13. Many enquiries come from founders living abroad who want to start or supply something in Kerala, which often needs import or export paperwork.
+
+### NDA (nda)
+C14. A founder was nervous about sharing the pitch deck with investors and asked whether to get an NDA first. (Fact: many investors don't sign at pitch stage.)
+C15. A team did projects for clients before registering the company, with no contracts or NDAs, and later had trouble showing what was theirs.
+
+### Co-founder agreements (cfa)
+C16. A 70/30 CEO/COO split was agreed verbally, and the roles were mislabelled even in their own notes. Nothing was written down.
+C17. A female founder holding 55% wanted to bring in new partners and didn't know how to protect her control.
+C18. Brothers started together and one was listed as "co-founder" only in a phone contact. There was no agreement.
+C19. A registered partnership firm wanted investors and had to restructure, so it needed a fresh founders' agreement.
+C20. A college team where one member was preparing for exams and paused; nobody knew who owned what.
+
+### Financial projections (fp)
+C21. A pitch was rejected for "no market validation, sales" and missing financial metrics.
+C22. A founder's investment ask came from adding up dev cost plus running cost, without monthly projections.
+C23. A farm business with modest monthly revenue and years of history had no numbers organised for an investor.
+C24. A mentee wanted to understand "what financial metrics investors check".
+
+### Company valuation (val)
+C25. A founder asked for a small amount "for phase 1, 3-year ROI" with no pitch deck, and needed a valuation to decide how much equity to give.
+C26. A company did projects before registering, so its valuation came out low.
+C27. A founder asked for mentorship on "valuation and projections" before raising.
+C28. A family-run proprietorship expanding into a new venture didn't know what its existing business was worth.
