@@ -112,12 +112,3 @@ duo("tm011", "d2c_brand", "C", "photocopy", "യൂട്യൂബ് ചാന�
  cap_ml="ചാനലിന്റെ പേര് വിദ്യാഭ്യാസ സർവീസിൽ ട്രേഡ്മാർക്ക് ചെയ്തു, പക്ഷേ ടീ-ഷർട്ട് വേറെ ക്ലാസ്. ട്രേഡ്മാർക്കിൽ 45 ക്ലാസ്; നിങ്ങൾ വിൽക്കുന്ന ഓരോ ക്ലാസിലും ഫയൽ ചെയ്യണം. നിങ്ങൾ മെർച്ച് വിൽക്കാൻ പ്ലാനുണ്ടോ?",
  cap_en="A tuition YouTuber trademarked his channel name for education services, and now someone sells T-shirts under it: clothing is a different class. There are 45 classes; file in every class you trade in, including merch. Planning merch: yes or no?",
  cap_mg="Channel-nte peru vidyaabhyaasa service-il trademark cheythu, pakshe T-shirt vere class. Trademark-il 45 class; ningal vilkkunna oro class-ilum file cheyyanam. Ningal merch vilkkaan plan undo?")
-
-lst("tml002", "copied_brand", "A", "ട്രേഡ്മാർക്കിൽ\nഓർക്കേണ്ട 3 നമ്പർ", [
- ("30 ദിവസം", "ഒബ്ജക്ഷൻ വന്നാൽ മറുപടി കൊടുക്കാനുള്ള സമയം."),
- ("4 മാസം", "ജേണലിൽ വന്ന ശേഷം ആർക്കും ഓപ്പോസിഷൻ ഫയൽ ചെയ്യാനുള്ള സമയം."),
- ("10 വർഷം", "രജിസ്ട്രേഷൻ ഇത്ര കാലം. പിന്നെ പുതുക്കണം.")],
- "ഇതിൽ ഏത് നമ്പറാണ്\nനിങ്ങൾക്ക് പുതിയത്?", CTA_TRADEMARK, theme="faq",
- cap_ml="ട്രേഡ്മാർക്കിലെ 3 നമ്പർ: ഒബ്ജക്ഷന് മറുപടി 30 ദിവസത്തിനുള്ളിൽ, ജേണലിൽ വന്ന് 4 മാസം ഓപ്പോസിഷൻ സമയം, രജിസ്ട്രേഷൻ 10 വർഷം, പിന്നെ പുതുക്കണം. ഏത് നമ്പറാണ് നിങ്ങൾക്ക് പുതിയത്: 30, 4, 10?",
- cap_en="Three trademark numbers to remember: 30 days to reply to an objection, 4 months for anyone to oppose after journal publication, and 10 years of validity before renewal. Which one was new to you: 30, 4 or 10?",
- cap_mg="Trademark-ile 3 number: objection-inu marupadi 30 divasathinullil, journal-il vannu 4 maasam opposition samayam, registration 10 varsham, pinne puthukkanam. Ethu number aanu ningalkku puthiyathu: 30, 4, 10?")

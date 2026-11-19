@@ -4,12 +4,6 @@ _s = importlib.util.spec_from_file_location("h", os.path.join(os.path.dirname(__
 duo, chat, lst, car, tip, quiz, contact, S, C, T, topics = _h.duo, _h.chat, _h.lst, _h.car, _h.tip, _h.quiz, _h.contact, _h.S, _h.C, _h.T, _h.topics
 CTA_FSSAI, CTA_FOOD = topics.CTA_FSSAI, topics.CTA_FOOD
 
-lst('fst001', 'home_baker', "B", 'ഏത് FSSAI?\nടേൺഓവർ നോക്കി\nതീരുമാനിക്കൂ', [('ബേസിക് രജിസ്ട്രേഷൻ', 'വർഷം പന്ത്രണ്ട് ലക്ഷം വരെ.'), ('സ്റ്റേറ്റ് ലൈസൻസ്', 'ഇരുപത് കോടി വരെ.'), ('സെൻട്രൽ', 'അതിന് മുകളിലും ഇറക്കുമതിക്കാർക്കും.')],
- 'വീട്ടിലെ ബേക്കറിക്കും\nവേണം', CTA_FSSAI, theme="tip",
- cap_ml='FSSAI: വർഷം 12 ലക്ഷം വരെ ബേസിക് രജിസ്ട്രേഷൻ, 20 കോടി വരെ സ്റ്റേറ്റ് ലൈസൻസ്, അതിന് മുകളിലും ഇറക്കുമതിക്കാർക്കും സെൻട്രൽ. ഹോം ബേക്കർമാർക്കും വേണം. നിങ്ങൾക്ക് ഏത് വേണം?',
- cap_en='FSSAI: basic registration up to 12 lakh turnover a year, state licence up to 20 crore, central above that and for importers. Home bakers need it too. Which one fits you?',
- cap_mg='FSSAI: 12 lakh vare basic registration, 20 kodi vare state licence, athinu mukalil central. Home bakers-num venam. Ningalkku ethu venam?')
-
 lst('fst002', 'packaged_food', "B", 'പാക്കറ്റിൽ\nനിർബന്ധം:\n14 അക്ക നമ്പർ', [('എവിടെ', 'പാക്കേജ് ചെയ്ത ഭക്ഷണത്തിന്റെ ലേബലിൽ.'), ('ആര് ചോദിക്കും', 'ഡെലിവറി ആപ്പുകളും കടകളും.'), ('ട്രിക്ക്', 'പ്രിന്റിന് മുമ്പ് നമ്പർ കിട്ടണം.')],
  'നമ്പർ ഇല്ലാത്ത പാക്കറ്റ്\nഷെൽഫിൽ കയറില്ല', CTA_FOOD, theme="tip",
  cap_ml='പാക്കേജ് ചെയ്ത ഭക്ഷണത്തിന്റെ ലേബലിൽ 14 അക്ക FSSAI നമ്പർ വേണം. ഡെലിവറി ആപ്പുകളും ഇത് ചോദിക്കും. നിങ്ങളുടെ ലേബലിൽ നമ്പർ ഉണ്ടോ?',

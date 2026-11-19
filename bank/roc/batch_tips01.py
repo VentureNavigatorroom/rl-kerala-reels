@@ -4,12 +4,6 @@ _s = importlib.util.spec_from_file_location("h", os.path.join(os.path.dirname(__
 duo, chat, lst, car, tip, quiz, contact, S, C, T, topics = _h.duo, _h.chat, _h.lst, _h.car, _h.tip, _h.quiz, _h.contact, _h.S, _h.C, _h.T, _h.topics
 CTA_ROC, CTA_FILING = topics.CTA_ROC, topics.CTA_FILING
 
-lst('rct001', 'new_company_roc', "B", 'പ്രൈവറ്റ് ലിമിറ്റഡ്:\nവർഷത്തെ ഫയലിംഗ്\nകലണ്ടർ', [('സെപ്റ്റംബർ മുപ്പത്', 'AGM, ഡയറക്ടർമാരുടെ KYC.'), ('AGM കഴിഞ്ഞ് മുപ്പത് ദിവസം', 'AOC-4.'), ('AGM കഴിഞ്ഞ് അറുപത് ദിവസം', 'MGT-7.')],
- 'കലണ്ടറിൽ ഇട്ടാൽ\nപിഴ ഒഴിവാക്കാം', CTA_ROC, theme="tip",
- cap_ml='പ്രൈവറ്റ് ലിമിറ്റഡിന്: AGM സെപ്റ്റംബർ 30-നകം, AOC-4 AGM കഴിഞ്ഞ് 30 ദിവസത്തിനുള്ളിൽ, MGT-7 60 ദിവസത്തിനുള്ളിൽ, ഓരോ ഡയറക്ടർക്കും KYC. നിങ്ങളുടെ ഫയലിംഗ് പൂർത്തിയായോ?',
- cap_en='Private limited calendar: AGM by 30 September, AOC-4 within 30 days of the AGM, MGT-7 within 60 days, and DIR-3 KYC for every director. Is yours done?',
- cap_mg='Private limited-nu: AGM September 30-nakam, AOC-4 AGM kazhinju 30 divasam, MGT-7 60 divasam, oro director-kkum KYC. Ningalude filing kazhinjo?')
-
 lst('rct002', 'dormant_company', "B", 'ബിസിനസ് ഇല്ല.\nഫയലിംഗും\nവേണ്ടേ?', [('തെറ്റ്', 'ബിസിനസ് ഇല്ലെങ്കിലും ഫയലിംഗ് നിർബന്ധം.'), ('മൂന്ന് വർഷം', 'ഫയൽ ചെയ്തില്ലെങ്കിൽ ഡയറക്ടർമാർക്ക് അയോഗ്യത.'), ('അപകടം', 'കമ്പനി സ്ട്രൈക്ക് ഓഫ് ആകാം.')],
  'ഉറങ്ങുന്ന കമ്പനിക്കും\nകലണ്ടർ ഉണ്ട്', CTA_FILING, theme="tip",
  cap_ml='ബിസിനസ് ഇല്ലെങ്കിലും ROC ഫയലിംഗ് നിർബന്ധം. മൂന്ന് വർഷം ഫയൽ ചെയ്തില്ലെങ്കിൽ ഡയറക്ടർമാർക്ക് 5 വർഷം അയോഗ്യതയും കമ്പനി സ്ട്രൈക്ക് ഓഫും വരാം. നിങ്ങളുടെ കമ്പനി എത്ര കാലമായി ഉറങ്ങുന്നു?',

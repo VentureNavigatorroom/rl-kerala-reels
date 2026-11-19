@@ -79,6 +79,9 @@ REVIEWED_OK = {
     # writes മൂന്ന് as മൂന്നു and ഡ as ട (ഓഡിറ്ററെ -> ഓടിറ്റരെ; ഓഡിറ്റർ heard right in 4 lines); letter ഓ (already respelled from ഒ) heard right
     # in 5 of 7 OPC/NOC lines, the other 2 only written as short ഒ: the voice said all of these right.
     "വർഷം", "ആണെങ്കിലും", "മൂന്ന്", "പൂജ്യം", "തന്നെ", "ഓഡിറ്ററെ", "ഓ",
+    # audit 19 Nov: recogniser joins ക്യാഷ് ഫ്ലോ into കാഷ്ഫ്ലോ, writes ആര് as chillu ആർ, and spells വാല്യുവേഷൻ as വാലുവേഷൻ
+    # (heard right in 9 of 12 lines): the voice said these right.
+    "ക്യാഷ്", "ആര്", "വാല്യുവേഷൻ",
 }
 def decided(word):
     """True when a word has already been fixed (RESPELL / SAY) or judged fine: the audit skips it."""

@@ -212,6 +212,17 @@ def place(s, man):
     opts.sort(key=lambda x: (last(x), abs(hash(s["id"] + x)) % 97))
     s["scene"] = opts[0]; return s
 
+def drop_orphans(man, byid):
+    """Unposted reels whose script was deleted from the bank (e.g. a removed near-duplicate) must not be posted:
+    drop them and their stories. Posted items are never touched. byid must be the FULL bank (tips/news included)."""
+    live = {topic_of(s) for s in byid.values()}   # guard: a topic whose bank failed to load (0 scripts) keeps its reels
+    gone = {i["id"] for i in man["items"] if not i.get("posted") and i["id"] not in byid and topic_of(i) in live}
+    if gone:
+        print("dropping unposted reels no longer in the bank:", sorted(gone), flush=True)
+        man["items"] = [i for i in man["items"] if i["id"] not in gone]
+        man["stories"] = [x for x in man.get("stories", []) if x.get("reel") not in gone]
+    return gone
+
 def main():
     run_fail = []
     target = int(os.environ.get("STOCK_TARGET", "40")); budget = float(os.environ.get("TIME_BUDGET_MIN", "300")) * 60
@@ -227,7 +238,8 @@ def main():
     # v5 fixed voice gender (many women's names were voiced male): rebuild just the unposted reels whose voices change
     from voice import HAS_ACR, FEMALE_V4, voice_for
     import duo3d
-    byid = {s["id"]: s for s in bank}
+    byid = {s["id"]: s for s in bank}   # full bank here: the tip/news filter comes later
+    drop_orphans(man, byid)
     def voice_changed(i, sc):
         if sc.get("kind") == "chat": nm = sc.get("names") or ()
         elif sc.get("kind") == "duo3d": nm = sc.get("names") or duo3d.SCENES.get(i.get("scene") or "", {}).get("names") or ()
