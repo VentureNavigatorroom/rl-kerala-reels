@@ -87,3 +87,15 @@ Rules for every script written from now on, all topics:
 6. Until 100 followers the worker posts 2 carousels + 3 stories per topic (`low_reach_mode`); reels get the quota.
 
 **New topics (live from 20 Nov):** gst, inv, sui (Startup India / DPIIT), sk (Kerala Startup Mission). Banks are in bank/<topic>/, facts and segments in factory/topics.py, ids prefixed g / v / u / m. Each topic has its own stock, keywords, DM flow and Discord label.
+
+## Run 10: 19 Nov 2026, REEL-MAX MODE (owner's order)
+
+The 2 "leads" so far were the owner testing, so there are **0 real leads**. The owner wants as many reels as the daily limit allows.
+
+What changes from 20 Nov, while followers are under 100:
+- **Every slot is a reel.** No carousels, stories or posters.
+- **Total reels per day:** 40 (20 Nov), 60 (21 Nov), 80 (22 Nov), then 90 (from 23 Nov). The monitor can lower it with `reel_cap`.
+- **Split by topic share** (co 40%, the other four 15% each), limited by built stock. Unused share goes to topics that have reels ready.
+- **So the bank is now the bottleneck.** Each topic needs about 14-36 new reel scripts a day once it is at full share.
+- **New topics come first.** gst, inv, sui and sk have only 6 scripts each, so the refill should give them most of every run until each has 40+.
+- **The factory now runs 4 times a day.**

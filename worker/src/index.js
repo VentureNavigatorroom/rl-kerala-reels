@@ -44,7 +44,30 @@ async function stageNow(env, day, topic = "co") {
   for (const hk of ["stage_hold", "stage_hold" + sfx]) { const hold = await env.STATE.get(hk); if (hold !== null && +hold < i) i = +hold; }   // hold = highest stage allowed
   return { i, ...ST[i] };
 }
+// REEL-MAX MODE (owner, 19 Nov: "as many reels as the daily limit allows, stop carousels/stories if needed").
+// While low_reach_mode is on (under 100 followers) and from 20 Nov: no carousels, stories or posters (they reach ~0 people
+// without followers); every slot is a reel. The total ramps up over 4 days so the account isn't flagged for a sudden jump;
+// the monitor can lower it with KV "reel_cap" if reach per reel drops. Reels are split by topic share and by built stock,
+// so a topic with little stock never blocks the quota: its unused share goes to topics that have reels ready.
+const REEL_RAMP = [["2026-11-20", 40], ["2026-11-21", 60], ["2026-11-22", 80], ["2026-11-23", 90]];
+const REEL_SHARE = { co: 0.4, gst: 0.15, inv: 0.15, sui: 0.15, sk: 0.15 };
+async function reelMaxPlan(env, day) {
+  const ck = `plan:${day}`; const cached = await kv(env, ck, null); if (cached) return cached;   // frozen once a day so slot times never move
+  let total = 0; for (const [d, n] of REEL_RAMP) if (day >= d) total = n;
+  const rc = await env.STATE.get("reel_cap"); if (rc !== null) total = Math.min(total, +rc);
+  const m = await manifest(env); const posted = await kv(env, "posted", {});
+  const avail = {}; for (const t of Object.keys(TOPICS)) avail[t] = 0;
+  for (const i of m.items || []) if (!i.posted && !posted[i.id]) avail[topicOf(i)]++;
+  const live = Object.keys(TOPICS).filter(t => day >= TOPICS[t].stages[0].from);
+  const plan = {}; for (const t of live) plan[t] = { reel: 0, carousel: 0, story: 0, poster: 0 };
+  let left = total;   // pass 1: each topic its share, limited by stock; pass 2: hand leftovers to topics with stock, co first
+  for (const t of live) { const n = Math.min(Math.round(total * REEL_SHARE[t]), avail[t]); plan[t].reel = n; left -= n; }
+  for (const t of ["co", ...live.filter(x => x !== "co")]) if (plan[t]) { const n = Math.min(left, avail[t] - plan[t].reel); if (n > 0) { plan[t].reel += n; left -= n; } }
+  const P = { cap: total, mode: "reel-max", stages: {}, plan, total: total - left, stock: avail };
+  await kvPut(env, ck, P); return P;
+}
 async function planDay(env, day) {
+  if (day >= REEL_RAMP[0][0] && (await env.STATE.get("low_reach_mode")) !== "0") return reelMaxPlan(env, day);
   const cap = +(await env.STATE.get("daily_cap") || DAILY_CAP); const stages = {}, plan = {};
   const low = (await env.STATE.get("low_reach_mode")) !== "0";
   for (const t of Object.keys(TOPICS)) { const st = await stageNow(env, day, t); if (st) { stages[t] = st; plan[t] = { reel: st.reel, carousel: low ? Math.min(st.carousel, LOW_REACH.carousel) : st.carousel, story: low ? Math.min(st.story, LOW_REACH.story) : st.story, poster: st.poster }; } }
@@ -214,7 +237,7 @@ const SUBREQ_LIMIT = /too many subrequests/i;
 function snapDue(p, ageRef) {   // ageRef: age in days at today's 03:00 IST, so the set doesn't shift during the hour
   if (p.kind === undefined || ageRef > 30) return false;
   if (p.kind === "story") return ageRef <= 1;   // Instagram keeps story insights for 24 h only
-  return ageRef <= 7 || [14, 21, 28].includes(Math.floor(ageRef));
+  return [2, 7].includes(Math.floor(ageRef));   // 2 rows per post: at ~96 posts/day this keeps KV writes inside the free 1,000/day
 }
 async function snapshot(env) {
   // one row per post per due day: metrics + where/when it was posted. This is the insights database.
@@ -225,6 +248,11 @@ async function snapshot(env) {
   const doneSet = new Set(prog.done);
   const todo = Object.entries(posted).filter(([id, p]) => !doneSet.has(id) && snapDue(p, (ref - p.t) / 86400e3));
   const tok = await env.STATE.get("ig_login_token"); const budget = { fetches: 0 };
+  const judged = await kv(env, "judged", {}); let judgedNew = false;
+  if (!Object.keys(judged).length && !(await env.STATE.get("judged_backfilled"))) {   // one-time: build the index from older rows
+    for (const id of Object.keys(posted).slice(-400)) { const h = await kv(env, `snap:${id}`, []); const r = h.find(x => x.age_days >= 2 && !x.error); if (r) { const { keywords, ...c } = r; judged[id] = c; judgedNew = true; } }
+    await env.STATE.put("judged_backfilled", "1"); if (judgedNew) { await kvPut(env, "judged", judged); judgedNew = false; }
+  }
   let n = 0, stopped = false;
   for (const [id, p] of todo) {
     if (n >= SNAP_MAX_POSTS || budget.fetches + 2 > SNAP_MAX_FETCH) { stopped = true; break; }
@@ -234,7 +262,7 @@ async function snapshot(env) {
     let v = {};
     try {
       const metrics = p.kind === "story" ? "reach,views,replies,shares,total_interactions,follows,profile_visits"   // stories have no saved/likes/comments
-        : p.kind === "carousel" || p.kind === "poster" ? "reach,shares,saved,total_interactions,likes,comments" : "reach,views,shares,saved,total_interactions,likes,comments";
+        : p.kind === "carousel" || p.kind === "poster" ? "reach,shares,saved,total_interactions,likes,comments" : "reach,views,shares,saved,total_interactions,likes,comments,ig_reels_avg_watch_time";
       const r = await insightsGet(env, p.media, metrics, tok, budget);
       v = Object.fromEntries(r.data.map(d => [d.name, d.values?.[0]?.value ?? d.total_value?.value ?? 0]));
     } catch (e) {
@@ -248,7 +276,9 @@ async function snapshot(env) {
       posted_at: posted_ist.toISOString().slice(0, 16), weekday: posted_ist.getUTCDay(), slot: posted_ist.toISOString().slice(11, 16),
       age_days: Math.round(age * 10) / 10, ...v, keyword_comments: Object.values(ev.keyword).reduce((a, b) => a + b, 0), keywords: ev.keyword, dms: ev.dms, leads: ev.leads };
     hist.push(row); await kvPut(env, k, hist.slice(-31)); doneSet.add(id);
+    if (row.age_days >= 2 && !row.error && !judged[id]) { const { keywords, ...c } = row; judged[id] = c; judgedNew = true; }
   }
+  if (judgedNew) await kvPut(env, "judged", judged);   // one compact row per post: optimiser and /public/insights read this, not thousands of keys
   if (doneSet.size !== prog.done.length) await kvPut(env, pk, { day, done: [...doneSet] });
   return { day, done: !stopped, rows: n, fetches: budget.fetches };
 }
@@ -264,10 +294,10 @@ function median(a) { const s = [...a].sort((x, y) => x - y); return s.length ? s
 async function optimise(env) {
   // Cautious: judge each post at 48-72h; compare it with posts from the SAME slot (time effect removed),
   // need >= 5 posts per group and a clear gap before moving weights, and move at most 25% per week.
-  const posted = await kv(env, "posted", {}); const rows = [];
-  for (const id of Object.keys(posted)) {
-    const h = await kv(env, `snap:${id}`, []); const r = h.find(x => x.age_days >= 2 && !x.error) || null;   // skip failed snapshot rows
-    if (!r || r.error || !r.reach) continue;
+  const judged = await kv(env, "judged", {}); const rows = [];
+  for (const id of Object.keys(judged)) {
+    const r = { ...judged[id] };
+    if (!r.reach) continue;
     r.score = ((r.shares || 0) * 3 + (r.saved || 0) * 2 + (r.keyword_comments || 0) * 10 + (r.leads || 0) * 25 + (r.total_interactions || 0)) / Math.max(50, r.reach) * 1000;
     rows.push(r);
   }
@@ -508,7 +538,7 @@ async function monitorAllowed(req, u) {
   if (req.method !== "POST") return false;
   const b = await req.clone().json().catch(() => ({}));
   if (p === "/ops/run") return ["slots", "snapshot", "optimise", "poll", "nudge"].includes(b.what) && !b.id;
-  if (p === "/ops/flag") return /^stage_hold(_gst|_inv|_sui|_sk)?$/.test(b.k) || b.k === "low_reach_mode";
+  if (p === "/ops/flag") return /^stage_hold(_gst|_inv|_sui|_sk)?$/.test(b.k) || b.k === "low_reach_mode" || b.k === "reel_cap";
   if (p === "/ops/graph") return (b.method || "GET") === "GET";
   return false;
 }
@@ -962,7 +992,7 @@ export default {
         return json(Object.fromEntries(Object.entries(L).map(([id, l]) => [id, { has_phone: !!l.phone, language: l.language || "", intent: l.intent, alerted: !!l.alerted, source_item: l.source_item || null, t: l.t || null }]))); }
       if (u.pathname === "/ops/insights") {
         const posted = await kv(env, "posted", {}); const out = {};
-        for (const id of Object.keys(posted)) out[id] = { posted: posted[id], events: await kv(env, `ev:${id}`, null), snapshots: await kv(env, `snap:${id}`, []) };
+        for (const id of Object.keys(posted).filter(i => Date.now() - posted[i].t < 7 * 86400e3)) out[id] = { posted: posted[id], events: await kv(env, `ev:${id}`, null), snapshots: await kv(env, `snap:${id}`, []) };
         return json({ weights: await kv(env, "weights", null), slot_report: await kv(env, "slot_report", null), posts: out });
       }
       if (u.pathname === "/ops/thread") { const id = u.searchParams.get("id"); return json({ meta: await kv(env, `m:${id}`, null), thread: await kv(env, `t:${id}`, []) }); }
@@ -989,7 +1019,7 @@ export default {
         const { token } = await req.json(); const r = await (await fetch(`https://graph.instagram.com/v24.0/me?fields=user_id,username&access_token=${encodeURIComponent(token)}`)).json();
         if (r.error) return json({ ok: false, error: r.error.message }); await env.STATE.put("ig_login_token", token); await env.STATE.put("ig_login_token_set", String(Date.now())); return json({ ok: true, username: r.username, user_id: r.user_id });
       }
-      if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (/^stage_(hold|force)(_gst|_inv|_sui|_sk)?$/.test(k) || k === "daily_cap" || k === "low_reach_mode") { v === null || v === undefined || v === "" ? await env.STATE.delete(k) : await env.STATE.put(k, String(+v)); return json({ ok: true, k, v }); }
+      if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (/^stage_(hold|force)(_gst|_inv|_sui|_sk)?$/.test(k) || k === "daily_cap" || k === "low_reach_mode" || k === "reel_cap") { v === null || v === undefined || v === "" ? await env.STATE.delete(k) : await env.STATE.put(k, String(+v)); return json({ ok: true, k, v }); }
         if (!["dm_inbound", "poll_inbox"].includes(k)) return json({ ok: false }); v ? await env.STATE.put(k, "1") : await env.STATE.delete(k); return json({ ok: true, k, v: !!v }); }
       if (u.pathname === "/ops/extra" && req.method === "POST") { const { carousels } = await req.json(); await kvPut(env, "extra_carousels", carousels || []); return json({ ok: true, n: (carousels || []).length }); }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
@@ -1005,13 +1035,13 @@ export default {
 <h2>Terms</h2><p>Information shared in replies is general guidance about company registration, not legal advice.</p>
 <p>Contact: send a direct message to @rejectionlist.kerala on Instagram.</p></body>`, { headers: { "content-type": "text/html; charset=utf-8" } });
     if (u.pathname === "/public/insights") {   // performance per post for the script writer: no names, numbers or messages
-      const posted = await kv(env, "posted", {}); const leads = Object.values(await kv(env, "leads", {})); const posts = [];
+      const posted = await kv(env, "posted", {}); const leads = Object.values(await kv(env, "leads", {})); const posts = []; const judged = await kv(env, "judged", {});
       for (const [id, p] of Object.entries(posted)) {
         if (p.kind === "story") continue;
-        const h = await kv(env, `snap:${id}`, []); const r = h.find(x => x.age_days >= 2) || h[h.length - 1] || {};
+        const r = judged[id] || {};
         const L = leads.filter(l => l.source_item === id);
         posts.push({ id, topic: topicOf(p), kind: p.kind, segment: p.segment || null, scene: p.scene || null, layout: p.layout || null, posted_at: IST(new Date(p.t)).toISOString().slice(0, 16), judged_at_days: r.age_days ?? null,
-          reach: r.reach ?? null, views: r.views ?? null, shares: r.shares ?? null, saved: r.saved ?? null, likes: r.likes ?? null, comments: r.comments ?? null,
+          reach: r.reach ?? null, views: r.views ?? null, avg_watch_s: r.ig_reels_avg_watch_time != null ? Math.round(r.ig_reels_avg_watch_time / 100) / 10 : null, shares: r.shares ?? null, saved: r.saved ?? null, likes: r.likes ?? null, comments: r.comments ?? null,
           keyword_comments: r.keyword_comments ?? null, dms: r.dms ?? null, leads: L.length, high_intent: L.filter(l => l.intent === "high").length, nri_leads: L.filter(l => l.nri).length, budget_likely: L.filter(l => l.can_afford_30k === "likely").length });
       }
       const nx = await kv(env, "nudge", {});

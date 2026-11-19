@@ -1,18 +1,18 @@
 name: reel-factory
-# Builds new reels twice a day (one run makes ~60 reels). Built stock is capped at 220 reels because GitHub Pages
+# Builds new reels four times a day (~3 min per reel, 170 min per run => ~55 reels a run, ~220 a day; reel-max mode posts up to 90 a day). Built stock is capped at 220 reels because GitHub Pages
 # sites are limited to about 1 GB (~2.5 MB per reel); the rest of the two-week backup waits as scripts in bank/.
 on:
-  schedule: [{ cron: "30 19 * * *" }, { cron: "30 7 * * *" }]   # 01:00 and 13:00 IST
+  schedule: [{ cron: "30 19 * * *" }, { cron: "30 1 * * *" }, { cron: "30 7 * * *" }, { cron: "30 13 * * *" }]   # 01:00, 07:00, 13:00, 19:00 IST
   workflow_dispatch:
     inputs:
       stock_target: { description: "reels to keep ready", default: "220" }
-      time_budget_min: { description: "minutes of building", default: "320" }
+      time_budget_min: { description: "minutes of building", default: "170" }
 permissions: { contents: write, pages: write, id-token: write }
 concurrency: { group: factory, cancel-in-progress: false }
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 355
+    timeout-minutes: 215
     steps:
       - uses: actions/checkout@v4
       - name: Restore library (kept on its own branch, history squashed so the repo never grows)
@@ -59,7 +59,7 @@ jobs:
           CAROUSEL_TARGET: "140"
           POSTER_TARGET: "70"
           STORY_TARGET: "105"
-          TIME_BUDGET_MIN: ${{ inputs.time_budget_min || '320' }}
+          TIME_BUDGET_MIN: ${{ inputs.time_budget_min || '170' }}
           TTS_THREADS: "4"
         run: python factory/build.py
       - name: Save library (single squashed commit on branch "library")
