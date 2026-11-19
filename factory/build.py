@@ -130,6 +130,19 @@ def pick(bank, man, n):
         s = max(cand, key=score); out.append(s); last_kind, last_seg = s["kind"], s["segment"]
     return out
 
+def build_shoutouts(man):
+    """Images for queued follower shout-outs (only people who said yes; the worker posts them)."""
+    url = (os.environ.get("POSTED_URL") or "").replace("/public/posted", "/public/shoutqueue")
+    if not url: return
+    import urllib.request, shoutout
+    try: q = json.load(urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (rl-kerala-reel-factory)"}), timeout=30))
+    except Exception as e: print("shoutqueue:", e, flush=True); return
+    have = {x["id"] for x in man.setdefault("shoutouts", [])}
+    for x in q:
+        if x["id"] in have or not x.get("names"): continue
+        shoutout.make(x, f"{LIB}/media/{x['id']}.jpg"); man["shoutouts"].append(dict(id=x["id"], kind=x["kind"], image=f"media/{x['id']}.jpg")); print("shout-out", x["id"], flush=True)
+    json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
+
 def sync_posted(man):
     """Mark items the Cloudflare poster already published; delete their media after 1 day (Instagram copies it at publish; keeps the Pages site under 1 GB at 35 reels a day) to keep the repo small."""
     url = os.environ.get("POSTED_URL")
@@ -205,6 +218,8 @@ def main():
     only = [a for a in sys.argv[1:] if not a.startswith("-")]
     bank, man = load_bank(), manifest()
     sync_posted(man)
+    try: build_shoutouts(man)
+    except Exception as e: print("shout-outs failed:", repr(e), flush=True)
     try: recaption(man)
     except Exception as e: print("recaption failed:", repr(e), flush=True)
     # v4 changed only how acronyms are spoken: rebuild just the unposted reels whose lines contain one, re-tag the rest

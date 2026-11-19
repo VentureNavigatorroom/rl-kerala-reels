@@ -98,6 +98,54 @@ function slotsFor(P) {   // P = planDay result (or one stage, old style). Feed p
   });
   return out.sort((a, b) => a[0] * 60 + a[1] - b[0] * 60 - b[1]);
 }
+// ---- FOLLOWER SHOUT-OUTS (owner, 19 Nov) --------------------------------------------------------------------------
+// Only people who said YES are named, by @username only, never with what they asked about. Asked once (after their chat
+// is complete, or when they comment/DM WELCOME). "remove me" / "no tag" switches it off for good.
+// Each person gets one weekly welcome; a monthly "top supporters" post names the 3-5 most engaged (by distinct days),
+// never the same person two months running. Batches of 20 (Instagram's tag limit), one post a day. Starts once the
+// account has SHOUT_MIN followers (KV "shout_min", default 30). Factory renders the images from /public/shoutqueue.
+const SHOUT_Q = "Quick one 🙏 Can we thank you by your Instagram username in our weekly welcome post? We only say thank you, never what you asked about.";
+const SHOUT_BTN = ["Yes, tag me 🙌", "No thanks"];
+const SHOUT_MIN = 30;
+const SHOUT_CTA = "Want your name here next time? Comment WELCOME on any post or DM us 🙏";
+async function shoutNote(env, uname, igsid, patch) {   // registry keyed by lowercase username
+  if (!uname) return; const reg = await kv(env, "shout", {}); const k = uname.toLowerCase();
+  const r = reg[k] || { u: uname, eng: {} }; if (igsid) r.id = igsid;
+  if (patch === "engage") { const mo = IST().toISOString().slice(0, 7), d = IST().toISOString().slice(8, 10); const a = r.eng[mo] || []; if (a.includes(d)) return; a.push(d); r.eng[mo] = a; for (const m0 of Object.keys(r.eng)) if (m0 < IST(new Date(Date.now() - 70 * 86400e3)).toISOString().slice(0, 7)) delete r.eng[m0]; }
+  else Object.assign(r, patch);
+  reg[k] = r; await kvPut(env, "shout", reg);
+}
+async function shoutPlan(env) {   // Sunday 09:41: queue this week's welcomes (and on the first Sunday of a month, top supporters)
+  let followers = 0; try { followers = (await graph(env, env.IG_USER_ID, { fields: "followers_count" }, "GET")).followers_count || 0; } catch (e) {}
+  const min = +(await env.STATE.get("shout_min") || SHOUT_MIN); if (followers < min) { await log(env, `shout-outs waiting: ${followers}/${min} followers`); return; }
+  const reg = await kv(env, "shout", {}); const queue = await kv(env, "shout_queue", []); const wk = IST().toISOString().slice(0, 10);
+  const yes = Object.values(reg).filter(r => r.yes);
+  const still = async r => { if (!r.id) return true; const p = await igProfile(env, r.id); return p.follows !== false; };
+  const fresh = []; for (const r of yes.filter(r => !r.welcomed).sort((a, b) => (a.yes_t || 0) - (b.yes_t || 0))) { if (fresh.length >= 100) break; if (await still(r)) fresh.push(r); }
+  for (let i = 0; i < fresh.length; i += 20) queue.push({ id: `sw${wk.replace(/-/g, "")}_${i / 20 + 1}`, kind: "welcome", names: fresh.slice(i, i + 20).map(r => r.u) });
+  fresh.forEach(r => { reg[r.u.toLowerCase()].welcomed = wk; });
+  if (+wk.slice(8, 10) <= 7) {   // first Sunday of the month: last month's top supporters
+    const lm = IST(new Date(Date.now() - 20 * 86400e3)).toISOString().slice(0, 7), pm = IST(new Date(Date.now() - 50 * 86400e3)).toISOString().slice(0, 7);
+    const top = yes.filter(r => (r.eng?.[lm] || []).length >= 2 && !(r.top || []).includes(pm)).sort((a, b) => (b.eng[lm] || []).length - (a.eng[lm] || []).length).slice(0, 5);
+    if (top.length) { queue.push({ id: `st${lm.replace("-", "")}`, kind: "top", month: lm, names: top.map(r => r.u) }); top.forEach(r => { const x = reg[r.u.toLowerCase()]; x.top = [...(x.top || []), lm]; }); }
+  }
+  await kvPut(env, "shout", reg); await kvPut(env, "shout_queue", queue); await log(env, `shout-outs queued: ${fresh.length} welcomes`);
+}
+async function shoutPost(env) {   // daily 12:47: post the oldest queued shout-out whose image the factory has made
+  const queue = await kv(env, "shout_queue", []); if (!queue.length) return;
+  const m = await manifest(env); const q = queue[0]; const img = (m.shoutouts || []).find(x => x.id === q.id); if (!img) return;
+  const reg = await kv(env, "shout", {}); const names = q.names.filter(u => reg[u.toLowerCase()]?.yes);   // someone may have opted out since
+  if (!names.length) { queue.shift(); await kvPut(env, "shout_queue", queue); return; }
+  const cols = names.length > 10 ? 2 : 1;
+  const tags = names.map((u, i) => ({ username: u, x: cols === 1 ? 0.5 : (i % 2 ? 0.72 : 0.28), y: Math.min(0.9, 0.36 + (cols === 1 ? i : Math.floor(i / 2)) * 0.055) }));
+  const head = q.kind === "top" ? "Thank you to our top supporters this month 🏆" : "Welcome to the rejectionlist.kerala family 🙏 Thank you for following!";
+  const cap = `${head}\n\n${names.map(u => "@" + u).join(" ")}\n\n${SHOUT_CTA}`;
+  const c = await graph(env, `${env.IG_USER_ID}/media`, { image_url: `${env.LIB_BASE}/${img.image}`, caption: cap, user_tags: JSON.stringify(tags) });
+  await waitReady(env, c.id); const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
+  const posted = await kv(env, "posted", {}); posted[q.id] = { media: pub.id, t: Date.now(), topic: "co", kind: "shoutout", segment: q.kind }; await kvPut(env, "posted", posted);
+  queue.shift(); await kvPut(env, "shout_queue", queue); await log(env, `shout-out ${q.id} posted (${names.length} names)`);
+}
+
 async function quotaLeft(env) {   // posts left in Instagram's rolling 24 h window (null if Instagram won't say)
   try { const r = await graph(env, `${env.IG_USER_ID}/content_publishing_limit`, { fields: "config,quota_usage" }, "GET"); const d = r.data?.[0]; return (d?.config?.quota_total ?? 100) - (d?.quota_usage ?? 0); }
   catch (e) { return null; }
@@ -445,7 +493,7 @@ async function botReply(env, thread, topic = "co") {
   } catch (e) { await log(env, `AI unavailable, using fallback: ${String(e.message).slice(0, 80)}`); }
   return fallbackReply(thread, topic);
 }
-const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?)/i;
+const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?|yes,? tag me|no thanks)/i;
 function regexLead(thread, topic = "co") {   // no AI: read each answer that follows our question
   const users = thread.filter(m => m.role === "user" && !BTN.test(m.content.trim()));
   const all = users.map(m => m.content).join(" \n ");
@@ -699,6 +747,16 @@ async function handleWebhook(env, body) {
         await sendDM(env, uid, bye); await log(env, `opt-out from ${uid}`); continue;
       }
       if (meta.no_nudge) delete meta.no_nudge;                       // they started talking again
+      {   // shout-out consent: answers, opt-outs and WELCOME never go to the sales bot
+        const tx = ev.message.text.trim(); let sr = null;
+        const pf = await igProfile(env, uid); const un = pf.username || meta.username; if (un) meta.username = un;
+        await shoutNote(env, un, uid, "engage");
+        if (/^yes,? tag me/i.test(tx)) { await shoutNote(env, un, uid, { yes: true, yes_t: Date.now(), asked: true }); sr = "Done! 🙌 You'll be in our next welcome post. Reply \"remove me\" anytime to opt out."; }
+        else if (/^no thanks$/i.test(tx)) { await shoutNote(env, un, uid, { yes: false, asked: true }); sr = "No problem at all 🙏 We won't name you."; }
+        else if (/\b(remove me|no tag|untag|don'?t tag)\b/i.test(tx)) { await shoutNote(env, un, uid, { yes: false, asked: true, removed: Date.now() }); sr = "Done, you won't be tagged or named again. 🙏"; }
+        else if (/^welcome[.!🙏 ]*$/i.test(tx)) { const r0 = (await kv(env, "shout", {}))[(un || "").toLowerCase()]; sr = r0?.yes ? "You're already on our welcome list 🙌" : SHOUT_Q; if (!r0?.yes) await shoutNote(env, un, uid, { asked: true }); }
+        if (sr) { await kvPut(env, `m:${uid}`, meta); thread.push({ role: "user", content: tx }, { role: "assistant", content: sr }); await kvPut(env, key, thread); await sendDM(env, uid, sr, sr === SHOUT_Q ? SHOUT_BTN : []); continue; }
+      }
       if (ev.message.reply_to?.story?.id) { meta.sources.push({ via: "story_reply", media: ev.message.reply_to.story.id, t: Date.now() }); if (!meta.topic) meta.topic = await itemTopic(env, await mediaToItem(env, ev.message.reply_to.story.id)); }
       if (!meta.sources.length) meta.sources.push({ via: "dm", t: Date.now() });
       await kvPut(env, `m:${uid}`, meta);
@@ -760,6 +818,7 @@ async function handleWebhook(env, body) {
         const nx = await kv(env, "nudge", {}); const pe = nx[uid];
         if (pe?.n > 0) nudgeStat(nx, "back");
         for (const [k, v] of Object.entries(nx)) if (k !== uid && k !== "_s" && v.c && !v.li && ((v.u && meta.username && v.u.toLowerCase() === meta.username.toLowerCase()) || v.f === uid)) delete nx[k];
+        if (flowDone && meta.username) { const r0 = (await kv(env, "shout", {}))[meta.username.toLowerCase()]; if (!r0?.asked) { await shoutNote(env, meta.username, uid, { asked: true }); thread.push({ role: "assistant", content: SHOUT_Q }); await kvPut(env, key, thread); await sendDM(env, uid, SHOUT_Q, SHOUT_BTN); } }
         if (flowDone || meta.no_nudge) delete nx[uid]; else nx[uid] = { li: meta.last_in, n: 0, tot: pe?.tot || 0, ls: pe?.ls || 0, u: meta.username || pe?.u || null };
         await kvPut(env, "nudge", nx);
       } catch (e9) { await log(env, `check-in index: ${String(e9.message).slice(0, 80)}`); }
@@ -771,6 +830,11 @@ async function handleWebhook(env, body) {
       await log(env, `comment from @${who}${ch.value.parent_id ? " (reply in thread)" : ""}: ${ch.value.text.slice(0, 60)}`);
       if ((ch.value.from?.id && ch.value.from.id === env.IG_USER_ID) || (ch.value.from?.username || "").toLowerCase() === OWN_USERNAME) continue;   // our own comments
       const item = await mediaToItem(env, ch.value.media?.id); await bumpPost(env, item, "comments");
+      if (ch.value.from?.username) await shoutNote(env, ch.value.from.username, null, "engage");
+      if (/^\s*welcome[.!🙏 ]*$/i.test(ch.value.text)) {   // asks to be featured: one private reply with the consent question
+        try { await sendMsg(env, { comment_id: ch.value.id }, SHOUT_Q, SHOUT_BTN); await shoutNote(env, ch.value.from?.username, null, { asked: true }); } catch (e) { await log(env, `welcome reply failed: ${e.message}`); }
+        continue;
+      }
       const uq = await uniqueKw(env, ch.value.text, item);                 // the post's own keyword ("LAUNCH") maps to its general one
       const k0 = uq ? uq.base : matchKeyword(ch.value.text); if (!k0) { await commentReply(env, ch.value, item); continue; } const m = [k0, k0];
       if (uq) { await bumpPost(env, item, "kw:" + uq.kw); await log(env, `own keyword ${uq.kw} (${uq.base}, post ${uq.item})`); }
@@ -963,6 +1027,8 @@ export default {
     for (const x of slotsFor(plan)) { const xm = x[0] * 60 + x[1], nm = h * 60 + mi; if (nm >= xm && nm - xm < 5 && !(await env.STATE.get(`slot:${day}:${x[0]}:${x[1]}`))) { slot = x; break; } }
     // the 03:xx snapshot chunks use most of the 50-subrequest budget, so skip the backup inbox poll while they run
     const snapRun = h === 3 && mi >= 1 && !(await env.STATE.get(`snapdone:${day}`));
+    if (IST().getUTCDay() === 0 && h === 9 && mi === 41 && !(await env.STATE.get(`shoutplan:${day}`))) { await env.STATE.put(`shoutplan:${day}`, "1", { expirationTtl: 172800 }); ctx.waitUntil(shoutPlan(env).catch(e => log(env, `shout plan: ${e.message}`))); }
+    if (h === 12 && mi === 47 && !(await env.STATE.get(`shoutpost:${day}`))) { await env.STATE.put(`shoutpost:${day}`, "1", { expirationTtl: 172800 }); ctx.waitUntil(shoutPost(env).catch(e => log(env, `shout post: ${e.message}`))); }
     if (!snapRun && await env.STATE.get("poll_inbox")) ctx.waitUntil((async () => {   // backup route, off while Meta delivers DMs by webhook                                    // check the inbox every 10 s so replies feel instant
       const t0 = Date.now();
       for (let k = 0; k < 6; k++) {
@@ -1056,6 +1122,7 @@ export default {
 <h2>Data deletion</h2><p>To delete your data, send the word <b>DELETE</b> as a direct message to @rejectionlist.kerala on Instagram, or ask us in any message. We remove your conversation and details within 7 days and confirm when done.</p>
 <h2>Terms</h2><p>Information shared in replies is general guidance about company registration, not legal advice.</p>
 <p>Contact: send a direct message to @rejectionlist.kerala on Instagram.</p></body>`, { headers: { "content-type": "text/html; charset=utf-8" } });
+    if (u.pathname === "/public/shoutqueue") return json((await kv(env, "shout_queue", [])).map(q => ({ id: q.id, kind: q.kind, month: q.month || null, names: q.names })));   // only people who said yes
     if (u.pathname === "/public/insights") {   // performance per post for the script writer: no names, numbers or messages
       const posted = await kv(env, "posted", {}); const leads = Object.values(await kv(env, "leads", {})); const posts = []; const judged = await kv(env, "judged", {});
       for (const [id, p] of Object.entries(posted)) {

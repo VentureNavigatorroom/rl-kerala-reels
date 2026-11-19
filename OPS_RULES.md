@@ -36,3 +36,12 @@ Real client data from the CRM never goes into this repo. See bank/STORY_THEMES.m
 If earlier runs were skipped (for example, Claude usage ran out), never assume the last run's state.
 - Every run starts from live numbers: stock, runway, insights, the worker log and workflow runs.
 - First do whatever fell behind: the most urgent topic's scripts first, then any failed workflows, then any missed checkpoint review (22 / 25 Nov). After that, the normal work.
+
+## Follower shout-outs (owner, 19 Nov)
+- **Who is named:** only people who tapped "Yes, tag me", by @username, with a plain thank-you. Never mention what they asked about.
+- **When they are asked:** once, after their chat is complete, or when they comment or DM WELCOME. "remove me" / "no tag" switches it off.
+- **Weekly welcome:** planned Sunday 09:41, starting at 30 followers (KV `shout_min`). One welcome per person, oldest first, only people still following. Batches of 20 (Instagram's tag limit), one post a day at 12:47.
+- **Monthly top supporters:** planned on the first Sunday of the month. The 3-5 most engaged people (counted by days engaged), never the same person two months in a row.
+- **Spam:** repeated comments count once a day.
+- **How the pieces fit:** the factory renders the images from /public/shoutqueue (factory/shoutout.py); the worker posts them.
+- **Monitor checks:** shout-out posts went out, and nobody is named who said no.
