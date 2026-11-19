@@ -17,18 +17,6 @@ duo("ied005", "first_exporter", "A", "courier", "ആദ്യ എക്സ്പ
  cap_en="Exporting goods for business needs an IEC; customs and banks ask for it. Personal-use shipments do not. Has your first export order arrived yet?",
  cap_mg="Business-nu sadhanam export cheyyaan IEC venam. Customs-um bank-um chodikkum. Ningalude first export order vanno?")
 
-duo("ied006", "importer", "A", "mall", "IEC ഉണ്ട്.\nപക്ഷേ ഡീആക്ടിവേറ്റ്\nആയി", [
- ("A","wide","ജാഫറേ, ചൈനയിൽ നിന്നുള്ള കണ്ടെയ്നർ കസ്റ്റംസിൽ നിർത്തി. IEC ഡീആക്ടിവേറ്റ് എന്ന്."),
- ("V","V","സുമയ്യേ, അത് ഒരിക്കൽ എടുത്താൽ ആജീവനാന്തമല്ലേ?"),
- ("A","A","കാലാവധി തീരില്ല. പക്ഷേ എല്ലാ വർഷവും ഏപ്രിൽ മുതൽ ജൂൺ വരെ ഓൺലൈനിൽ അപ്ഡേറ്റ് ചെയ്യണം."),
- ("V","V","ചെയ്തില്ലെങ്കിൽ ഡീആക്ടിവേറ്റ് ആകും."),
- ("A","wide","അതെ. ഇനി എല്ലാ വർഷവും കലണ്ടറിൽ ഇടണം."),
- ("V","wide","കോഡ് ഉണ്ടായാൽ മാത്രം പോരാ, പുതുക്കണം.")],
- "എല്ലാ വർഷവും ഏപ്രിൽ-ജൂൺ\nIEC അപ്ഡേറ്റ്", CTA_IEC, theme="faq",
- cap_ml="IEC കാലഹരണപ്പെടില്ല, പക്ഷേ എല്ലാ വർഷവും ഏപ്രിൽ മുതൽ ജൂൺ വരെ ഓൺലൈനിൽ അപ്ഡേറ്റ് ചെയ്യണം. ഇല്ലെങ്കിൽ ഡീആക്ടിവേറ്റ് ആകും. ഈ വർഷം നിങ്ങൾ അപ്ഡേറ്റ് ചെയ്തോ?",
- cap_en="An IEC never expires, but it must be updated online every year between April and June or it is deactivated. Did you update yours this year?",
- cap_mg="IEC expire aakilla, pakshe ella varshavum April muthal June vare online update cheyyanam. Illenkil deactivate aakum. Ee varsham update cheytho?")
-
 duo("ied007", "spice_trade", "A", "farm", "രണ്ട് ബിസിനസ്,\nരണ്ട് IEC?\nPAN ഒന്ന്", [
  ("A","wide","ഗോപീ, ഏലക്കായ്ക്കും കുരുമുളകിനും വെവ്വേറെ IEC എടുക്കണോ?"),
  ("V","V","വാസൂ, രണ്ടും ഒരേ PAN-ൽ ആണോ?"),
