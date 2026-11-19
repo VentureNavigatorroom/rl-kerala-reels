@@ -73,3 +73,5 @@ lst("ul001", "grant_seeker", "B", "DPIIT റെക്കഗ്നിഷൻ\nക�
  cap_ml="DPIIT സ്റ്റാർട്ടപ്പ് ഇന്ത്യ റെക്കഗ്നിഷന് വേണ്ടത്: പ്രൈവറ്റ് ലിമിറ്റഡ്, LLP അല്ലെങ്കിൽ രജിസ്റ്റേർഡ് പാർട്ണർഷിപ്പ്; 10 വർഷത്തിൽ താഴെ പഴക്കം; ഒരു വർഷവും 200 കോടി കടക്കാത്ത ടേൺഓവർ; പുതുമ.",
  cap_en="Startup India DPIIT recognition checklist: a Pvt Ltd, LLP or registered partnership; under 10 years old; turnover never above Rs 200 crore in any year; and an innovative product, process or scalable model.",
  cap_mg="DPIIT Startup India recognition-nu venda 4 kaaryam: Pvt Ltd, LLP allenkil registered partnership; 10 varshathil thaazhe; 200 crore kadakkatha turnover; puthuma.")
+
+for _x in S: _x.setdefault("theme", "crm")   # built on bank/STORY_THEMES.md (anonymised CRM situations)

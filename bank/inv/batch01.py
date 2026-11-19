@@ -73,3 +73,5 @@ lst("vl001", "angel", "B", "സ്റ്റാർട്ടപ്പിൽ പൈ
  cap_ml="സ്റ്റാർട്ടപ്പിൽ നിക്ഷേപിക്കും മുമ്പ് ഇൻവെസ്റ്റർ ചോദിക്കേണ്ട മൂന്ന് ചോദ്യം: കമ്പനി പ്രൈവറ്റ് ലിമിറ്റഡ് ആണോ, അവകാശങ്ങൾ ഷെയർഹോൾഡേഴ്സ് എഗ്രിമെന്റിലും ആർട്ടിക്കിൾസിലും ഉണ്ടോ, 60 ദിവസത്തിൽ ഷെയർ അലോട്ട് ചെയ്യുമോ.",
  cap_en="Three questions to ask before you invest in a startup: is it a private limited company, where are your rights written (shareholders' agreement and articles), and will your shares be allotted within 60 days. Angel investing in Kerala.",
  cap_mg="Startup-il invest cheyyum mumbu investor chodikkenda 3 chodyam: company Pvt Ltd aano, rights shareholders agreement-ilum articles-ilum undo, 60 divasathil share allot cheyyumo.")
+
+for _x in S: _x.setdefault("theme", "crm")   # built on bank/STORY_THEMES.md (anonymised CRM situations)

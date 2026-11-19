@@ -73,3 +73,5 @@ lst("ml001", "idea_stage", "B", "KSUM ഗ്രാന്റിന്\nമുമ�
  cap_ml="KSUM ഗ്രാന്റിന് മുമ്പ്: കേരളത്തിൽ പ്രൈവറ്റ് ലിമിറ്റഡ് അല്ലെങ്കിൽ LLP, DPIIT സ്റ്റാർട്ടപ്പ് റെക്കഗ്നിഷൻ, KSUM യുണീക്ക് ഐഡി.",
  cap_en="Before applying for a Kerala Startup Mission grant: a Pvt Ltd or LLP registered in Kerala, DPIIT Startup India recognition, and the KSUM Unique ID.",
  cap_mg="KSUM grant-nu mumbu: Kerala-yil Pvt Ltd allenkil LLP, DPIIT recognition, KSUM unique ID.")
+
+for _x in S: _x.setdefault("theme", "crm")   # built on bank/STORY_THEMES.md (anonymised CRM situations)

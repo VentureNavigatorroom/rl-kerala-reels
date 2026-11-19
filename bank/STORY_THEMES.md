@@ -70,3 +70,39 @@ Why these work: they are what our audience is actually living through. Use each 
 - Rejection: "പിച്ച് റിജക്റ്റ്. കാരണം ഒറ്റ വാക്ക്"
 - Gulf: "ദുബായിൽ ഇരുന്ന് നാട്ടിൽ കമ്പനി?"
 - Myth flip: "DPIIT കിട്ടിയാൽ ടാക്സ് ഇല്ല? തെറ്റ്"
+
+## Questions people ask online (researched 19 Nov; mark these scripts theme="faq")
+
+These are common questions and mistakes from public FAQ pages, forums and "mistakes to avoid" guides. Use them as hooks; still use only the facts in topics.py.
+
+### Company registration (co): fresh angles, so co stops feeling repetitive
+F1. **Name mismatch from Kerala initials.** "K. P. Rajesh" on PAN but "Rajesh Kunnathu Parambil" on Aadhaar, so the application stalls. Kerala-style initials cause this a lot; match the documents first.
+F2. **Residential address as the registered office.** It works with the owner's NOC and a bill, but some panchayat or municipal rules restrict commercial activity at home. Check before you use it for a shop-front business.
+F3. **The certificate arrives, and then nothing happens.** Open a current account in the company's name (never use the personal account for company money), appoint the auditor within 30 days, and file INC-20A within 180 days.
+F4. **Wrong structure.** A proprietor who wants investors, or an LLP that can't issue shares. "Picking the wrong entity" is the most-cited mistake.
+F5. **Name approved, trademark not checked.** The name passes, then a brand owner objects.
+F6. **"I'll register after the business picks up."** Then a big client asks for a company today.
+
+### GST (gst)
+F7. "Do I need GST if I only sell on Instagram?" It depends on the state and the limit (see FACTS_GST).
+F8. "No sales this month, so no return?" Wrong: a nil return is still due, and filing late costs a fee every day.
+F9. "Can I cancel GST if the business stops?" (Facts allow only: returns are due while registered.)
+F10. "Voluntary GST: is it worth it?" B2B clients ask for a GSTIN.
+
+### Investor agreements (inv)
+F11. "Does a term sheet mean the deal is done?" No, it's mostly non-binding.
+F12. "Can I take money from 50 relatives?" A private placement is limited to 200 people a year, and it still needs filings.
+F13. "Investor wants a board seat: is that normal?" The SHA sets the rights, and the articles must be updated.
+
+### Startup India (sui) / KSUM (sk)
+F14. "Is a restaurant a startup?" Only with genuine innovation or a scalable model.
+F15. "Does DPIIT recognition give me money?" No. It makes you eligible to apply for schemes and grants.
+F16. "Can an LLP get the KSUM Unique ID?" Yes, a Pvt Ltd or LLP registered in Kerala.
+
+### Udyam (ud)
+F17. **"My buyer pays after 90 days."** A manufacturing or service micro/small unit with Udyam can claim compound interest after 45 days, and can complain on MSME Samadhaan.
+F18. **"I'm a shop owner, will Udyam get my dues paid faster?"** No. Traders get priority lending only, not the 45-day protection.
+F19. **"Turnover is 8 crore but machinery cost 3 crore."** That's small, not micro: both limits must be met.
+F20. **"Bank asked for an Udyam certificate for the loan."**
+F21. **"Big company asks: are you MSME-registered?"** Since section 43B(h), buyers ask because paying late costs them their tax deduction.
+F22. **"Registered years ago as Udyog Aadhaar."** It has to move to Udyam.

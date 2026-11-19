@@ -11,14 +11,14 @@ STORIES FROM REAL ENQUIRIES: bank/STORY_THEMES.md holds anonymised situations di
 companies, places, numbers or anything that could identify a person). Build scripts on those situations, always with
 invented names and changed details. Never put CRM details in the repo."""
 
-DIRS = {"co": "bank", "gst": "bank/gst", "inv": "bank/inv", "sui": "bank/sui", "sk": "bank/sk"}
+DIRS = {"co": "bank", "gst": "bank/gst", "inv": "bank/inv", "sui": "bank/sui", "sk": "bank/sk", "ud": "bank/ud"}
 # share of each stock target (reels, carousels, stories, posters) kept for each topic; together <= 1 keeps the
 # GitHub Pages site under its 1 GB limit. Company registration posts the most reels a day, so it keeps the biggest backup.
-SHARE = {"co": 0.4, "gst": 0.15, "inv": 0.15, "sui": 0.15, "sk": 0.15}
+SHARE = {"co": 0.25, "gst": 0.15, "inv": 0.15, "sui": 0.15, "sk": 0.15, "ud": 0.15}   # same as the worker's REEL_SHARE
 
 # general keywords (the worker's KW_TOPIC). Each post also gets its own unique keyword from build.KW_POOL.
 BASES = {"co": ["START", "NAME", "AFTER", "CHECKLIST"], "gst": ["GST", "LIMIT", "PENALTY"], "inv": ["INVEST", "TERMSHEET", "FUNDING"],
-         "sui": ["DPIIT", "BENEFITS"], "sk": ["KSUM", "GRANT"]}
+         "sui": ["DPIIT", "BENEFITS"], "sk": ["KSUM", "GRANT"], "ud": ["UDYAM", "MSME"]}
 ALL_BASES = {k for v in BASES.values() for k in v}
 
 # CTAs: (pill text, promise). The first word of the pill is the keyword.
@@ -32,7 +32,9 @@ CTA_DPIIT = ("DPIIT എന്ന് കമന്റ് ചെയ്യൂ", "ന
 CTA_BENEFITS = ("BENEFITS എന്ന് കമന്റ് ചെയ്യൂ", "റെക്കഗ്നിഷൻ കൊണ്ടുള്ള\nഗുണങ്ങൾ അയച്ചുതരാം")
 CTA_KSUM = ("KSUM എന്ന് കമന്റ് ചെയ്യൂ", "യുണീക്ക് ഐഡി ഗൈഡ്\nഅയച്ചുതരാം")
 CTA_GRANT = ("GRANT എന്ന് കമന്റ് ചെയ്യൂ", "ഗ്രാന്റിന് മുമ്പുള്ള\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം")
-CTAS = {"gst": [CTA_GST, CTA_LIMIT, CTA_PENALTY], "inv": [CTA_INVEST, CTA_TERMSHEET, CTA_FUNDING], "sui": [CTA_DPIIT, CTA_BENEFITS], "sk": [CTA_KSUM, CTA_GRANT]}
+CTA_UDYAM = ("UDYAM എന്ന് കമന്റ് ചെയ്യൂ", "ഉദ്യം കൊണ്ടുള്ള\nഗുണങ്ങൾ അയച്ചുതരാം")
+CTA_MSME = ("MSME എന്ന് കമന്റ് ചെയ്യൂ", "മൈക്രോയോ സ്മോളോ എന്ന്\nനോക്കാനുള്ള ലിസ്റ്റ് അയച്ചുതരാം")
+CTAS = {"ud": [CTA_UDYAM, CTA_MSME], "gst": [CTA_GST, CTA_LIMIT, CTA_PENALTY], "inv": [CTA_INVEST, CTA_TERMSHEET, CTA_FUNDING], "sui": [CTA_DPIIT, CTA_BENEFITS], "sk": [CTA_KSUM, CTA_GRANT]}
 
 SEGMENTS = {
     "co": ["freelancer", "cofounders", "proprietor", "salaried", "solo", "nri"],
@@ -60,6 +62,12 @@ SEGMENTS = {
            "returnee",         # Gulf returnees and NRIs starting a startup in Kerala
            "campus",           # students, IEDC / college incubator founders
            "women_founder"],   # women-led startups
+    # Udyam / MSME: small manufacturers and service businesses chasing payments, loans and tenders
+    "ud": ["manufacturer",     # small units: food processing, furniture, garments, printing, coir, rubber products
+           "service_unit",     # service businesses selling to companies: IT, agencies, repair, transport, catering
+           "trader_ud",        # shops / wholesalers (Udyam only for priority lending)
+           "loan_seeker",      # owners applying for a business loan
+           "supplier_unpaid"], # suppliers whose big buyers pay late
 }
 
 # Facts the scripts may use (checked Nov 2026; sources in the INSIGHTS notes). Nothing else, and never a service price.
@@ -112,4 +120,17 @@ FACTS_SK = """
   private limited company or LLP with 'Active' status at MCA
 - idea grant: you may apply before incorporating, but the company and the Unique ID are needed before money is released
 - never state grant amounts or promise selection (amounts and calls change; the team checks the live call)
+"""
+
+FACTS_UD = """
+- Udyam registration = the government's MSME registration (since 1 July 2020): online, Aadhaar-based, PAN (and GSTIN
+  where the business has one), self-declaration; no renewal, but keep details updated. Never mention any fee
+- classification since 1 Apr 2025, BOTH limits must be met: micro = investment up to Rs 2.5 crore and turnover up to
+  Rs 10 crore; small = Rs 25 crore and Rs 100 crore; medium = Rs 125 crore and Rs 500 crore (crossing either moves you up)
+- manufacturing and service micro / small units: buyers must pay within 15 days, or the agreed time up to 45 days; after
+  that they owe compound interest at 3x the RBI bank rate; complaints go to the MSME Samadhaan portal / facilitation
+  council; a buyer paying late loses the income-tax deduction until payment (section 43B(h))
+- retail and wholesale traders can register (since July 2021) but only for priority sector lending: NO 45-day protection
+- registration helps with priority sector lending, collateral-free loan schemes (CGTMSE) and preferences in government
+  tenders. Never promise a loan, subsidy or recovery
 """

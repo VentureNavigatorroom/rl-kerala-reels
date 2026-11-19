@@ -27,6 +27,7 @@ const TOPICS = {
   gst: { label: "GST", noun: "GST registration", storyShift: 12, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
   inv: { label: "INVESTOR AGREEMENT", noun: "investor agreement", storyShift: 24, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
   sui: { label: "STARTUP INDIA", noun: "Startup India (DPIIT) recognition", storyShift: 36, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
+  ud: { label: "UDYAM (MSME)", noun: "Udyam (MSME) registration", storyShift: 54, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
   sk: { label: "KERALA STARTUP MISSION", noun: "Kerala Startup Mission registration", storyShift: 48, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
 };
 const STAGES = TOPICS.co.stages;
@@ -50,7 +51,8 @@ async function stageNow(env, day, topic = "co") {
 // the monitor can lower it with KV "reel_cap" if reach per reel drops. Reels are split by topic share and by built stock,
 // so a topic with little stock never blocks the quota: its unused share goes to topics that have reels ready.
 const REEL_RAMP = [["2026-11-20", 40], ["2026-11-21", 60], ["2026-11-22", 80], ["2026-11-23", 90]];
-const REEL_SHARE = { co: 0.4, gst: 0.15, inv: 0.15, sui: 0.15, sk: 0.15 };
+// owner, 19 Nov: company-registration reels were starting to feel repetitive, so co drops to 25% and Udyam joins at 15%
+const REEL_SHARE = { co: 0.25, gst: 0.15, inv: 0.15, sui: 0.15, sk: 0.15, ud: 0.15 };
 async function reelMaxPlan(env, day) {
   const ck = `plan:${day}`; const cached = await kv(env, ck, null); if (cached) return cached;   // frozen once a day so slot times never move
   let total = 0; for (const [d, n] of REEL_RAMP) if (day >= d) total = n;
@@ -160,7 +162,7 @@ async function postReel(env, topic = "co") {
   }
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });
-  posted[it.id] = { media: pub.id, t: Date.now(), topic, kind: it.kind, segment: it.segment, scene: it.scene || null, trial: asTrial && !(await kv(env, "trial_unavailable", false)) };
+  posted[it.id] = { media: pub.id, t: Date.now(), topic, theme: it.theme || null, kind: it.kind, segment: it.segment, scene: it.scene || null, trial: asTrial && !(await kv(env, "trial_unavailable", false)) };
   await kvPut(env, "posted", posted); await log(env, `${topic} reel ${it.id} posted (${pub.id})${posted[it.id].trial ? " as trial" : ""}`);
 }
 async function postStory(env, topic = "co") {
@@ -272,7 +274,7 @@ async function snapshot(env) {
     n++;
     const ev = await kv(env, `ev:${id}`, { comments: 0, keyword: {}, leads: 0, dms: 0 });
     const posted_ist = IST(new Date(p.t));
-    const row = { day, id, topic: topicOf(p), kind: p.kind, segment: p.segment, scene: p.scene || null, layout: p.layout || null, trial: !!p.trial,
+    const row = { day, id, topic: topicOf(p), theme: p.theme || null, kind: p.kind, segment: p.segment, scene: p.scene || null, layout: p.layout || null, trial: !!p.trial,
       posted_at: posted_ist.toISOString().slice(0, 16), weekday: posted_ist.getUTCDay(), slot: posted_ist.toISOString().slice(11, 16),
       age_days: Math.round(age * 10) / 10, ...v, keyword_comments: Object.values(ev.keyword).reduce((a, b) => a + b, 0), keywords: ev.keyword, dms: ev.dms, leads: ev.leads };
     hist.push(row); await kvPut(env, k, hist.slice(-31)); doneSet.add(id);
@@ -405,7 +407,22 @@ const FALLBACK_SK = [
   "Would you prefer the call in Malayalam or English?",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
-const BOT = { co: () => ({ sys: BOT_SYSTEM, fq: FALLBACK_Q }), gst: () => ({ sys: BOT_GST, fq: FALLBACK_GST }), inv: () => ({ sys: BOT_INV, fq: FALLBACK_INV }), sui: () => ({ sys: BOT_SUI, fq: FALLBACK_SUI }), sk: () => ({ sys: BOT_SK, fq: FALLBACK_SK }) };
+const BOT_UD = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that helps businesses get Udyam (MSME) registration (and also company registration, GST, Startup India, KSUM and investor agreements).
+${RULES_COMMON}
+General facts you may use: Udyam is the government's MSME registration, Aadhaar-based with PAN (and GSTIN where the business has one) and self-declared; it does not need renewal but details should be kept updated. Since 1 April 2025 a micro enterprise has investment up to Rs 2.5 crore and turnover up to Rs 10 crore (small: Rs 25 crore and Rs 100 crore; medium: Rs 125 crore and Rs 500 crore), and BOTH limits must be met. For manufacturing and service micro and small units, buyers must pay within 45 days (or the agreed time up to 45 days) or owe compound interest at three times the RBI bank rate, a delayed payment can be taken to the MSME Samadhaan portal, and a buyer who pays late loses the income tax deduction until payment (section 43B(h)). Retail and wholesale traders can register but only for priority sector lending, not the 45-day protection. Registration also helps with priority lending, collateral-free loan schemes and government tender preferences. Never promise a loan, subsidy or recovery; the team checks the case on the call.
+Goal: qualify the lead by asking, one at a time:
+1) what the business does (manufacturing, service or trading), 2) is it a proprietorship, partnership, LLP or company, and does it have GST, 3) roughly its turnover, 4) why they want Udyam now (a buyer asked, a loan, a tender, delayed payments) and how soon, 5) their phone number, 6) preferred language for the call: Malayalam or English.
+When you have all six, thank them and say a team member will call. Output only the reply text.`;
+const FALLBACK_UD = [
+  "What does your business do: manufacturing, a service or trading?",
+  "Is it a proprietorship, partnership, LLP or company? Does it have GST?",
+  "Roughly how much turnover does it have in a year?",
+  "Why do you want Udyam now: a buyer asked, a loan, a tender or a delayed payment? How soon?",
+  "Could you share a phone number so our team can call you?",
+  "Would you prefer the call in Malayalam or English?",
+  "Thank you! 🙏 Our team will call you shortly.",
+];
+const BOT = { ud: () => ({ sys: BOT_UD, fq: FALLBACK_UD }), co: () => ({ sys: BOT_SYSTEM, fq: FALLBACK_Q }), gst: () => ({ sys: BOT_GST, fq: FALLBACK_GST }), inv: () => ({ sys: BOT_INV, fq: FALLBACK_INV }), sui: () => ({ sys: BOT_SUI, fq: FALLBACK_SUI }), sk: () => ({ sys: BOT_SK, fq: FALLBACK_SK }) };
 function fallbackReply(thread, topic = "co") {
   const FALLBACK_Q = BOT[topic]().fq;
   const last = thread[thread.length - 1]?.content || "";
@@ -428,7 +445,7 @@ async function botReply(env, thread, topic = "co") {
   } catch (e) { await log(env, `AI unavailable, using fallback: ${String(e.message).slice(0, 80)}`); }
   return fallbackReply(thread, topic);
 }
-const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?)/i;
+const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?)/i;
 function regexLead(thread, topic = "co") {   // no AI: read each answer that follows our question
   const users = thread.filter(m => m.role === "user" && !BTN.test(m.content.trim()));
   const all = users.map(m => m.content).join(" \n ");
@@ -443,6 +460,7 @@ function regexLead(thread, topic = "co") {   // no AI: read each answer that fol
 const LEAD_SCHEMA = {
   co: `{"business":"","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   gst: `{"business":"what they sell and the business type","founders":"","nri":false,"traction":"turnover this year or expected","interstate":"sells to other states / online marketplaces?","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  ud: `{"business":"what the business does and whether manufacturing, service or trading","founders":"","nri":false,"traction":"entity type, GST status, turnover","timeline":"why Udyam now and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   sui: `{"business":"what the startup does and what is new","founders":"","nri":false,"traction":"entity type, registration date and stage","timeline":"how soon and what for","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   sk: `{"business":"what the startup does","founders":"","nri":false,"traction":"entity type, Kerala registration, DPIIT status","timeline":"what they want from KSUM and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   inv: `{"role":"founder raising | investor investing","business":"company and what it does, Pvt Ltd or not","founders":"","nri":false,"traction":"who is investing (friends/family, angel, NRI/foreign, fund)","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
@@ -463,13 +481,13 @@ async function igProfile(env, igsid) {
 // Keyword matching that tolerates typos, spacing, case, and Malayalam spellings
 // (e.g. "strat", "Satrt🙏", "chek list", "nmae", "സ്റ്റാർട്ട്"), without firing on ordinary words like "star", "game" or "alter".
 const KW_TOPIC = { START: "co", NAME: "co", AFTER: "co", CHECKLIST: "co", GST: "gst", LIMIT: "gst", PENALTY: "gst", INVEST: "inv", TERMSHEET: "inv", FUNDING: "inv",
-  DPIIT: "sui", BENEFITS: "sui", KSUM: "sk", GRANT: "sk" };
+  DPIIT: "sui", BENEFITS: "sui", KSUM: "sk", GRANT: "sk", UDYAM: "ud", MSME: "ud" };
 const KEYWORDS = Object.keys(KW_TOPIC);
-const KW_UPPER_IN_LONG = new Set(["AFTER", "GST", "LIMIT", "PENALTY", "INVEST", "FUNDING", "TERMSHEET", "BENEFITS", "GRANT", "KSUM", "DPIIT"]);   // ordinary words: in a long comment they count only when written in capitals
-const KW_NOFUZZ = new Set(["GST", "KSUM"]);   // too short to guess typos safely
+const KW_UPPER_IN_LONG = new Set(["AFTER", "GST", "LIMIT", "PENALTY", "INVEST", "FUNDING", "TERMSHEET", "BENEFITS", "GRANT", "KSUM", "DPIIT", "UDYAM", "MSME"]);   // ordinary words: in a long comment they count only when written in capitals
+const KW_NOFUZZ = new Set(["GST", "KSUM", "MSME"]);   // too short to guess typos safely
 const KW_ML = [[/സ്റ്റാർ?ട്ട?്?|സ്റ്റാട്ട്/, "START"], [/നെയിം|നേം|നെയിമ്/, "NAME"], [/ആഫ്റ്റർ|ആഫ്ടർ/, "AFTER"], [/ചെക്ക്[\s\u200c\u200d]*ലിസ്റ്റ്|ചെക്ലിസ്റ്റ്/, "CHECKLIST"],
-  [/ജി[\s.]*എസ്[\s.]*ടി|ജിഎസ്ടി/, "GST"], [/ലിമിറ്റ്(?![\u0D00-\u0D7F])/, "LIMIT"], [/പെനാൽ?റ്റി/, "PENALTY"], [/ഇൻവെസ്റ്റ്(?![\u0D00-\u0D7F])/, "INVEST"], [/ടേം[\s\u200c]*ഷീറ്റ്/, "TERMSHEET"], [/ഫണ്ടിം?ഗ്/, "FUNDING"], [/ഡി[\s.]*പി[\s.]*ഐ[\s.]*ഐ[\s.]*ടി/, "DPIIT"], [/ബെനഫിറ്റ്/, "BENEFITS"], [/കെ[\s.]*സം|കെസം|കെ[\s.]*എസ്[\s.]*യു[\s.]*എം/, "KSUM"], [/ഗ്രാന്റ്/, "GRANT"]];
-const KW_STOP = new Set(["star", "stars", "stat", "stats", "smart", "stark", "tart", "starts", "same", "came", "game", "fame", "lame", "tame", "made", "dame", "nam", "alter", "afer", "hater", "invent", "invents", "finding", "fending", "funding's", "limbo", "lima", "omit", "vomit", "penalt", "gift", "grand", "grants'", "giant", "grunt", "granite", "benefit's"]);
+  [/ജി[\s.]*എസ്[\s.]*ടി|ജിഎസ്ടി/, "GST"], [/ലിമിറ്റ്(?![\u0D00-\u0D7F])/, "LIMIT"], [/പെനാൽ?റ്റി/, "PENALTY"], [/ഇൻവെസ്റ്റ്(?![\u0D00-\u0D7F])/, "INVEST"], [/ടേം[\s\u200c]*ഷീറ്റ്/, "TERMSHEET"], [/ഫണ്ടിം?ഗ്/, "FUNDING"], [/ഡി[\s.]*പി[\s.]*ഐ[\s.]*ഐ[\s.]*ടി/, "DPIIT"], [/ബെനഫിറ്റ്/, "BENEFITS"], [/കെ[\s.]*സം|കെസം|കെ[\s.]*എസ്[\s.]*യു[\s.]*എം/, "KSUM"], [/ഗ്രാന്റ്/, "GRANT"], [/ഉദ്യാ?ം|ഉദ്യമ്/, "UDYAM"], [/എം[\s.]*എസ്[\s.]*എം[\s.]*ഇ/, "MSME"]];
+const KW_STOP = new Set(["star", "stars", "stat", "stats", "smart", "stark", "tart", "starts", "same", "came", "game", "fame", "lame", "tame", "made", "dame", "nam", "alter", "afer", "hater", "invent", "invents", "finding", "fending", "funding's", "limbo", "lima", "omit", "vomit", "penalt", "gift", "grand", "grants'", "udyog", "giant", "grunt", "granite", "benefit's"]);
 function editDist(a, b) {   // Damerau-Levenshtein (adjacent swaps count as one edit)
   const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
   for (let j = 1; j <= b.length; j++) d[0][j] = j;
@@ -848,7 +866,7 @@ const FOLLOW_ASK = "Almost there! 🙌 Please follow @rejectionlist.kerala (we s
 const FOLLOW_RECHECK = "Hmm, we can't see your follow yet 🤔 Open our profile, tap Follow, then tap the button again.";
 const NEXT_BUTTONS = ["Talk to our team", "Which type suits me?", "Documents needed"];
 const NEXT = { co: NEXT_BUTTONS, gst: ["Talk to our team", "Do I need GST?", "GST documents"], inv: ["Talk to our team", "I'm raising funds", "I'm investing"],
-  sui: ["Talk to our team", "Am I eligible?", "What do I get?"], sk: ["Talk to our team", "Am I eligible?", "Which grants?"] };
+  sui: ["Talk to our team", "Am I eligible?", "What do I get?"], ud: ["Talk to our team", "Micro, small or medium?", "Late payments?"], sk: ["Talk to our team", "Am I eligible?", "Which grants?"] };
 async function itemTopic(env, item) { try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || []), ...(mf.stories || [])].find(i => i.id === item); return it?.topic || (it?.reel ? topicOf((mf.items || []).find(i => i.id === it.reel)) : "co"); } catch (e) { return "co"; } }
 // First private reply is short and asks for a reply: a reply moves the chat into their main inbox,
 // then the full resource (KEYWORD_REPLY) follows.
@@ -905,6 +923,8 @@ const KEYWORD_OPENER = {
   FUNDING: "Hi! 👋 Thanks for your comment. Want the legal steps after an investor says yes? Tap the button below.",
   DPIIT: "Hi! 👋 Thanks for your comment. Want our quick check on whether your startup can get Startup India (DPIIT) recognition? Tap the button below.",
   BENEFITS: "Hi! 👋 Thanks for your comment. Want the list of what DPIIT recognition actually opens up? Tap the button below.",
+  UDYAM: "Hi! 👋 Thanks for your comment. Want our quick guide to Udyam (MSME) registration and what it protects? Tap the button below.",
+  MSME: "Hi! 👋 Thanks for your comment. Want to know if your business is micro, small or medium under the new limits? Tap the button below.",
   KSUM: "Hi! 👋 Thanks for your comment. Want our guide to the Kerala Startup Mission Unique ID? Tap the button below.",
   GRANT: "Hi! 👋 Thanks for your comment. Want the checklist you need before applying for a KSUM grant? Tap the button below.",
 };
@@ -920,6 +940,8 @@ const KEYWORD_REPLY = {
   TERMSHEET: "Here you go! What a term sheet binds you to:\n\n🔓 Usually NOT binding: valuation, amount, board seats, other commercial terms\n🔒 Usually binding from signing: confidentiality, exclusivity (no talking to other investors for a set period), costs, governing law\n\nRead the exclusivity period carefully before you sign. Are you a founder or an investor?",
   DPIIT: "Here you go! Can your startup get DPIIT (Startup India) recognition?\n\n✅ A private limited company, LLP, registered partnership or cooperative (a proprietorship has to register an entity first)\n✅ Less than 10 years since registration\n✅ Turnover never above Rs 200 crore in any year\n✅ Working on something innovative, or a business model that can scale\n\nWhat does your startup do, and what is new about it?",
   BENEFITS: "Here you go! What DPIIT recognition opens up:\n\n🧾 Rebates on patent and trademark filing fees, and faster examination\n📋 Self-certification under several labour and environment laws\n🏛 Eligibility for many government and state startup schemes, tenders and grants (Kerala's KSUM grants usually ask for it)\n💰 The right to APPLY for the 3-year income tax holiday (section 80-IAC), which is a separate approval\n\nWhat does your startup do, and what is new about it?",
+  UDYAM: "Here you go! Udyam (MSME) registration in short:\n\n🆔 The government's MSME registration: Aadhaar-based, with PAN (and GSTIN if you have one), no renewal\n💸 Manufacturing and service micro/small units: buyers must pay within 45 days, or owe compound interest at 3x the RBI bank rate; delays can go to the MSME Samadhaan portal\n🏦 Helps with priority lending, collateral-free loan schemes and government tenders\n🛒 Traders can register too, but only for priority lending (no 45-day protection)\n\nWhat does your business do: manufacturing, a service or trading?",
+  MSME: "Here you go! MSME limits since 1 April 2025 (both must be met):\n\n🔹 Micro: investment up to Rs 2.5 crore AND turnover up to Rs 10 crore\n🔹 Small: up to Rs 25 crore AND Rs 100 crore\n🔹 Medium: up to Rs 125 crore AND Rs 500 crore\n\nIf you cross either limit you move up a category. What does your business do: manufacturing, a service or trading?",
   KSUM: "Here you go! The Kerala Startup Mission (KSUM) Unique ID:\n\n🆔 KSUM's grants, incubation, programmes and events are for startups that hold this ID\n🏢 The startup should be registered in Kerala, usually as a private limited company or LLP\n📜 Most KSUM schemes also ask for Startup India (DPIIT) recognition\n\nWhat does your startup do?",
   GRANT: "Here you go! Before you apply for a KSUM grant:\n\n1. Register the startup in Kerala (private limited company or LLP)\n2. Get Startup India (DPIIT) recognition\n3. Get the KSUM Unique ID\n4. Keep your pitch, prototype and plan for using the money ready\n\nFor the idea grant you may apply before step 1, but the company and Unique ID are needed before any money is released. What does your startup do?",
   FUNDING: "Here you go! Legal steps after an investor says yes:\n\n1. Sign the term sheet\n2. Share subscription + shareholders' agreements\n3. Board and shareholder approvals, offer letter (PAS-4), money into a separate bank account\n4. Allot shares within 60 days, file PAS-3 within 15 days of allotment (the money can be used only after that)\n5. NRI or foreign investor on repatriation basis: report to RBI (FC-GPR) within 30 days of allotment\n\nAre you a founder raising money, or an investor putting money in?",
@@ -1040,7 +1062,7 @@ export default {
         if (p.kind === "story") continue;
         const r = judged[id] || {};
         const L = leads.filter(l => l.source_item === id);
-        posts.push({ id, topic: topicOf(p), kind: p.kind, segment: p.segment || null, scene: p.scene || null, layout: p.layout || null, posted_at: IST(new Date(p.t)).toISOString().slice(0, 16), judged_at_days: r.age_days ?? null,
+        posts.push({ id, topic: topicOf(p), theme: p.theme || null, kind: p.kind, segment: p.segment || null, scene: p.scene || null, layout: p.layout || null, posted_at: IST(new Date(p.t)).toISOString().slice(0, 16), judged_at_days: r.age_days ?? null,
           reach: r.reach ?? null, views: r.views ?? null, avg_watch_s: r.ig_reels_avg_watch_time != null ? Math.round(r.ig_reels_avg_watch_time / 100) / 10 : null, shares: r.shares ?? null, saved: r.saved ?? null, likes: r.likes ?? null, comments: r.comments ?? null,
           keyword_comments: r.keyword_comments ?? null, dms: r.dms ?? null, leads: L.length, high_intent: L.filter(l => l.intent === "high").length, nri_leads: L.filter(l => l.nri).length, budget_likely: L.filter(l => l.can_afford_30k === "likely").length });
       }

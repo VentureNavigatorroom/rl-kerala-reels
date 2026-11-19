@@ -73,3 +73,5 @@ lst("gl001", "online_seller", "B", "GST ഇല്ലാതെ\nവിൽക്�
  cap_ml="GST ഇല്ലാതെ മുന്നോട്ട് പോകാൻ പറ്റാത്ത മൂന്ന് സാഹചര്യങ്ങൾ: മറ്റ് സംസ്ഥാനത്തേക്ക് സാധന വിൽപ്പന, സാധനങ്ങൾക്ക് 40 ലക്ഷം അല്ലെങ്കിൽ സർവീസിന് 20 ലക്ഷം ടേൺഓവർ, വലിയ ബയർ GSTIN ചോദിക്കുമ്പോൾ.",
  cap_en="Three situations where you can't keep selling without GST in Kerala: selling goods to other states, turnover above Rs 40 lakh for goods or Rs 20 lakh for services, and big buyers who ask for a GSTIN.",
  cap_mg="GST illaathe munnottu pokaan pattatha 3 saahacharyam: other state-ilekku goods, goods-nu 40 lakh allenkil service-nu 20 lakh turnover, valiya buyer GSTIN chodikkumbol.")
+
+for _x in S: _x.setdefault("theme", "crm")   # built on bank/STORY_THEMES.md (anonymised CRM situations)

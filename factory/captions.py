@@ -49,6 +49,15 @@ TOPIC = {
         ml="ഇൻവെസ്റ്റർ യെസ് പറഞ്ഞാൽ: എഗ്രിമെന്റുകൾ, ബോർഡ്, ഷെയർഹോൾഡർ അനുമതി, PAS-4, പ്രത്യേക ബാങ്ക് അക്കൗണ്ട്, 60 ദിവസത്തിൽ അലോട്ട്മെന്റ്, 15 ദിവസത്തിൽ PAS-3. NRI ഇൻവെസ്റ്ററാണെങ്കിൽ 30 ദിവസത്തിൽ FC-GPR.",
         en="After an investor says yes: agreements, board and shareholder approvals, PAS-4 offer letter, a separate bank account, allotment within 60 days, PAS-3 within 15 days, and FC-GPR within 30 days for NRI or foreign investors.",
         mg="Investor yes paranjaal: agreements, board-um shareholder approval-um, PAS-4, separate bank account, 60 divasathil allotment, 15 divasathil PAS-3. NRI investor aanenkil 30 divasathil FC-GPR."),
+    # ---- Udyam / MSME (topic ud) ----
+    "UDYAM": dict(
+        ml="ഉദ്യം (MSME) രജിസ്ട്രേഷൻ: ആധാർ, പാൻ വെച്ച് ഓൺലൈനായി. മാനുഫാക്ചറിംഗ്, സർവീസ് യൂണിറ്റുകൾക്ക് ബയർ 45 ദിവസത്തിനുള്ളിൽ പണം തരണം, ഇല്ലെങ്കിൽ പലിശ. ലോണിനും ടെൻഡറിനും സഹായം.",
+        en="Udyam (MSME) registration in Kerala: Aadhaar and PAN based, online. For manufacturing and service micro and small units, buyers must pay within 45 days or owe interest; it also helps with priority lending and government tenders. MSME registration explained.",
+        mg="Udyam MSME registration: Aadhaar, PAN vechu online. Manufacturing, service units-nu buyer 45 divasathinullil paisa tharanam, illenkil palisha. Loan-num tender-num sahaayam."),
+    "MSME": dict(
+        ml="2025 മുതൽ MSME ലിമിറ്റ്: മൈക്രോ 2.5 കോടി നിക്ഷേപം, 10 കോടി ടേൺഓവർ. സ്മോൾ 25 കോടി, 100 കോടി. മീഡിയം 125 കോടി, 500 കോടി. രണ്ടും പാലിക്കണം.",
+        en="New MSME classification from April 2025: micro up to Rs 2.5 crore investment and Rs 10 crore turnover, small up to Rs 25 crore and Rs 100 crore, medium up to Rs 125 crore and Rs 500 crore. Both limits must be met.",
+        mg="2025 muthal MSME limit: micro 2.5 crore investment, 10 crore turnover. Small 25 crore, 100 crore. Medium 125 crore, 500 crore. Randum paalikkanam."),
     # ---- Startup India / DPIIT (topic sui) ----
     "DPIIT": dict(
         ml="സ്റ്റാർട്ടപ്പ് ഇന്ത്യ (DPIIT) റെക്കഗ്നിഷൻ ആർക്ക് കിട്ടും? പ്രൈവറ്റ് ലിമിറ്റഡ്, LLP, രജിസ്റ്റേർഡ് പാർട്ണർഷിപ്പ്. 10 വർഷത്തിൽ താഴെ പഴക്കം, ഒരു വർഷവും 200 കോടി കടക്കാത്ത ടേൺഓവർ, പുതുമയുള്ള ആശയം.",
@@ -84,6 +93,11 @@ SEGMENT = {   # who it is for, using the phrases each group searches
     "family_money": dict(ml="ബന്ധുക്കളിൽ നിന്നോ സുഹൃത്തുക്കളിൽ നിന്നോ പൈസ എടുക്കുന്നവർക്ക്: അതും നിക്ഷേപമാണ്.", en="For founders taking money from family or friends: it is still an investment that needs proper papers.", mg="Family-yil ninno friends-il ninno paisa edukkunnavarkku: athum investment aanu."),
     "nri_investor": dict(ml="നാട്ടിലെ കമ്പനിയിൽ നിക്ഷേപിക്കുന്ന ഗൾഫ് മലയാളികൾക്ക്.", en="For Gulf Malayalis and NRIs investing in a Kerala company.", mg="Naattile company-il invest cheyyunna Gulf Malayalikalkku."),
     "angel": dict(ml="ആദ്യമായി ഒരു സ്റ്റാർട്ടപ്പിൽ നിക്ഷേപിക്കുന്നവർക്ക്: നിങ്ങളുടെ പൈസ സുരക്ഷിതമാക്കൂ.", en="For first-time angel investors: protect your money with the right agreement.", mg="Aadyamaayi startup-il invest cheyyunnavarkku: ningalude paisa safe aakkoo."),
+    "manufacturer": dict(ml="ചെറിയ മാനുഫാക്ചറിംഗ് യൂണിറ്റുകൾക്ക്.", en="For small manufacturing units in Kerala.", mg="Cheriya manufacturing units-nu."),
+    "service_unit": dict(ml="കമ്പനികൾക്ക് സർവീസ് കൊടുക്കുന്ന ബിസിനസുകൾക്ക്.", en="For service businesses whose clients are companies.", mg="Companies-nu service kodukkunna business-nu."),
+    "trader_ud": dict(ml="കടകൾക്കും ഹോൾസെയിൽ കച്ചവടക്കാർക്കും.", en="For shop owners and wholesalers.", mg="Kadakalkkum wholesale kachavadakkarkkum."),
+    "loan_seeker": dict(ml="ബിസിനസ് ലോൺ നോക്കുന്നവർക്ക്.", en="For business owners applying for a loan.", mg="Business loan nokkunnavarkku."),
+    "supplier_unpaid": dict(ml="വലിയ ബയർമാർ പണം വൈകിപ്പിക്കുന്ന സപ്ലയർമാർക്ക്.", en="For suppliers whose big buyers pay late.", mg="Valiya buyers paisa vaikippikkunna suppliers-nu."),
     "tech_founder": dict(ml="ആപ്പ്, സോഫ്റ്റ്‌വെയർ, പ്രോഡക്റ്റ് ഫൗണ്ടർമാർക്ക്.", en="For app, SaaS and product founders in Kerala.", mg="App, software, product founders-nu."),
     "grant_seeker": dict(ml="സർക്കാർ ഗ്രാന്റുകൾ നോക്കുന്ന ഫൗണ്ടർമാർക്ക്.", en="For founders applying for government startup grants and schemes.", mg="Government grants nokkunna founders-nu."),
     "traditional_innovator": dict(ml="ഫുഡ്, കൃഷി, ആയുർവേദം, മാനുഫാക്ചറിംഗ് രംഗത്ത് പുതിയത് ചെയ്യുന്നവർക്ക്.", en="For food, agri, ayurveda and manufacturing businesses doing something new.", mg="Food, agri, ayurveda, manufacturing-il puthiyathu cheyyunnavarkku."),
@@ -104,16 +118,19 @@ H_LOCAL = ["#kerala", "#kochi", "#keralabusiness", "#malayali", "#startupkerala"
 H_TOPIC = {"START": ["#privatelimitedcompany", "#pvtltd", "#llp", "#opc"], "NAME": ["#companyname", "#trademark", "#businessname"],
            "AFTER": ["#compliance", "#rocfiling", "#annualfiling"], "CHECKLIST": ["#businessregistration", "#documents", "#startupindia"]}
 H_TOPIC.update({"GST": ["#gstregistration", "#gstin", "#gstnumber"], "LIMIT": ["#gstlimit", "#gstindia", "#compositionscheme"], "PENALTY": ["#gstreturn", "#gstr3b", "#gstcompliance"],
+                "UDYAM": ["#udyamregistration", "#msme", "#msmeregistration"], "MSME": ["#msme", "#msmeindia", "#smallbusinessindia"],
                 "DPIIT": ["#startupindia", "#dpiit", "#startupregistration"], "BENEFITS": ["#startupindia", "#80iac", "#startupbenefits"],
                 "KSUM": ["#ksum", "#keralastartupmission", "#keralastartup"], "GRANT": ["#startupgrant", "#ksum", "#seedfund"],
                 "INVEST": ["#investment", "#shareholdersagreement", "#equity"], "TERMSHEET": ["#termsheet", "#fundraising", "#venturecapital"], "FUNDING": ["#funding", "#angelinvestor", "#seedfunding"]})
 H_SEG = {"freelancer": "#freelancer", "cofounders": "#startup", "proprietor": "#smallbusiness", "salaried": "#sidebusiness", "solo": "#entrepreneur", "nri": "#nri",
          "online_seller": "#onlineseller", "trader": "#smallbusiness", "service_pro": "#consultant", "new_company": "#startup", "nri_business": "#nri",
+         "manufacturer": "#manufacturing", "service_unit": "#smallbusiness", "trader_ud": "#retail", "loan_seeker": "#businessloan", "supplier_unpaid": "#msme",
          "tech_founder": "#saas", "grant_seeker": "#startupgrant", "traditional_innovator": "#innovation", "student_founder": "#studentstartup", "investor_ready": "#fundraising",
          "idea_stage": "#ideastage", "kerala_registered": "#keralastartup", "returnee": "#nri", "campus": "#studentstartup", "women_founder": "#womenentrepreneurs",
          "founder_raising": "#startupfunding", "family_money": "#familybusiness", "nri_investor": "#nriinvestment", "angel": "#angelinvesting", "cofounder_split": "#cofounder"}
-CORE = {"co": "#companyregistration", "gst": "#gstregistration", "inv": "#investoragreement", "sui": "#startupindia", "sk": "#keralastartupmission"}
+CORE = {"ud": "#udyamregistration", "co": "#companyregistration", "gst": "#gstregistration", "inv": "#investoragreement", "sui": "#startupindia", "sk": "#keralastartupmission"}
 H_EXTRA_T = {"gst": ["#gst", "#taxindia", "#keralabusiness", "#msme", "#smallbusinessindia"], "inv": ["#startupindia", "#keralastartup", "#investors", "#startuplaw", "#founders"],
+             "ud": ["#msme", "#keralabusiness", "#smallbusinessindia", "#makeinindia", "#entrepreneur"],
              "sui": ["#startup", "#founders", "#keralastartup", "#entrepreneurindia", "#makeinindia"], "sk": ["#startup", "#kochi", "#trivandrum", "#founders", "#keralabusiness"]}
 H_EXTRA = ["#mca", "#incorporation", "#startupindia", "#businessowner", "#keralastartup"]
 
