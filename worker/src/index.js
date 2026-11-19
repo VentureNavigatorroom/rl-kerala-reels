@@ -120,8 +120,9 @@ async function reelMaxPlan(env, day) {
   const live = Object.keys(TOPICS).filter(t => day >= TOPICS[t].stages[0].from);
   const plan = {}; for (const t of live) plan[t] = { reel: 0, carousel: 0, story: 0, poster: 0 };
   let left = total;   // pass 1: each topic its share, limited by stock; pass 2: hand leftovers to topics with stock, co first
-  for (const t of live) { const n = Math.min(Math.round(total * REEL_SHARE[t]), avail[t]); plan[t].reel = n; left -= n; }
-  for (const t of ["co", ...live.filter(x => x !== "co")]) if (plan[t]) { const n = Math.min(left, avail[t] - plan[t].reel); if (n > 0) { plan[t].reel += n; left -= n; } }
+  for (const t of live) { const n = Math.min(Math.floor(total * (REEL_SHARE[t] || 0)), avail[t]); plan[t].reel = n; left -= n; }
+  const order = ["co", ...live.filter(x => x !== "co")]; let moved = true;   // leftovers one at a time, round-robin over topics that still have stock
+  while (left > 0 && moved) { moved = false; for (const t of order) if (plan[t] && left > 0 && plan[t].reel < avail[t]) { plan[t].reel++; left--; moved = true; } }
   const P = { cap: total, mode: "reel-max", stages: {}, plan, total: total - left, stock: avail };
   await kvPut(env, ck, P); return P;
 }
