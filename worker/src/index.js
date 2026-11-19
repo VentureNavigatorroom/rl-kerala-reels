@@ -22,6 +22,61 @@ const RAMP = (d0, d1, d2, d3, d4) => [
   { from: d4, reel: 35, carousel: 5, story: 5, poster: 0 },
 ];
 const LOW_REACH = { carousel: 2, story: 3 };
+// ---- SEVEN MORE TOPICS (owner, 19 Nov evening): same plan, goal and automation as company registration --------------
+// Each entry fills TOPICS, keywords, DM bot, fallback questions, buttons, keyword replies and lead fields below.
+const Q_END = ["Could you share a phone number so our team can call you?", "Would you prefer the call in Malayalam or English?", "Thank you! 🙏 Our team will call you shortly."];
+const NEWT = {
+  tm: { label: "TRADEMARK", noun: "trademark registration", shift: 3,
+    about: "registers trademarks (brand names and logos) in India",
+    facts: "A trademark application is filed with the Trade Marks Registry; once filed you may use the TM symbol, and the R symbol only after registration. There are 45 classes of goods and services and you file in the classes you trade in. After examination an objection may come, which must be answered within 30 days; after publication in the journal anyone can oppose within 4 months. A registered trademark lasts 10 years and can be renewed. Getting a company name approved does NOT protect the brand; only a trademark does. Never promise registration.",
+    qs: ["What is the brand name or logo, and what does your business sell or do?", "Is the business a proprietorship, partnership, LLP or company? Is it already using the brand?", "Have you checked if anyone else uses a similar name?", "How soon do you want to file?"],
+    next: ["Talk to our team", "Can I use TM now?", "Name vs trademark?"],
+    kws: { TRADEMARK: ["Want our quick guide to protecting your brand name with a trademark?", "Here you go! Trademark in short:\n\n™ You can use TM once you file; ® only after registration\n📂 45 classes: you file in the classes you sell in\n⏱ Objection replies within 30 days; anyone can oppose within 4 months of publication\n🔁 Valid 10 years, renewable\n⚠️ A company name approval does NOT protect your brand\n\nWhat is your brand name, and what do you sell?"],
+           BRAND: ["Want the checklist to make sure nobody can copy your brand name?", "Here you go! Protecting your brand:\n\n1. Search for similar marks before you print anything\n2. File a trademark in the right class (45 classes)\n3. Use ™ after filing, ® only after registration\n4. Renew every 10 years\n\nYour company or domain name alone does not stop someone else using the brand. What is your brand name?"] } },
+  roc: { label: "ROC COMPLIANCE", noun: "ROC annual compliance", shift: 9,
+    about: "handles ROC annual compliance for private limited companies and LLPs",
+    facts: "A private limited company holds its AGM by 30 September, files AOC-4 (financial statements) within 30 days of the AGM and MGT-7/7A (annual return) within 60 days of the AGM; every director files DIR-3 KYC by 30 September. Late filing costs Rs 100 per day per form, with no upper limit. INC-20A is due within 180 days of incorporation and the first auditor within 30 days. Not filing for 3 years can disqualify directors for 5 years and the company can be struck off. An LLP files Form 11 by 30 May and Form 8 by 30 October. These are due even if the company had no business.",
+    qs: ["Is it a private limited company or an LLP, and when was it registered?", "Which filings are done so far, and are any pending or late?", "Did the company have any business or bank transactions this year?", "How soon do you want everything up to date?"],
+    next: ["Talk to our team", "No business, still file?", "What's the late fee?"],
+    kws: { ROC: ["Want the yearly ROC filing calendar for your company?", "Here you go! Yearly ROC filings for a private limited company:\n\n📅 AGM by 30 September\n📄 AOC-4 within 30 days of the AGM\n📄 MGT-7/7A within 60 days of the AGM\n🪪 DIR-3 KYC for every director by 30 September\n⚠️ Late: Rs 100 per day per form, no upper limit\n🚫 3 years unfiled: directors can be disqualified for 5 years\n\nDue even if there was no business. Is your company a Pvt Ltd or an LLP?"],
+           FILING: ["Want the list of filings a company must do even with zero business?", "Here you go! Even with zero business, a company files:\n\n📄 AOC-4 and MGT-7/7A every year\n🪪 DIR-3 KYC for every director\n🧾 Income tax return\n⚠️ Each ROC form late = Rs 100 a day, no cap\n\nAn LLP files Form 11 (by 30 May) and Form 8 (by 30 October). When was your company registered?"] } },
+  fssai: { label: "FSSAI", noun: "FSSAI food registration / licence", shift: 15,
+    about: "gets FSSAI registration and licences for food businesses",
+    facts: "Every food business needs FSSAI: basic registration for turnover up to Rs 12 lakh a year (including home bakers and small sellers), a state licence up to Rs 20 crore, and a central licence above that or for importers and some other categories. The 14-digit FSSAI number must be printed on packaged food labels. Selling food without registration or licence can be punished with a penalty of up to Rs 5 lakh and imprisonment of up to 6 months. Registration and licences are valid for 1 to 5 years and must be renewed. Never promise approval.",
+    qs: ["What food do you make or sell, and from where (home, shop, kitchen, online)?", "Roughly what is your yearly turnover?", "Do you sell packaged food, or sell through Swiggy, Zomato, Amazon or other states?", "How soon do you need the FSSAI number?"],
+    next: ["Talk to our team", "Home bakers too?", "Registration or licence?"],
+    kws: { FSSAI: ["Want our quick guide on which FSSAI registration your food business needs?", "Here you go! Which FSSAI do you need?\n\n🥘 Basic registration: turnover up to Rs 12 lakh a year (home bakers too)\n🏪 State licence: up to Rs 20 crore\n🏭 Central licence: above that, and importers\n🏷 Print the 14-digit FSSAI number on packaged food\n⚠️ Selling without it: penalty up to Rs 5 lakh\n\nWhat food do you make or sell?"],
+           FOOD: ["Want the checklist for selling food legally from home or a shop?", "Here you go! Selling food legally:\n\n1. FSSAI registration (up to Rs 12 lakh turnover) or licence\n2. FSSAI number on every packet\n3. Renew before it expires (1-5 years)\n4. Food delivery apps ask for the FSSAI number before listing you\n\nWhat food do you sell, and from home or a shop?"] } },
+  iec: { label: "IEC (IMPORT-EXPORT)", noun: "IEC import-export registration", shift: 21,
+    about: "gets the Import Export Code (IEC) from DGFT for businesses that import or export",
+    facts: "The IEC is a 10-digit code issued by DGFT, linked to the business PAN; it is needed to import or export goods, and customs and banks ask for it. One IEC covers the whole business (one PAN). It does not expire, but it must be updated online every year between April and June, otherwise it is deactivated. Exporters of services need it to claim export benefits. Import or export for personal use does not need it. Never promise approval or export incentives.",
+    qs: ["What do you want to import or export, and to or from which country?", "Is the business a proprietorship, partnership, LLP or company? Does it have GST?", "Is this your first shipment, or are you already trading?", "How soon is the first shipment?"],
+    next: ["Talk to our team", "Do I need IEC?", "Yearly update?"],
+    kws: { IEC: ["Want our quick guide to the Import Export Code (IEC)?", "Here you go! IEC in short:\n\n🌍 10-digit code from DGFT, linked to your business PAN\n📦 Needed to import or export goods; customs and banks ask for it\n🔁 Never expires, but must be updated every year between April and June or it is deactivated\n🙋 Not needed for personal-use imports\n\nWhat do you want to import or export?"],
+           EXPORT: ["Want the checklist before your first export order?", "Here you go! Before your first export:\n\n1. IEC (Import Export Code) from DGFT\n2. GST registration for the business\n3. A current account that can receive foreign payments\n4. Update the IEC every April-June\n\nWhat do you want to export, and to which country?"] } },
+  nda: { label: "NDA", noun: "NDA (non-disclosure agreement)", shift: 27,
+    about: "drafts NDAs (non-disclosure agreements) for businesses and founders",
+    facts: "An NDA is a contract that is enforceable in India if it is properly drafted and stamped as per the state's stamp law. It can be one-way or mutual. A good NDA defines what is confidential, what is excluded (already public, independently developed), how long the duty lasts, and the remedies, such as an injunction. An NDA cannot protect information that is already public. Many investors do not sign NDAs at the pitch stage, so share only what you are comfortable with. Never promise an outcome in a dispute.",
+    qs: ["Who will you share information with: an employee, freelancer, vendor, partner or investor?", "What do you need to protect: an idea, code, designs, client lists, recipes, something else?", "One-way NDA or mutual (both sides share)?", "How soon do you need it?"],
+    next: ["Talk to our team", "One-way or mutual?", "Will investors sign?"],
+    kws: { NDA: ["Want our guide to what a strong NDA must have?", "Here you go! A strong NDA has:\n\n🔒 A clear definition of what is confidential\n🚫 Exclusions (already public, independently developed)\n⏱ How long the duty lasts\n⚖️ Remedies, such as an injunction\n🧾 Proper stamping as per the state's stamp law\n\nAn NDA cannot protect what is already public. Who will you share information with?"],
+           SECRET: ["Want the checklist before sharing your idea with anyone?", "Here you go! Before you share your idea:\n\n1. Decide what must stay secret (code, recipe, client list, design)\n2. Get an NDA signed, one-way or mutual\n3. Share only what that person needs\n4. Note: many investors won't sign NDAs at pitch stage, so pitch the what, not the how\n\nWho are you about to share it with?"] } },
+  cfa: { label: "CO-FOUNDER AGREEMENT", noun: "co-founder agreement", shift: 33,
+    about: "drafts co-founder agreements (equity split, vesting, roles, IP and exits)",
+    facts: "A co-founder agreement records the equity split, vesting (a common practice is 4 years with a 1-year cliff), roles and decision-making, assignment of all IP to the company, what happens when a founder leaves (buy-back of unvested shares), and dispute resolution. In India a non-compete that applies after someone leaves is generally not enforceable, but confidentiality and non-solicitation can be. For share rights to bind the company they should also be reflected in the shareholders' agreement and the articles. Never decide the split for them.",
+    qs: ["How many co-founders are there, and have you agreed a split yet?", "Is the company registered yet (Pvt Ltd, LLP or not yet)?", "Who built what so far (idea, code, money, clients)?", "How soon do you want the agreement signed?"],
+    next: ["Talk to our team", "What is vesting?", "If one leaves?"],
+    kws: { COFOUNDER: ["Want our checklist of what every co-founder agreement must cover?", "Here you go! A co-founder agreement covers:\n\n📊 Equity split\n⏳ Vesting (commonly 4 years with a 1-year cliff)\n🧭 Roles and who decides what\n💡 All IP owned by the company\n🚪 What happens if a founder leaves (unvested shares come back)\n⚖️ How disputes are settled\n\nHow many co-founders are you?"],
+           VESTING: ["Want to know how vesting protects co-founders?", "Here you go! Vesting in short:\n\n⏳ Shares are earned over time (commonly 4 years)\n🧱 A 1-year cliff: leave before 1 year and you keep none\n🚪 Leave later and unvested shares come back to the company\n\nWithout vesting, a co-founder who leaves in month 6 can keep their full share. Have you agreed your split yet?"] } },
+  fp: { label: "FINANCIAL PROJECTIONS", noun: "financial projections", shift: 39,
+    about: "prepares investor-ready financial projections: a 3-year revenue and expense forecast with P&L, cash flow and the assumptions behind it",
+    facts: "Investors, banks and grant panels ask for financial projections. A good set covers 3 years month by month for year 1, with revenue drivers (customers, price, growth), costs and hiring, a P&L, cash flow and break-even, plus the assumptions written down so they can be questioned. Projections must be realistic and tied to traction; inflated numbers lose credibility with investors. Banks may ask for a project report for loans. Never state our fee for this service; the team quotes on the call.",
+    qs: ["What does your business do, and is it already earning revenue?", "What are the projections for: an investor, a bank loan, a grant, or your own planning?", "Do you have past numbers (sales, costs) we can build on?", "By when do you need them?"],
+    next: ["Talk to our team", "What do investors check?", "For a bank loan?"],
+    kws: { PROJECTION: ["Want the checklist of what investors look for in financial projections?", "Here you go! Investor-ready projections have:\n\n📈 3 years: month by month for year 1\n👥 Revenue drivers: customers, price, growth\n💸 Costs and hiring plan\n📊 P&L, cash flow and break-even point\n📝 Assumptions written down\n\nInflated numbers lose investors' trust; tie them to your traction. Is your business earning revenue yet?"],
+           FORECAST: ["Want to know how to build a 3-year revenue and expense forecast?", "Here you go! A 3-year forecast in 4 steps:\n\n1. Start from real numbers (sales, costs) if you have them\n2. Set drivers: customers per month, price, growth\n3. Add costs, salaries and one-time spends\n4. Check cash flow: when does money run out, when do you break even?\n\nWho is it for: an investor, a bank or a grant?"] } },
+};
+
 const TOPICS = {
   co: { label: "COMPANY REG", noun: "company registration", storyShift: 0, stages: RAMP("2026-11-01", "2026-11-14", "2026-11-21", "2026-11-28", "2026-12-05") },
   gst: { label: "GST", noun: "GST registration", storyShift: 12, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
@@ -30,6 +85,7 @@ const TOPICS = {
   ud: { label: "UDYAM (MSME)", noun: "Udyam (MSME) registration", storyShift: 54, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
   sk: { label: "KERALA STARTUP MISSION", noun: "Kerala Startup Mission registration", storyShift: 48, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") },
 };
+for (const [t, c] of Object.entries(NEWT)) TOPICS[t] = { label: c.label, noun: c.noun, storyShift: c.shift, stages: RAMP("2026-11-20", "2026-11-27", "2026-12-04", "2026-12-11", "2026-12-18") };
 const STAGES = TOPICS.co.stages;
 const topicOf = x => (x && TOPICS[x.topic]) ? x.topic : "co";
 // Instagram allows 100 API posts per rolling 24 h (stories count; checked 14 Nov: quota_total 100). Keep a margin for retries.
@@ -52,7 +108,8 @@ async function stageNow(env, day, topic = "co") {
 // so a topic with little stock never blocks the quota: its unused share goes to topics that have reels ready.
 const REEL_RAMP = [["2026-11-20", 40], ["2026-11-21", 60], ["2026-11-22", 80], ["2026-11-23", 90]];
 // owner, 19 Nov: company-registration reels were starting to feel repetitive, so co drops to 25% and Udyam joins at 15%
-const REEL_SHARE = { co: 0.25, gst: 0.15, inv: 0.15, sui: 0.15, sk: 0.15, ud: 0.15 };
+// owner, 19 Nov evening: 13 topics, same goal each; company registration keeps a little more as the original topic
+const REEL_SHARE = { co: 0.12, gst: 0.073, inv: 0.073, sui: 0.073, sk: 0.073, ud: 0.073, tm: 0.073, roc: 0.073, fssai: 0.073, iec: 0.073, nda: 0.073, cfa: 0.073, fp: 0.073 };
 async function reelMaxPlan(env, day) {
   const ck = `plan:${day}`; const cached = await kv(env, ck, null); if (cached) return cached;   // frozen once a day so slot times never move
   let total = 0; for (const [d, n] of REEL_RAMP) if (day >= d) total = n;
@@ -470,7 +527,13 @@ const FALLBACK_UD = [
   "Would you prefer the call in Malayalam or English?",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
-const BOT = { ud: () => ({ sys: BOT_UD, fq: FALLBACK_UD }), co: () => ({ sys: BOT_SYSTEM, fq: FALLBACK_Q }), gst: () => ({ sys: BOT_GST, fq: FALLBACK_GST }), inv: () => ({ sys: BOT_INV, fq: FALLBACK_INV }), sui: () => ({ sys: BOT_SUI, fq: FALLBACK_SUI }), sk: () => ({ sys: BOT_SK, fq: FALLBACK_SK }) };
+const botFor = c => `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that ${c.about} (and also company registration, GST and other business registrations and agreements).
+${RULES_COMMON}
+General facts you may use: ${c.facts}
+Goal: qualify the lead by asking, one at a time:
+${c.qs.map((q, i) => `${i + 1}) ${q}`).join(" ")} 5) their phone number, 6) preferred language for the call: Malayalam or English.
+When you have all six, thank them and say a team member will call. Output only the reply text.`;
+const BOT = { ...Object.fromEntries(Object.entries(NEWT).map(([t, c]) => [t, () => ({ sys: botFor(c), fq: [...c.qs, ...Q_END] })])), ud: () => ({ sys: BOT_UD, fq: FALLBACK_UD }), co: () => ({ sys: BOT_SYSTEM, fq: FALLBACK_Q }), gst: () => ({ sys: BOT_GST, fq: FALLBACK_GST }), inv: () => ({ sys: BOT_INV, fq: FALLBACK_INV }), sui: () => ({ sys: BOT_SUI, fq: FALLBACK_SUI }), sk: () => ({ sys: BOT_SK, fq: FALLBACK_SK }) };
 function fallbackReply(thread, topic = "co") {
   const FALLBACK_Q = BOT[topic]().fq;
   const last = thread[thread.length - 1]?.content || "";
@@ -493,7 +556,7 @@ async function botReply(env, thread, topic = "co") {
   } catch (e) { await log(env, `AI unavailable, using fallback: ${String(e.message).slice(0, 80)}`); }
   return fallbackReply(thread, topic);
 }
-const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?|yes,? tag me|no thanks)/i;
+const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?|yes,? tag me|no thanks|can i use tm now\?|name vs trademark\?|no business, still file\?|what's the late fee\?|home bakers too\?|registration or licence\?|do i need iec\?|yearly update\?|one-way or mutual\?|will investors sign\?|what is vesting\?|if one leaves\?|what do investors check\?|for a bank loan\?)/i;
 function regexLead(thread, topic = "co") {   // no AI: read each answer that follows our question
   const users = thread.filter(m => m.role === "user" && !BTN.test(m.content.trim()));
   const all = users.map(m => m.content).join(" \n ");
@@ -508,6 +571,7 @@ function regexLead(thread, topic = "co") {   // no AI: read each answer that fol
 const LEAD_SCHEMA = {
   co: `{"business":"","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   gst: `{"business":"what they sell and the business type","founders":"","nri":false,"traction":"turnover this year or expected","interstate":"sells to other states / online marketplaces?","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  ...Object.fromEntries(Object.keys(NEWT).map(t => [t, `{"business":"what the business does and what they need","founders":"","nri":false,"traction":"entity type, stage and any numbers they gave","timeline":"what it is for and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`])),
   ud: `{"business":"what the business does and whether manufacturing, service or trading","founders":"","nri":false,"traction":"entity type, GST status, turnover","timeline":"why Udyam now and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   sui: `{"business":"what the startup does and what is new","founders":"","nri":false,"traction":"entity type, registration date and stage","timeline":"how soon and what for","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   sk: `{"business":"what the startup does","founders":"","nri":false,"traction":"entity type, Kerala registration, DPIIT status","timeline":"what they want from KSUM and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
@@ -529,13 +593,15 @@ async function igProfile(env, igsid) {
 // Keyword matching that tolerates typos, spacing, case, and Malayalam spellings
 // (e.g. "strat", "Satrt🙏", "chek list", "nmae", "സ്റ്റാർട്ട്"), without firing on ordinary words like "star", "game" or "alter".
 const KW_TOPIC = { START: "co", NAME: "co", AFTER: "co", CHECKLIST: "co", GST: "gst", LIMIT: "gst", PENALTY: "gst", INVEST: "inv", TERMSHEET: "inv", FUNDING: "inv",
-  DPIIT: "sui", BENEFITS: "sui", KSUM: "sk", GRANT: "sk", UDYAM: "ud", MSME: "ud" };
+  DPIIT: "sui", BENEFITS: "sui", KSUM: "sk", GRANT: "sk", UDYAM: "ud", MSME: "ud",
+  ...Object.fromEntries(Object.entries(NEWT).flatMap(([t, c]) => Object.keys(c.kws).map(k => [k, t]))) };
 const KEYWORDS = Object.keys(KW_TOPIC);
-const KW_UPPER_IN_LONG = new Set(["AFTER", "GST", "LIMIT", "PENALTY", "INVEST", "FUNDING", "TERMSHEET", "BENEFITS", "GRANT", "KSUM", "DPIIT", "UDYAM", "MSME"]);   // ordinary words: in a long comment they count only when written in capitals
-const KW_NOFUZZ = new Set(["GST", "KSUM", "MSME"]);   // too short to guess typos safely
+const KW_UPPER_IN_LONG = new Set(["AFTER", "GST", "LIMIT", "PENALTY", "INVEST", "FUNDING", "TERMSHEET", "BENEFITS", "GRANT", "KSUM", "DPIIT", "UDYAM", "MSME", "TRADEMARK", "BRAND", "ROC", "FILING", "FSSAI", "FOOD", "IEC", "EXPORT", "NDA", "SECRET", "COFOUNDER", "VESTING", "PROJECTION", "FORECAST"]);   // ordinary words: in a long comment they count only when written in capitals
+const KW_NOFUZZ = new Set(["GST", "KSUM", "MSME", "ROC", "FSSAI", "FOOD", "IEC", "NDA", "BRAND", "COFOUNDER"]);   // COFOUNDER: "founder" alone must not trigger it   // too short to guess typos safely
 const KW_ML = [[/സ്റ്റാർ?ട്ട?്?|സ്റ്റാട്ട്/, "START"], [/നെയിം|നേം|നെയിമ്/, "NAME"], [/ആഫ്റ്റർ|ആഫ്ടർ/, "AFTER"], [/ചെക്ക്[\s\u200c\u200d]*ലിസ്റ്റ്|ചെക്ലിസ്റ്റ്/, "CHECKLIST"],
-  [/ജി[\s.]*എസ്[\s.]*ടി|ജിഎസ്ടി/, "GST"], [/ലിമിറ്റ്(?![\u0D00-\u0D7F])/, "LIMIT"], [/പെനാൽ?റ്റി/, "PENALTY"], [/ഇൻവെസ്റ്റ്(?![\u0D00-\u0D7F])/, "INVEST"], [/ടേം[\s\u200c]*ഷീറ്റ്/, "TERMSHEET"], [/ഫണ്ടിം?ഗ്/, "FUNDING"], [/ഡി[\s.]*പി[\s.]*ഐ[\s.]*ഐ[\s.]*ടി/, "DPIIT"], [/ബെനഫിറ്റ്/, "BENEFITS"], [/കെ[\s.]*സം|കെസം|കെ[\s.]*എസ്[\s.]*യു[\s.]*എം/, "KSUM"], [/ഗ്രാന്റ്/, "GRANT"], [/ഉദ്യാ?ം|ഉദ്യമ്/, "UDYAM"], [/എം[\s.]*എസ്[\s.]*എം[\s.]*ഇ/, "MSME"]];
-const KW_STOP = new Set(["star", "stars", "stat", "stats", "smart", "stark", "tart", "starts", "same", "came", "game", "fame", "lame", "tame", "made", "dame", "nam", "alter", "afer", "hater", "invent", "invents", "finding", "fending", "funding's", "limbo", "lima", "omit", "vomit", "penalt", "gift", "grand", "grants'", "udyog", "giant", "grunt", "granite", "benefit's"]);
+  [/ജി[\s.]*എസ്[\s.]*ടി|ജിഎസ്ടി/, "GST"], [/ലിമിറ്റ്(?![\u0D00-\u0D7F])/, "LIMIT"], [/പെനാൽ?റ്റി/, "PENALTY"], [/ഇൻവെസ്റ്റ്(?![\u0D00-\u0D7F])/, "INVEST"], [/ടേം[\s\u200c]*ഷീറ്റ്/, "TERMSHEET"], [/ഫണ്ടിം?ഗ്/, "FUNDING"], [/ഡി[\s.]*പി[\s.]*ഐ[\s.]*ഐ[\s.]*ടി/, "DPIIT"], [/ബെനഫിറ്റ്/, "BENEFITS"], [/കെ[\s.]*സം|കെസം|കെ[\s.]*എസ്[\s.]*യു[\s.]*എം/, "KSUM"], [/ഗ്രാന്റ്/, "GRANT"], [/ഉദ്യാ?ം|ഉദ്യമ്/, "UDYAM"], [/എം[\s.]*എസ്[\s.]*എം[\s.]*ഇ/, "MSME"], [/ട്രേഡ്[\s\u200c]*മാർക്ക്/, "TRADEMARK"], [/ആർ[\s.]*ഒ[\s.]*സി/, "ROC"],
+  [/എഫ്[\s.]*എസ്[\s.]*എസ്[\s.]*എ[\s.]*ഐ/, "FSSAI"], [/ഐ[\s.]*ഇ[\s.]*സി/, "IEC"], [/എക്സ്പോർട്ട്/, "EXPORT"], [/എൻ[\s.]*ഡി[\s.]*എ/, "NDA"], [/കോ[\s-]*ഫൗണ്ടർ/, "COFOUNDER"], [/വെസ്റ്റിംഗ്/, "VESTING"], [/പ്രൊജക്ഷൻ/, "PROJECTION"], [/ഫോർകാസ്റ്റ്/, "FORECAST"]];
+const KW_STOP = new Set(["star", "stars", "stat", "stats", "smart", "stark", "tart", "starts", "same", "came", "game", "fame", "lame", "tame", "made", "dame", "nam", "alter", "afer", "hater", "invent", "invents", "finding", "fending", "funding's", "limbo", "lima", "omit", "vomit", "penalt", "gift", "grand", "grants'", "udyog", "expert", "experts", "testing", "resting", "nesting", "filling", "filming", "secrets", "brand's", "branded", "giant", "grunt", "granite", "benefit's"]);
 function editDist(a, b) {   // Damerau-Levenshtein (adjacent swaps count as one edit)
   const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
   for (let j = 1; j <= b.length; j++) d[0][j] = j;
@@ -604,7 +670,7 @@ async function monitorAllowed(req, u) {
   if (req.method !== "POST") return false;
   const b = await req.clone().json().catch(() => ({}));
   if (p === "/ops/run") return ["slots", "snapshot", "optimise", "poll", "nudge"].includes(b.what) && !b.id;
-  if (p === "/ops/flag") return /^stage_hold(_gst|_inv|_sui|_sk)?$/.test(b.k) || b.k === "low_reach_mode" || b.k === "reel_cap";
+  if (p === "/ops/flag") return /^stage_hold(_[a-z]+)?$/.test(b.k) || b.k === "low_reach_mode" || b.k === "reel_cap";
   if (p === "/ops/graph") return (b.method || "GET") === "GET";
   return false;
 }
@@ -769,7 +835,7 @@ async function handleWebhook(env, body) {
         if (pk) { meta.pending_kw = pk; await env.STATE.delete(`pk:${meta.username.toLowerCase()}`); }
       }
       if (!meta.pending_kw) {   // keyword typed straight into DMs or as a story reply (contact stories ask for this)
-        const short = ev.message.text.trim().split(/\s+/).length <= 4;
+        const short = ev.message.text.trim().split(/\s+/).length <= 2;   // answers like "home food business" must not trigger the FOOD guide mid-chat
         const dk = short ? ((await uniqueKw(env, ev.message.text))?.base || matchKeyword(ev.message.text)) : null;
         if (dk) { meta.pending_kw = dk; meta.follow_asks = 0; await log(env, `keyword ${dk} via DM from @${meta.username || uid}`); }
       }
@@ -930,7 +996,7 @@ const FOLLOW_ASK = "Almost there! 🙌 Please follow @rejectionlist.kerala (we s
 const FOLLOW_RECHECK = "Hmm, we can't see your follow yet 🤔 Open our profile, tap Follow, then tap the button again.";
 const NEXT_BUTTONS = ["Talk to our team", "Which type suits me?", "Documents needed"];
 const NEXT = { co: NEXT_BUTTONS, gst: ["Talk to our team", "Do I need GST?", "GST documents"], inv: ["Talk to our team", "I'm raising funds", "I'm investing"],
-  sui: ["Talk to our team", "Am I eligible?", "What do I get?"], ud: ["Talk to our team", "Micro, small or medium?", "Late payments?"], sk: ["Talk to our team", "Am I eligible?", "Which grants?"] };
+  sui: ["Talk to our team", "Am I eligible?", "What do I get?"], ...Object.fromEntries(Object.entries(NEWT).map(([t, c]) => [t, c.next])), ud: ["Talk to our team", "Micro, small or medium?", "Late payments?"], sk: ["Talk to our team", "Am I eligible?", "Which grants?"] };
 async function itemTopic(env, item) { try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || []), ...(mf.stories || [])].find(i => i.id === item); return it?.topic || (it?.reel ? topicOf((mf.items || []).find(i => i.id === it.reel)) : "co"); } catch (e) { return "co"; } }
 // First private reply is short and asks for a reply: a reply moves the chat into their main inbox,
 // then the full resource (KEYWORD_REPLY) follows.
@@ -987,6 +1053,7 @@ const KEYWORD_OPENER = {
   FUNDING: "Hi! 👋 Thanks for your comment. Want the legal steps after an investor says yes? Tap the button below.",
   DPIIT: "Hi! 👋 Thanks for your comment. Want our quick check on whether your startup can get Startup India (DPIIT) recognition? Tap the button below.",
   BENEFITS: "Hi! 👋 Thanks for your comment. Want the list of what DPIIT recognition actually opens up? Tap the button below.",
+  ...Object.fromEntries(Object.values(NEWT).flatMap(c => Object.entries(c.kws).map(([k, v]) => [k, `Hi! 👋 Thanks for your comment. ${v[0]} Tap the button below.`]))),
   UDYAM: "Hi! 👋 Thanks for your comment. Want our quick guide to Udyam (MSME) registration and what it protects? Tap the button below.",
   MSME: "Hi! 👋 Thanks for your comment. Want to know if your business is micro, small or medium under the new limits? Tap the button below.",
   KSUM: "Hi! 👋 Thanks for your comment. Want our guide to the Kerala Startup Mission Unique ID? Tap the button below.",
@@ -1004,6 +1071,7 @@ const KEYWORD_REPLY = {
   TERMSHEET: "Here you go! What a term sheet binds you to:\n\n🔓 Usually NOT binding: valuation, amount, board seats, other commercial terms\n🔒 Usually binding from signing: confidentiality, exclusivity (no talking to other investors for a set period), costs, governing law\n\nRead the exclusivity period carefully before you sign. Are you a founder or an investor?",
   DPIIT: "Here you go! Can your startup get DPIIT (Startup India) recognition?\n\n✅ A private limited company, LLP, registered partnership or cooperative (a proprietorship has to register an entity first)\n✅ Less than 10 years since registration\n✅ Turnover never above Rs 200 crore in any year\n✅ Working on something innovative, or a business model that can scale\n\nWhat does your startup do, and what is new about it?",
   BENEFITS: "Here you go! What DPIIT recognition opens up:\n\n🧾 Rebates on patent and trademark filing fees, and faster examination\n📋 Self-certification under several labour and environment laws\n🏛 Eligibility for many government and state startup schemes, tenders and grants (Kerala's KSUM grants usually ask for it)\n💰 The right to APPLY for the 3-year income tax holiday (section 80-IAC), which is a separate approval\n\nWhat does your startup do, and what is new about it?",
+  ...Object.fromEntries(Object.values(NEWT).flatMap(c => Object.entries(c.kws).map(([k, v]) => [k, v[1]]))),
   UDYAM: "Here you go! Udyam (MSME) registration in short:\n\n🆔 The government's MSME registration: Aadhaar-based, with PAN (and GSTIN if you have one), no renewal\n💸 Manufacturing and service micro/small units: buyers must pay within 45 days, or owe compound interest at 3x the RBI bank rate; delays can go to the MSME Samadhaan portal\n🏦 Helps with priority lending, collateral-free loan schemes and government tenders\n🛒 Traders can register too, but only for priority lending (no 45-day protection)\n\nWhat does your business do: manufacturing, a service or trading?",
   MSME: "Here you go! MSME limits since 1 April 2025 (both must be met):\n\n🔹 Micro: investment up to Rs 2.5 crore AND turnover up to Rs 10 crore\n🔹 Small: up to Rs 25 crore AND Rs 100 crore\n🔹 Medium: up to Rs 125 crore AND Rs 500 crore\n\nIf you cross either limit you move up a category. What does your business do: manufacturing, a service or trading?",
   KSUM: "Here you go! The Kerala Startup Mission (KSUM) Unique ID:\n\n🆔 KSUM's grants, incubation, programmes and events are for startups that hold this ID\n🏢 The startup should be registered in Kerala, usually as a private limited company or LLP\n📜 Most KSUM schemes also ask for Startup India (DPIIT) recognition\n\nWhat does your startup do?",
@@ -1107,7 +1175,7 @@ export default {
         const { token } = await req.json(); const r = await (await fetch(`https://graph.instagram.com/v24.0/me?fields=user_id,username&access_token=${encodeURIComponent(token)}`)).json();
         if (r.error) return json({ ok: false, error: r.error.message }); await env.STATE.put("ig_login_token", token); await env.STATE.put("ig_login_token_set", String(Date.now())); return json({ ok: true, username: r.username, user_id: r.user_id });
       }
-      if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (/^stage_(hold|force)(_gst|_inv|_sui|_sk)?$/.test(k) || k === "daily_cap" || k === "low_reach_mode" || k === "reel_cap") { v === null || v === undefined || v === "" ? await env.STATE.delete(k) : await env.STATE.put(k, String(+v)); return json({ ok: true, k, v }); }
+      if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (/^stage_(hold|force)(_[a-z]+)?$/.test(k) || k === "daily_cap" || k === "low_reach_mode" || k === "reel_cap") { v === null || v === undefined || v === "" ? await env.STATE.delete(k) : await env.STATE.put(k, String(+v)); return json({ ok: true, k, v }); }
         if (!["dm_inbound", "poll_inbox"].includes(k)) return json({ ok: false }); v ? await env.STATE.put(k, "1") : await env.STATE.delete(k); return json({ ok: true, k, v: !!v }); }
       if (u.pathname === "/ops/extra" && req.method === "POST") { const { carousels } = await req.json(); await kvPut(env, "extra_carousels", carousels || []); return json({ ok: true, n: (carousels || []).length }); }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });

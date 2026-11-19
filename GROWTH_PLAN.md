@@ -1,5 +1,9 @@
 # Growth plan and checkpoints (owner's instruction, 19 Nov 2026)
 
+GOAL (owner): 10 clients a month PER TOPIC (about 100 enquiries a month each), same as company registration, for all 13 topics:
+co, gst, inv, sui, sk, ud, tm, roc, fssai, iec, nda, cfa, fp. The 20-25 Nov projection below was made for 6 topics;
+with 13 the same total volume is spread thinner, so per-topic numbers are lower and the topic comparison (rule 4) matters more.
+
 These rules run whether the owner is present or not. The monitor (every 3 h) and the script writer (every 4 h) read this file on every run. Two review tasks run on 22 Nov and 25 Nov.
 
 ## Projection we committed to, for 20-25 Nov
