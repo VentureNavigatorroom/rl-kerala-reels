@@ -271,14 +271,14 @@ def main():
     urgent = [s for s in bank if s.get("theme") in ("correction", "news", "opportunity") and fresh(s)]   # same-day news: first in every run
     urgent.sort(key=lambda s: ("correction", "news", "opportunity").index(s["theme"]))
     tips = []
-    for t in topics.DIRS:   # keep 3 tips ready per topic (one posts a day)
+    for t in topics.DIRS:   # keep 2 tips ready per topic (one posts a day)
         ready = sum(1 for i in man["items"] if not i.get("posted") and topic_of(i) == t and i.get("theme") == "tip")
-        tips += [s for s in bank if topic_of(s) == t and s.get("theme") == "tip" and fresh(s)][:max(0, 3 - ready)]
+        tips += [s for s in bank if topic_of(s) == t and s.get("theme") == "tip" and fresh(s)][:max(0, 2 - ready)]
     bank = [s for s in bank if s.get("theme") not in SPECIAL]   # normal reel stock never includes the reserved themes
     if only: todo = [s for s in urgent + tips + bank if s["id"] in only]
     else:   # each topic tops up its own stock; the lists are interleaved so the time budget is shared fairly
         lists = [pick([s for s in bank if topic_of(s) == t], man, max(0, n - stock[t])) for t, n in per_topic(target).items()]
-        todo = urgent + tips + [x for row in __import__("itertools").zip_longest(*lists) for x in row if x]
+        todo = urgent + [x for row in __import__("itertools").zip_longest(*lists, tips) for x in row if x]   # tips interleaved so new topics still get normal reels
     print(f"stock {stock}, building {len(todo)}", flush=True)
     t0 = time.time()
     for s in todo:
