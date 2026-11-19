@@ -263,11 +263,22 @@ def main():
     for name, fn, env, dflt in (("carousels", build_carousels, "CAROUSEL_TARGET", "70"), ("stories", build_stories, "STORY_TARGET", "70"), ("posters", build_posters, "POSTER_TARGET", "70")):
         try: fn(man, int(os.environ.get(env, dflt)))
         except Exception as e: print(f"{name} build failed:", repr(e), flush=True); run_fail.append(f"{name}: {e!r}")
-    stock = {t: sum(1 for i in man["items"] if not i.get("posted") and topic_of(i) == t) for t in topics.DIRS}
-    if only: todo = [s for s in bank if s["id"] in only]
+    SPECIAL = ("tip", "news", "opportunity", "correction")   # tips + news (owner, 19 Nov night): reserved slots, built first
+    today = time.strftime("%Y-%m-%d", time.gmtime(time.time() + 19800))
+    stock = {t: sum(1 for i in man["items"] if not i.get("posted") and topic_of(i) == t and i.get("theme") not in SPECIAL) for t in topics.DIRS}
+    built_ids = {i["id"] for i in man["items"]}; fails = man.get("failed", {})
+    fresh = lambda s: s["id"] not in built_ids and fails.get(s["id"], 0) < 2 and (not s.get("expires") or s["expires"] >= today)
+    urgent = [s for s in bank if s.get("theme") in ("correction", "news", "opportunity") and fresh(s)]   # same-day news: first in every run
+    urgent.sort(key=lambda s: ("correction", "news", "opportunity").index(s["theme"]))
+    tips = []
+    for t in topics.DIRS:   # keep 3 tips ready per topic (one posts a day)
+        ready = sum(1 for i in man["items"] if not i.get("posted") and topic_of(i) == t and i.get("theme") == "tip")
+        tips += [s for s in bank if topic_of(s) == t and s.get("theme") == "tip" and fresh(s)][:max(0, 3 - ready)]
+    bank = [s for s in bank if s.get("theme") not in SPECIAL]   # normal reel stock never includes the reserved themes
+    if only: todo = [s for s in urgent + tips + bank if s["id"] in only]
     else:   # each topic tops up its own stock; the lists are interleaved so the time budget is shared fairly
         lists = [pick([s for s in bank if topic_of(s) == t], man, max(0, n - stock[t])) for t, n in per_topic(target).items()]
-        todo = [x for row in __import__("itertools").zip_longest(*lists) for x in row if x]
+        todo = urgent + tips + [x for row in __import__("itertools").zip_longest(*lists) for x in row if x]
     print(f"stock {stock}, building {len(todo)}", flush=True)
     t0 = time.time()
     for s in todo:
@@ -286,7 +297,7 @@ def main():
         man.setdefault("stories", [])
         man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"], topic=topic_of(s))]
         cap = captions.caption(s, s["hook"].replace("\n", " "))
-        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], topic=topic_of(s), theme=s.get("theme"), kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
+        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], topic=topic_of(s), theme=s.get("theme"), expires=s.get("expires"), source=s.get("source"), kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
             video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)

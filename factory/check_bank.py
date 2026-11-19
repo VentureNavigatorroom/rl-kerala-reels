@@ -168,6 +168,21 @@ for a in range(len(pa)):
     for b in range(a + 1, len(pa)):
         if difflib.SequenceMatcher(None, pa[a][1], pa[b][1]).ratio() > 0.8: err(f"{pa[b][0]}: poster nearly repeats {pa[a][0]}")
 
+# tips + news (owner, 19 Nov night): news / opportunity / correction must cite an official source and an "as of" date
+import re as _re
+OFFICIAL = ("mca.gov.in", "gst.gov.in", "cbic.gov.in", "dgft.gov.in", "dpiit.gov.in", "startupindia.gov.in", "startupmission.in",
+            "fssai.gov.in", "ipindia.gov.in", "udyamregistration.gov.in", "msme.gov.in", "rbi.org.in", "incometax.gov.in",
+            "egazette.gov.in", "pib.gov.in", "icai.org", "icsi.edu")
+for x in banks["reels"]:
+    th = x.get("theme")
+    if th not in (None, "crm", "faq", "new", "tip", "news", "opportunity", "correction"): err(f"{x['id']}: unknown theme {th}")
+    if th in ("news", "opportunity", "correction"):
+        src = str(x.get("source") or "")
+        if not any(d in src for d in OFFICIAL): err(f"{x['id']}: {th} needs source= an official URL ({', '.join(OFFICIAL[:4])} ...)")
+        if not _re.fullmatch(r"20\d\d-\d\d-\d\d", str(x.get("as_of") or "")): err(f"{x['id']}: {th} needs as_of='YYYY-MM-DD' (date of the circular)")
+        if x.get("expires") and not _re.fullmatch(r"20\d\d-\d\d-\d\d", str(x["expires"])): err(f"{x['id']}: expires must be YYYY-MM-DD")
+        if th == "correction" and not x.get("corrects"): err(f"{x['id']}: correction needs corrects='<id of the wrong reel>'")
+
 print(f"reels {len(banks['reels'])}, carousels {len(banks['carousels'])}, posters {len(banks['posters'])}, stories {len(banks['stories'])}")
 if errs:
     print(f"{len(errs)} problem(s):"); [print(" -", e) for e in errs]; sys.exit(1)

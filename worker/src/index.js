@@ -113,24 +113,31 @@ async function stageNow(env, day, topic = "co") {
 // without followers); every slot is a reel. The total ramps up over 4 days so the account isn't flagged for a sudden jump;
 // the monitor can lower it with KV "reel_cap" if reach per reel drops. Reels are split by topic share and by built stock,
 // so a topic with little stock never blocks the quota: its unused share goes to topics that have reels ready.
-const REEL_RAMP = [["2026-11-20", 40], ["2026-11-21", 60], ["2026-11-22", 80], ["2026-11-23", 90]];
+const REEL_RAMP = [["2026-11-20", 40], ["2026-11-21", 60], ["2026-11-22", 80]];   // owner, 19 Nov night: capped at 80 so tips + news fit under 100/24 h
+// TIPS + NEWS (owner, 19 Nov night). On top of the reel split: one "tip" reel per topic per day (quick check, calendar,
+// checklist, comparison, what-if), and NEWS_SLOTS slots for verified news / opportunity / correction reels (theme
+// "news" | "opportunity" | "correction"). These themes are reserved: normal reel slots never use them. Empty slots post nothing.
+const NEWS_SLOTS = 4;
+const SPECIAL = ["tip", "news", "opportunity", "correction"];
+const todayIST = () => IST().toISOString().slice(0, 10);
+const live_ = i => !i.expires || i.expires >= todayIST();   // a news item is never posted after its "as of" deadline
 // owner, 19 Nov: company-registration reels were starting to feel repetitive, so co drops to 25% and Udyam joins at 15%
 // owner, 19 Nov evening: 13 topics, same goal each; company registration keeps a little more as the original topic
 const REEL_SHARE = { co: 0.11, gst: 0.068, inv: 0.068, sui: 0.068, sk: 0.068, ud: 0.068, tm: 0.068, roc: 0.068, fssai: 0.068, iec: 0.068, nda: 0.068, cfa: 0.068, fp: 0.068, val: 0.068 };   // 14 topics
 async function reelMaxPlan(env, day) {
-  const ck = `plan:${day}`; const cached = await kv(env, ck, null); if (cached) return cached;   // frozen once a day so slot times never move
+  const ck = `plan2:${day}`; const cached = await kv(env, ck, null); if (cached) return cached;   // frozen once a day so slot times never move
   let total = 0; for (const [d, n] of REEL_RAMP) if (day >= d) total = n;
   const rc = await env.STATE.get("reel_cap"); if (rc !== null) total = Math.min(total, +rc);
   const m = await manifest(env); const posted = await kv(env, "posted", {});
   const avail = {}; for (const t of Object.keys(TOPICS)) avail[t] = 0;
-  for (const i of m.items || []) if (!i.posted && !posted[i.id]) avail[topicOf(i)]++;
+  for (const i of m.items || []) if (!i.posted && !posted[i.id] && !SPECIAL.includes(i.theme)) avail[topicOf(i)]++;
   const live = Object.keys(TOPICS).filter(t => day >= TOPICS[t].stages[0].from);
-  const plan = {}; for (const t of live) plan[t] = { reel: 0, carousel: 0, story: 0, poster: 0 };
+  const plan = {}; for (const t of live) plan[t] = { reel: 0, carousel: 0, story: 0, poster: 0, tip: 1 };
   let left = total;   // pass 1: each topic its share, limited by stock; pass 2: hand leftovers to topics with stock, co first
   for (const t of live) { const n = Math.min(Math.floor(total * (REEL_SHARE[t] || 0)), avail[t]); plan[t].reel = n; left -= n; }
   const order = ["co", ...live.filter(x => x !== "co")]; let moved = true;   // leftovers one at a time, round-robin over topics that still have stock
   while (left > 0 && moved) { moved = false; for (const t of order) if (plan[t] && left > 0 && plan[t].reel < avail[t]) { plan[t].reel++; left--; moved = true; } }
-  const P = { cap: total, mode: "reel-max", stages: {}, plan, total: total - left, stock: avail };
+  const P = { cap: total, mode: "reel-max", stages: {}, plan, news: NEWS_SLOTS, total: total - left, tips: live.length, stock: avail };
   await kvPut(env, ck, P); return P;
 }
 async function planDay(env, day) {
@@ -151,7 +158,8 @@ function slotsFor(P) {   // P = planDay result (or one stage, old style). Feed p
   const out = [];
   for (const [t, p] of Object.entries(P.plan)) STORY_TIMES.slice(0, p.story).forEach(([h, m]) => { const x = h * 60 + m + TOPICS[t].storyShift; out.push([Math.floor(x / 60), x % 60, "story", t]); });
   const feed = [];   // each post gets a position in its own topic+type series; merging by position interleaves everything evenly
-  for (const [t, p] of Object.entries(P.plan)) for (const k of ["reel", "carousel", "poster"]) for (let j = 0; j < p[k]; j++) feed.push({ pos: (j + 0.5) / p[k], k, t });
+  for (const [t, p] of Object.entries(P.plan)) for (const k of ["reel", "carousel", "poster", "tip"]) for (let j = 0; j < (p[k] || 0); j++) feed.push({ pos: k === "tip" ? 0.3 + 0.4 * ((Object.keys(P.plan).indexOf(t) + 0.5) / Object.keys(P.plan).length) : (j + 0.5) / p[k], k, t });
+  for (let j = 0; j < (P.news || 0); j++) feed.push({ pos: (j + 0.5) / P.news, k: "news", t: "co" });
   feed.sort((a, b) => a.pos - b.pos || (a.t < b.t ? -1 : 1));
   const multi = Object.keys(P.plan).length > 1;   // company registration alone keeps its 07:05-22:45 day
   const tot = feed.length, start = multi ? 6 * 60 + 30 : 7 * 60 + 5, end = multi ? 23 * 60 + 15 : 22 * 60 + 45, storyMin = out.map(([h, m]) => h * 60 + m); let last = -99;
@@ -254,18 +262,24 @@ async function waitReady(env, id) {
   }
   throw new Error("container not ready in time");
 }
-async function postReel(env, topic = "co") {
+async function postReel(env, topic = "co", want = "reel") {
   const m = await manifest(env); const posted = await kv(env, "posted", {});
   const w = await kv(env, "weights", null); const L = TOPICS[topic].label;
-  const avail = m.items.filter(i => !posted[i.id] && topicOf(i) === topic);
+  const avail = m.items.filter(i => !posted[i.id] && live_(i) && (want === "news" ? ["correction", "news", "opportunity"].includes(i.theme)
+    : (topicOf(i) === topic && (want === "tip" ? i.theme === "tip" : !SPECIAL.includes(i.theme)))));
+  if (want === "news") avail.sort((a, b) => ["correction", "news", "opportunity"].indexOf(a.theme) - ["correction", "news", "opportunity"].indexOf(b.theme) || (b.built || 0) - (a.built || 0));
+  if (want !== "reel") { if (!avail.length) { await log(env, `no ${want} item for ${topic}: slot left empty`); return; } return publishReel(env, avail[0], topicOf(avail[0]), m, posted); }
   if (!avail.length) { await log(env, `NO STOCK: ${topic} reel library empty`); await alertOnce(env, "noreel_" + topic, `⚠️ [${L}] Reel library is empty. Nothing to post. Check the factory on GitHub.`); return; }
   if (avail.length < 35 && IST().getUTCHours() === 7 && IST().getUTCMinutes() < 30) await alertOnce(env, "lowreel_" + topic, `⚠️ [${L}] Reel backup is low: ${avail.length} left. The refill task writes more scripts automatically.`);
   const recent = Object.values(posted).filter(p => topicOf(p) === topic).sort((a, b) => b.t - a.t).slice(0, 2);
   const score = i => (w?.kind?.[i.kind] ?? 1) * (w?.segment?.[i.segment] ?? 1) * (recent.some(r => r.kind === i.kind) ? 0.5 : 1) * (0.8 + Math.random() * 0.4);
   const it = avail.sort((a, b) => score(b) - score(a))[0];
+  return publishReel(env, it, topic, m, posted);
+}
+async function publishReel(env, it, topic, m, posted) {
   const p = { media_type: "REELS", video_url: `${env.LIB_BASE}/${it.video}`, cover_url: `${env.LIB_BASE}/${it.cover}`, caption: fixCaption(it.caption), share_to_feed: "true" };
   const trialOff = await kv(env, "trial_unavailable", false);
-  const asTrial = !trialOff && Math.random() < TRIAL_SHARE;
+  const asTrial = !trialOff && !["news", "opportunity", "correction"].includes(it.theme) && Math.random() < TRIAL_SHARE;   // news goes to followers too
   let c;
   try { c = await graph(env, `${env.IG_USER_ID}/media`, asTrial ? { ...p, trial_params: JSON.stringify({ graduation_strategy: "SS_PERFORMANCE" }) } : p); }
   catch (e) {
@@ -680,6 +694,7 @@ async function monitorAllowed(req, u) {
   if (p === "/ops/run") return ["slots", "snapshot", "optimise", "poll", "nudge"].includes(b.what) && !b.id;
   if (p === "/ops/flag") return /^stage_hold(_[a-z]+)?$/.test(b.k) || b.k === "low_reach_mode" || b.k === "reel_cap";
   if (p === "/ops/graph") return (b.method || "GET") === "GET";
+  if (p === "/ops/correct") return true;
   return false;
 }
 async function mediaToItem(env, mediaId) {
@@ -1090,7 +1105,7 @@ const KEYWORD_REPLY = {
 async function postKind(env, what, topic = "co") {
   const left = await quotaLeft(env);   // never run into Instagram's 24 h limit: skip and log instead
   if (left !== null && left <= 1) { await log(env, `SKIP ${topic} ${what}: Instagram 24 h posting limit nearly used (${left} left)`); await alertOnce(env, "quota", `⚠️ Instagram's 24-hour posting limit is nearly used; skipped a ${TOPICS[topic].label} ${what}. Planned volume will be lowered by the monitor if this repeats.`); return; }
-  return what === "reel" ? postReel(env, topic) : what === "story" ? postStory(env, topic) : what === "poster" ? postPoster(env, topic) : postCarousel(env, topic);
+  return what === "reel" || what === "tip" || what === "news" ? postReel(env, topic, what) : what === "story" ? postStory(env, topic) : what === "poster" ? postPoster(env, topic) : postCarousel(env, topic);
 }
 
 // ---------------- entry points ----------------
@@ -1185,6 +1200,10 @@ export default {
       }
       if (u.pathname === "/ops/flag" && req.method === "POST") { const { k, v } = await req.json(); if (/^stage_(hold|force)(_[a-z]+)?$/.test(k) || k === "daily_cap" || k === "low_reach_mode" || k === "reel_cap") { v === null || v === undefined || v === "" ? await env.STATE.delete(k) : await env.STATE.put(k, String(+v)); return json({ ok: true, k, v }); }
         if (!["dm_inbound", "poll_inbox"].includes(k)) return json({ ok: false }); v ? await env.STATE.put(k, "1") : await env.STATE.delete(k); return json({ ok: true, k, v: !!v }); }
+      if (u.pathname === "/ops/correct" && req.method === "POST") {   // correction note on a reel that had wrong info (never deletes it)
+        const { media, text } = await req.json(); if (!/^\d+$/.test(String(media || "")) || !text || String(text).length > 900) return json({ error: "media id and text (<=900 chars) needed" }, 400);
+        const r = await graph(env, `${media}/comments`, { message: String(text) }); await log(env, `correction comment on ${media}`); return json({ ok: true, comment: r.id });
+      }
       if (u.pathname === "/ops/extra" && req.method === "POST") { const { carousels } = await req.json(); await kvPut(env, "extra_carousels", carousels || []); return json({ ok: true, n: (carousels || []).length }); }
       if (u.pathname === "/ops/status") return json({ now_ist: IST().toISOString(), posted: await kv(env, "posted", {}), log: (await kv(env, "log", [])).slice(0, 80) });
     }
