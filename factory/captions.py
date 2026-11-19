@@ -23,6 +23,50 @@ TOPIC = {
         ml="കമ്പനി രജിസ്ട്രേഷന് വേണ്ട ഡോക്യുമെന്റ്സ്: ഓരോ ഡയറക്ടറുടെയും PAN, ആധാർ, അഡ്രസ്സ് പ്രൂഫ്, ഫോട്ടോ, ഓഫീസിന്റെ കറന്റ് ബിൽ, ഉടമയുടെ NOC. വീടിന്റെ അഡ്രസ്സും ഓഫീസ് ആക്കാം.",
         en="Documents for company registration in India: PAN and Aadhaar of every director, address proof, photo, a recent utility bill for the office and the owner's NOC. Your home address can be the registered office.",
         mg="Company registration-nu documents enthokke venam? Oro director-nteyum PAN, Aadhaar, address proof, photo, office current bill, owner-nte NOC. Veedinte address-um office aakkam."),
+    # ---- GST registration (topic gst) ----
+    "GST": dict(
+        ml="കേരളത്തിൽ ജിഎസ്ടി രജിസ്ട്രേഷൻ എപ്പോൾ വേണം? സാധനങ്ങൾക്ക് വർഷം 40 ലക്ഷം, സർവീസിന് 20 ലക്ഷം ടേൺഓവർ കടന്നാൽ. മറ്റ് സംസ്ഥാനങ്ങളിലേക്ക് സാധനം വിൽക്കുന്നെങ്കിൽ, ഓൺലൈൻ ഓർഡർ ആണെങ്കിലും, ആദ്യ വിൽപ്പന മുതൽ.",
+        en="When do you need GST registration in Kerala? Above Rs 40 lakh turnover for goods or Rs 20 lakh for services, and from the first sale if you sell goods to other states, including online orders through Amazon, Flipkart or Meesho. GST number, GSTIN, GST registration online.",
+        mg="GST registration eppol venam? Goods-nu 40 lakh, service-nu 20 lakh turnover kadannaal. Other state-ilekku saadhanam vilkkunnenkil, online order aanenkilum, first sale muthal GST venam."),
+    "LIMIT": dict(
+        ml="ജിഎസ്ടി ലിമിറ്റ്: സാധനങ്ങൾക്ക് 40 ലക്ഷം, സർവീസിന് 20 ലക്ഷം. കോമ്പോസിഷൻ സ്കീം സാധനങ്ങൾക്ക് 1.5 കോടി വരെ, സർവീസിന് 50 ലക്ഷം വരെ. മറ്റ് സംസ്ഥാനങ്ങളിലേക്കുള്ള സാധന വിൽപ്പനയ്ക്ക് ലിമിറ്റ് ഇല്ല.",
+        en="GST turnover limit in Kerala: Rs 40 lakh for goods, Rs 20 lakh for services. Composition scheme up to Rs 1.5 crore (goods) or Rs 50 lakh (services). No limit for selling goods to other states, online or offline.",
+        mg="GST limit: goods 40 lakh, service 20 lakh. Composition scheme goods 1.5 crore vare, service 50 lakh vare. Other state-ilekku goods vilkkunnavarkku limit illa."),
+    "PENALTY": dict(
+        ml="ജിഎസ്ടി പിഴ: രജിസ്റ്റർ ചെയ്യേണ്ടപ്പോൾ ചെയ്തില്ലെങ്കിൽ ടാക്സും 18% പലിശയും, കൂടെ 10,000 അല്ലെങ്കിൽ ടാക്സിന്റെ 10%. റിട്ടേൺ വൈകിയാൽ ദിവസം 50, വിൽപ്പന ഇല്ലാത്ത മാസവും നിൽ റിട്ടേൺ വേണം.",
+        en="GST penalties: not registering when required means the tax, 18% interest and a penalty of Rs 10,000 or 10% of the tax, whichever is higher. A late GSTR-3B costs Rs 50 a day, and nil returns are due even with no sales.",
+        mg="GST penalty: register cheyyendappol cheythillenkil tax-um 18% interest-um, koode 10,000 allenkil tax-inte 10%. Return late aayaal divasam 50. Sales illatha maasavum nil return venam."),
+    # ---- investor agreements (topic inv) ----
+    "INVEST": dict(
+        ml="ഇൻവെസ്റ്ററുടെ പൈസ വരും മുമ്പ്: ടേം ഷീറ്റ്, ഷെയർ സബ്സ്ക്രിപ്ഷൻ എഗ്രിമെന്റ്, ഷെയർഹോൾഡേഴ്സ് എഗ്രിമെന്റ്. ആർട്ടിക്കിൾസ് മാറ്റിയാലേ ആ അവകാശങ്ങൾ കമ്പനിയെ ബാധിക്കൂ. പൈസ കിട്ടി 60 ദിവസത്തിനുള്ളിൽ ഷെയർ അലോട്ട് ചെയ്യണം.",
+        en="Investor agreement checklist for founders and investors in Kerala: term sheet, share subscription agreement, shareholders' agreement (SHA), updated articles, and share allotment within 60 days of receiving the money. Startup funding done right.",
+        mg="Investor-inte paisa varum mumbu: term sheet, share subscription agreement, shareholders agreement. Articles maattiyaale aa rights company-ye bind cheyyu. Paisa kitti 60 divasathinullil share allot cheyyanam."),
+    "TERMSHEET": dict(
+        ml="ടേം ഷീറ്റ് ഒപ്പിട്ടാൽ എല്ലാം ഉറച്ചോ? വാല്യുവേഷനും തുകയും സാധാരണ ബൈൻഡിംഗ് അല്ല. പക്ഷേ കോൺഫിഡൻഷ്യാലിറ്റി, എക്സ്ക്ലൂസിവിറ്റി പോലുള്ള ക്ലോസുകൾ ഒപ്പിട്ട ദിവസം മുതൽ ബാധകം.",
+        en="Signing a term sheet for startup funding in India? Valuation and amount are usually non-binding, but confidentiality, exclusivity (no-shop), costs and governing law bind you from the day you sign.",
+        mg="Term sheet sign cheythaal ellaam urachoo? Valuation-um amount-um saadharana binding alla. Pakshe confidentiality, exclusivity pole ulla clauses sign cheytha divasam muthal binding aanu."),
+    "FUNDING": dict(
+        ml="ഇൻവെസ്റ്റർ യെസ് പറഞ്ഞാൽ: എഗ്രിമെന്റുകൾ, ബോർഡ്, ഷെയർഹോൾഡർ അനുമതി, PAS-4, പ്രത്യേക ബാങ്ക് അക്കൗണ്ട്, 60 ദിവസത്തിൽ അലോട്ട്മെന്റ്, 15 ദിവസത്തിൽ PAS-3. NRI ഇൻവെസ്റ്ററാണെങ്കിൽ 30 ദിവസത്തിൽ FC-GPR.",
+        en="After an investor says yes: agreements, board and shareholder approvals, PAS-4 offer letter, a separate bank account, allotment within 60 days, PAS-3 within 15 days, and FC-GPR within 30 days for NRI or foreign investors.",
+        mg="Investor yes paranjaal: agreements, board-um shareholder approval-um, PAS-4, separate bank account, 60 divasathil allotment, 15 divasathil PAS-3. NRI investor aanenkil 30 divasathil FC-GPR."),
+    # ---- Startup India / DPIIT (topic sui) ----
+    "DPIIT": dict(
+        ml="സ്റ്റാർട്ടപ്പ് ഇന്ത്യ (DPIIT) റെക്കഗ്നിഷൻ ആർക്ക് കിട്ടും? പ്രൈവറ്റ് ലിമിറ്റഡ്, LLP, രജിസ്റ്റേർഡ് പാർട്ണർഷിപ്പ്. 10 വർഷത്തിൽ താഴെ പഴക്കം, ഒരു വർഷവും 200 കോടി കടക്കാത്ത ടേൺഓവർ, പുതുമയുള്ള ആശയം.",
+        en="Who can get Startup India DPIIT recognition? A Pvt Ltd, LLP or registered partnership under 10 years old, turnover never above Rs 200 crore, working on innovation or a scalable model. Startup India registration in Kerala.",
+        mg="Startup India DPIIT recognition aarkku kittum? Pvt Ltd, LLP, registered partnership. 10 varshathil thaazhe, 200 crore kadakkatha turnover, puthumayulla idea."),
+    "BENEFITS": dict(
+        ml="DPIIT റെക്കഗ്നിഷൻ കൊണ്ട് എന്ത് കിട്ടും? പേറ്റന്റ്, ട്രേഡ്മാർക്ക് ഫീസിൽ ഇളവ്, സെൽഫ് സർട്ടിഫിക്കേഷൻ, പല സ്കീമുകൾക്കും യോഗ്യത. 3 വർഷത്തെ ടാക്സ് ഹോളിഡേയ്ക്ക് വേറെ അപേക്ഷ വേണം.",
+        en="DPIIT recognition benefits: patent and trademark fee rebates, self-certification, eligibility for government schemes and tenders. The 80-IAC tax holiday needs a separate approval. Startup India benefits explained.",
+        mg="DPIIT recognition kondu enthu kittum? Patent, trademark fee-il ilavu, self certification, schemes-nu eligibility. 3 varshathe tax holiday-kku vere application venam."),
+    # ---- Kerala Startup Mission (topic sk) ----
+    "KSUM": dict(
+        ml="കേരള സ്റ്റാർട്ടപ്പ് മിഷൻ യുണീക്ക് ഐഡി: KSUM ഗ്രാന്റുകൾക്കും ഇൻക്യുബേഷനും പ്രോഗ്രാമുകൾക്കും ഇത് വേണം. കേരളത്തിൽ രജിസ്റ്റർ ചെയ്ത സ്റ്റാർട്ടപ്പ് ആയിരിക്കണം.",
+        en="Kerala Startup Mission (KSUM) Unique ID: needed for KSUM grants, incubation and programmes. The startup should be registered in Kerala. KSUM registration explained.",
+        mg="Kerala Startup Mission unique ID: KSUM grants-num incubation-num programs-num ithu venam. Kerala-yil register cheytha startup aayirikkanam."),
+    "GRANT": dict(
+        ml="KSUM ഗ്രാന്റിന് മുമ്പ്: കേരളത്തിൽ കമ്പനി അല്ലെങ്കിൽ LLP, DPIIT റെക്കഗ്നിഷൻ, KSUM യുണീക്ക് ഐഡി. ഐഡിയ ഗ്രാന്റിന് നേരത്തെ അപേക്ഷിക്കാം, പക്ഷേ പൈസ കിട്ടും മുമ്പ് കമ്പനിയും ഐഡിയും വേണം.",
+        en="Before a KSUM grant: a Pvt Ltd or LLP in Kerala, DPIIT recognition and the KSUM Unique ID. For the idea grant you can apply early, but the company and ID are needed before money is released. Kerala startup grants.",
+        mg="KSUM grant-nu mumbu: Kerala-yil company allenkil LLP, DPIIT recognition, KSUM unique ID. Idea grant-nu nerathe apply cheyyaam, pakshe paisa kittum mumbu company-um ID-um venam."),
 }
 SEGMENT = {   # who it is for, using the phrases each group searches
     "freelancer": dict(ml="ഫ്രീലാൻസിൽ നിന്ന് സ്വന്തം കമ്പനിയിലേക്ക് മാറാൻ ആലോചിക്കുന്ന ഫ്രീലാൻസർമാർക്ക്: വലിയ ക്ലയന്റുകൾ കമ്പനി ഡീറ്റെയിൽസ് ചോദിക്കും.", en="For freelancers in Kerala moving from freelancing to a registered company, when bigger clients ask for company details.", mg="Freelancer aano? Freelancing-il ninnu swantham company register cheyyan time aayo ennu nokkaam."),
@@ -31,6 +75,26 @@ SEGMENT = {   # who it is for, using the phrases each group searches
     "salaried": dict(ml="ജോലിയോടൊപ്പം സൈഡ് ബിസിനസ് തുടങ്ങുന്നവർക്ക്.", en="For salaried professionals in Kerala starting a side business or planning to quit their job.", mg="Job-inte koode side business thudangunnavarkku, allenkil job vittu business plan ullavarkku."),
     "solo": dict(ml="ഒറ്റയ്ക്ക് ബിസിനസ് തുടങ്ങുന്നവർക്ക്: വൺ പേഴ്സൺ കമ്പനി (OPC) ഒരു വഴിയാണ്.", en="For solo founders: a One Person Company (OPC) lets you start a company on your own.", mg="Ottaykku business thudangunnavarkku: One Person Company (OPC) oru option aanu."),
     "nri": dict(ml="ഗൾഫിലിരുന്ന് നാട്ടിൽ കമ്പനി തുടങ്ങുന്ന NRI-കൾക്ക്: NRI-ക്കും ഡയറക്ടർ ആകാം.", en="For NRIs in the Gulf starting a company in Kerala: NRIs can be directors and shareholders.", mg="Gulf-il irunnu naattil company thudangunna NRI-kalkku: NRI-kkum director aakaam."),
+    "online_seller": dict(ml="ആമസോൺ, ഫ്ലിപ്കാർട്ട്, മീഷോ, ഇൻസ്റ്റഗ്രാം വഴി വിൽക്കുന്നവർക്ക്.", en="For online sellers in Kerala on Amazon, Flipkart, Meesho and Instagram.", mg="Amazon, Flipkart, Meesho, Instagram vazhi vilkkunnavarkku."),
+    "trader": dict(ml="കടകൾക്കും ഹോൾസെയിൽ, ഹോം ഫുഡ്, സ്പൈസ് ബിസിനസുകൾക്കും.", en="For shop owners, wholesalers, home-food and spice businesses in Kerala.", mg="Shop, wholesale, home food, spice business nadathunnavarkku."),
+    "service_pro": dict(ml="കൺസൾട്ടന്റുകൾക്കും ഏജൻസികൾക്കും ഫ്രീലാൻസർമാർക്കും: B2B ക്ലയന്റുകൾ GSTIN ചോദിക്കും.", en="For consultants, agencies and freelancers in Kerala whose B2B clients ask for a GSTIN.", mg="Consultants, agencies, freelancers: B2B clients GSTIN chodikkum."),
+    "new_company": dict(ml="പുതിയതായി രജിസ്റ്റർ ചെയ്ത കമ്പനികൾക്കും LLP-കൾക്കും.", en="For newly registered companies and LLPs in Kerala getting their first corporate clients.", mg="Puthiyathaayi register cheytha company-kalkkum LLP-kalkkum."),
+    "nri_business": dict(ml="ഗൾഫിലിരുന്ന് നാട്ടിലെ ബിസിനസ് നടത്തുന്ന NRI-കൾക്ക്.", en="For NRIs in the Gulf running or starting a business in Kerala.", mg="Gulf-il irunnu naattile business nadathunna NRI-kalkku."),
+    "founder_raising": dict(ml="ഫണ്ടിംഗ് എടുക്കുന്ന സ്റ്റാർട്ടപ്പ് ഫൗണ്ടർമാർക്ക്.", en="For startup founders in Kerala raising angel or seed funding.", mg="Funding edukkunna startup founders-nu."),
+    "family_money": dict(ml="ബന്ധുക്കളിൽ നിന്നോ സുഹൃത്തുക്കളിൽ നിന്നോ പൈസ എടുക്കുന്നവർക്ക്: അതും നിക്ഷേപമാണ്.", en="For founders taking money from family or friends: it is still an investment that needs proper papers.", mg="Family-yil ninno friends-il ninno paisa edukkunnavarkku: athum investment aanu."),
+    "nri_investor": dict(ml="നാട്ടിലെ കമ്പനിയിൽ നിക്ഷേപിക്കുന്ന ഗൾഫ് മലയാളികൾക്ക്.", en="For Gulf Malayalis and NRIs investing in a Kerala company.", mg="Naattile company-il invest cheyyunna Gulf Malayalikalkku."),
+    "angel": dict(ml="ആദ്യമായി ഒരു സ്റ്റാർട്ടപ്പിൽ നിക്ഷേപിക്കുന്നവർക്ക്: നിങ്ങളുടെ പൈസ സുരക്ഷിതമാക്കൂ.", en="For first-time angel investors: protect your money with the right agreement.", mg="Aadyamaayi startup-il invest cheyyunnavarkku: ningalude paisa safe aakkoo."),
+    "tech_founder": dict(ml="ആപ്പ്, സോഫ്റ്റ്‌വെയർ, പ്രോഡക്റ്റ് ഫൗണ്ടർമാർക്ക്.", en="For app, SaaS and product founders in Kerala.", mg="App, software, product founders-nu."),
+    "grant_seeker": dict(ml="സർക്കാർ ഗ്രാന്റുകൾ നോക്കുന്ന ഫൗണ്ടർമാർക്ക്.", en="For founders applying for government startup grants and schemes.", mg="Government grants nokkunna founders-nu."),
+    "traditional_innovator": dict(ml="ഫുഡ്, കൃഷി, ആയുർവേദം, മാനുഫാക്ചറിംഗ് രംഗത്ത് പുതിയത് ചെയ്യുന്നവർക്ക്.", en="For food, agri, ayurveda and manufacturing businesses doing something new.", mg="Food, agri, ayurveda, manufacturing-il puthiyathu cheyyunnavarkku."),
+    "student_founder": dict(ml="പ്രോട്ടോടൈപ്പുമായി നിൽക്കുന്ന സ്റ്റുഡന്റ് ഫൗണ്ടർമാർക്ക്.", en="For student and young founders with a prototype.", mg="Prototype-umaayi nilkkunna student founders-nu."),
+    "investor_ready": dict(ml="ഇൻവെസ്റ്റർമാരെ കാണാൻ തയ്യാറെടുക്കുന്നവർക്ക്.", en="For founders getting ready to meet investors.", mg="Investors-ne kaanaan thayyaredukkunnavarkku."),
+    "idea_stage": dict(ml="ഐഡിയയോ പ്രോട്ടോടൈപ്പോ മാത്രമുള്ള ഫൗണ്ടർമാർക്ക്.", en="For idea and prototype stage founders in Kerala.", mg="Idea-yo prototype-o maathram ulla founders-nu."),
+    "kerala_registered": dict(ml="കേരളത്തിൽ കമ്പനി ഉണ്ട്, പക്ഷേ KSUM-ൽ ഇതുവരെ രജിസ്റ്റർ ചെയ്തിട്ടില്ലാത്തവർക്ക്.", en="For Kerala companies and LLPs that have not registered with KSUM yet.", mg="Kerala-yil company undu, pakshe KSUM-il ithuvare register cheythittillaathavarkku."),
+    "returnee": dict(ml="ഗൾഫിൽ നിന്ന് തിരിച്ചെത്തി സ്റ്റാർട്ടപ്പ് തുടങ്ങുന്നവർക്ക്.", en="For Gulf returnees and NRIs starting up in Kerala.", mg="Gulf-il ninnu thirichethi startup thudangunnavarkku."),
+    "campus": dict(ml="കോളേജിൽ നിന്ന് സ്റ്റാർട്ടപ്പ് തുടങ്ങുന്നവർക്ക്.", en="For student founders starting up from campus.", mg="College-il ninnu startup thudangunnavarkku."),
+    "women_founder": dict(ml="സ്വന്തം സ്റ്റാർട്ടപ്പ് നടത്തുന്ന സ്ത്രീകൾക്ക്.", en="For women founders in Kerala.", mg="Swantham startup nadathunna sthreekalkku."),
+    "cofounder_split": dict(ml="ഷെയർ എങ്ങനെ വീതിക്കണം എന്ന് ആലോചിക്കുന്ന കോ-ഫൗണ്ടർമാർക്ക്.", en="For co-founders deciding the share split before outside money arrives.", mg="Share engane veethikkanam ennu aalochikkunna co-founders-nu."),
 }
 CTA = dict(ml="{base} അല്ലെങ്കിൽ {kw} എന്ന് കമന്റ് ചെയ്യൂ, DM-ൽ അയച്ചുതരാം 👇",
            en="Comment {base} or {kw} and we'll send it to your DM 👇",
@@ -39,15 +103,29 @@ CTA = dict(ml="{base} അല്ലെങ്കിൽ {kw} എന്ന് കമ
 H_LOCAL = ["#kerala", "#kochi", "#keralabusiness", "#malayali", "#startupkerala"]
 H_TOPIC = {"START": ["#privatelimitedcompany", "#pvtltd", "#llp", "#opc"], "NAME": ["#companyname", "#trademark", "#businessname"],
            "AFTER": ["#compliance", "#rocfiling", "#annualfiling"], "CHECKLIST": ["#businessregistration", "#documents", "#startupindia"]}
-H_SEG = {"freelancer": "#freelancer", "cofounders": "#startup", "proprietor": "#smallbusiness", "salaried": "#sidebusiness", "solo": "#entrepreneur", "nri": "#nri"}
+H_TOPIC.update({"GST": ["#gstregistration", "#gstin", "#gstnumber"], "LIMIT": ["#gstlimit", "#gstindia", "#compositionscheme"], "PENALTY": ["#gstreturn", "#gstr3b", "#gstcompliance"],
+                "DPIIT": ["#startupindia", "#dpiit", "#startupregistration"], "BENEFITS": ["#startupindia", "#80iac", "#startupbenefits"],
+                "KSUM": ["#ksum", "#keralastartupmission", "#keralastartup"], "GRANT": ["#startupgrant", "#ksum", "#seedfund"],
+                "INVEST": ["#investment", "#shareholdersagreement", "#equity"], "TERMSHEET": ["#termsheet", "#fundraising", "#venturecapital"], "FUNDING": ["#funding", "#angelinvestor", "#seedfunding"]})
+H_SEG = {"freelancer": "#freelancer", "cofounders": "#startup", "proprietor": "#smallbusiness", "salaried": "#sidebusiness", "solo": "#entrepreneur", "nri": "#nri",
+         "online_seller": "#onlineseller", "trader": "#smallbusiness", "service_pro": "#consultant", "new_company": "#startup", "nri_business": "#nri",
+         "tech_founder": "#saas", "grant_seeker": "#startupgrant", "traditional_innovator": "#innovation", "student_founder": "#studentstartup", "investor_ready": "#fundraising",
+         "idea_stage": "#ideastage", "kerala_registered": "#keralastartup", "returnee": "#nri", "campus": "#studentstartup", "women_founder": "#womenentrepreneurs",
+         "founder_raising": "#startupfunding", "family_money": "#familybusiness", "nri_investor": "#nriinvestment", "angel": "#angelinvesting", "cofounder_split": "#cofounder"}
+CORE = {"co": "#companyregistration", "gst": "#gstregistration", "inv": "#investoragreement", "sui": "#startupindia", "sk": "#keralastartupmission"}
+H_EXTRA_T = {"gst": ["#gst", "#taxindia", "#keralabusiness", "#msme", "#smallbusinessindia"], "inv": ["#startupindia", "#keralastartup", "#investors", "#startuplaw", "#founders"],
+             "sui": ["#startup", "#founders", "#keralastartup", "#entrepreneurindia", "#makeinindia"], "sk": ["#startup", "#kochi", "#trivandrum", "#founders", "#keralabusiness"]}
 H_EXTRA = ["#mca", "#incorporation", "#startupindia", "#businessowner", "#keralastartup"]
 
 def _pick(xs, key): return xs[zlib.crc32(key.encode()) % len(xs)]
 
-def hashtags(item_id, base, segment):
-    tags = ["#companyregistration", _pick(H_LOCAL, item_id + "l"), _pick(H_TOPIC.get(base, H_EXTRA), item_id + "t"), H_SEG.get(segment, "#entrepreneur")]
-    for x in [_pick(H_EXTRA, item_id + "x")] + H_EXTRA:
-        if x not in tags: tags.append(x); break
+def hashtags(item_id, base, segment, topic="co"):
+    extra = H_EXTRA_T.get(topic, H_EXTRA)
+    tags = [CORE.get(topic, CORE["co"]), _pick(H_LOCAL, item_id + "l"), _pick(H_TOPIC.get(base, extra), item_id + "t"), H_SEG.get(segment, "#entrepreneur")]
+    tags = list(dict.fromkeys(tags))
+    for x in [_pick(extra, item_id + "x")] + extra + H_EXTRA:
+        if len(tags) >= 5: break
+        if x not in tags: tags.append(x)
     return " ".join(tags[:5])
 
 def caption(s, head):
@@ -59,7 +137,7 @@ def caption(s, head):
         body = s.get("cap_" + lang) or t[lang]
         para = body + (" " + g[lang] if g and not s.get("cap_" + lang) else "")
         parts.append(para + "\n" + CTA[lang].format(base=base, kw=kw))
-    parts.append(hashtags(s["id"], base, seg))
+    parts.append(hashtags(s["id"], base, seg, s.get("topic") or "co"))
     out = "\n\n".join(parts)[:2200]
     assert out.count("#") <= 5, s["id"]
     return out

@@ -58,7 +58,7 @@ jobs:
           STOCK_TARGET: ${{ inputs.stock_target || '220' }}
           CAROUSEL_TARGET: "140"
           POSTER_TARGET: "70"
-          STORY_TARGET: "70"
+          STORY_TARGET: "105"
           TIME_BUDGET_MIN: ${{ inputs.time_budget_min || '320' }}
           TTS_THREADS: "4"
         run: python factory/build.py

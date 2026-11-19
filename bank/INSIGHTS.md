@@ -70,3 +70,20 @@ Shift up to ~60% of a batch toward a clear winner (~1.5x median on 5+ posts); ke
 - Changes made: none to the mix. batch18 (freelancer 7, cofounders 7, salaried 6) + batch19 (proprietor 7, nri 7, solo 6) = 40 scripts: 32 duo3d in 32 different locations (the 27 least used, all at 4-5 uses, plus the 5 Gulf places for NRI), 6 chats, 2 lists. Proprietor scripts again open on money waiting (school notebooks, baby-food buyer, hotel fish, supermarket halwa, cement haulage); share unchanged at 7/40. Carousels not topped up (reel priority; 114 unposted = 22 days at 5/day).
 - Stock after this run: reels 220 unposted built + 151 unbuilt = 371 (target 490; lasts to ~4 Dec through the 21 Nov and 28 Nov stages); carousels 114 (target 140); posters 70 (target 70); stories 299 unposted.
 - Watch next (20 Nov, first metrics for 15-18 Nov posts): list saves/shares vs duo3d/chat, any non-proprietor DM, any reel above ~100 reach.
+
+## Run 9: 19 Nov 2026, owner asked to optimise for growth. ACTION, not observe-only
+
+Data: 114 posts and **1 follower**. Every reel reaches ~100-130 non-followers (Instagram's first test pool) and stops there. Average watch is only **3-12 s of a 20-35 s reel**, with ~0 likes and shares. Carousels and stories reach 0-2 people (they go to followers, and there are none). Leads: 2, both from one reel (d401, money-on-the-table proprietor story; 5 keyword comments, 30 DMs).
+
+Diagnosis: viewers swipe away in the first seconds, so no reel graduates beyond the test pool.
+
+Rules for every script written from now on, all topics:
+
+1. **Hook = the painful moment** from a real situation (bank/STORY_THEMES.md: rejection, lost share, missed grant, buyer asking for papers, family money gone wrong). No greetings, no set-up line. The first spoken line repeats the hook's conflict.
+2. **6 dialogue lines max** (was 8) so reels land at ~15-22 s. Put the payoff (the fact) by line 4-5. The last line is a short punch or joke that loops.
+3. Use **numbers and quotes** in hooks ("70/30 on WhatsApp", "\"which company?\"", "rejected: one word").
+4. Use the real-enquiry situations from STORY_THEMES.md, **always anonymised** (invented names, different sector, city and numbers).
+5. Ask a **comment question** in cap_ml/cap_en sometimes ("ഇത് നിങ്ങൾക്ക് പറ്ററിയോ?") to earn comments, plus the keyword.
+6. Until 100 followers the worker posts 2 carousels + 3 stories per topic (`low_reach_mode`); reels get the quota.
+
+**New topics (live from 20 Nov):** gst, inv, sui (Startup India / DPIIT), sk (Kerala Startup Mission). Banks are in bank/<topic>/, facts and segments in factory/topics.py, ids prefixed g / v / u / m. Each topic has its own stock, keywords, DM flow and Discord label.
