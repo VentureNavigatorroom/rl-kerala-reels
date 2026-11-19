@@ -50,3 +50,12 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - **Spam:** repeated comments count once a day.
 - **How the pieces fit:** the factory renders the images from /public/shoutqueue (factory/shoutout.py); the worker posts them.
 - **Monitor checks:** shout-out posts went out, and nobody is named who said no.
+
+## Tips, news and corrections (owner, 19 Nov night)
+- Daily total = normal reels (reel-max ramp, now capped at 80 from 22 Nov) + 1 tip reel per topic (14) + up to 4 news / opportunity / correction reels. 80 + 14 + 4 = 98, under Instagram's 100 posts per 24 h (the shout-out post takes the last one). Empty tip or news slots post nothing.
+- Themes "tip", "news", "opportunity", "correction" are reserved: normal reel slots never use them, and the factory builds them before or alongside normal reels (news first, tips interleaved, 2 tips ready per topic).
+- Tips: quick checks, calendar reminders, checklists, comparisons, "what if" answers. One per topic per day. Facts only from topics.py. Files bank/<topic>/batch_tipsNN.py, theme="tip". The refill writer keeps at least 10 unposted tip scripts per topic.
+- News (watcher task, 4 runs a day): same-day posting only from Tier A official sources (government sites, plus ICAI / ICSI when they link the government circular). News reports alone wait; rumours never. Two official sources disagree: post nothing, tell the owner. Every news item carries source, as_of and expires; it is never posted after expires.
+- Opportunity: a new government scheme / grant call / programme window: what it is, who is eligible, the official deadline. Never promise selection, funding or returns; never investment advice.
+- Corrections: if a posted item was wrong or is overridden, post a correction reel (first in the news queue), add a correction comment on the wrong reel (/ops/correct), fix any unposted scripts repeating it, tell the owner. Never delete the wrong reel. Instagram's API cannot edit a published caption; the owner can edit it by hand.
+- Topics never clash: a news item that changes a fact updates FACTS_ in topics.py in the same commit, so tips and normal reels written afterwards use the new fact.
