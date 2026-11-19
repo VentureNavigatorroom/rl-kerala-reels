@@ -155,37 +155,68 @@ async function postPoster(env) {   // single 4:5 image post
 
 // Reach and other post metrics: the posting token lacks instagram_manage_insights, but the Instagram-login (DM) token
 // has the insights permission, so use it first and fall back to the posting token.
-async function insightsGet(env, media, metrics) {
-  const tok = await env.STATE.get("ig_login_token");
+async function insightsGet(env, media, metrics, tok, budget) {   // budget (optional): { fetches } counter of real subrequests
+  if (tok === undefined) tok = await env.STATE.get("ig_login_token");
   if (tok) {
     const u = new URL(`https://graph.instagram.com/v24.0/${media}/insights`); u.search = new URLSearchParams({ metric: metrics, access_token: tok });
+    if (budget) budget.fetches++;
     const j = await (await fetch(u)).json(); if (!j.error) return j;
   }
+  if (budget) budget.fetches++;
   return graph(env, `${media}/insights`, { metric: metrics }, "GET");
 }
 
 // ---------------- optimiser ----------------
+// Free plan: 50 subrequests per invocation and ~1000 KV writes/day, so the daily snapshot runs in chunks, one per cron
+// minute during 03:01-03:59 IST, and only snapshots a post daily for its first 7 days, then at day 14, 21 and 28.
+const SNAP_MAX_POSTS = 30, SNAP_MAX_FETCH = 36;   // insightsGet = 1-2 fetches; leaves room for discord/token refresh
+const SUBREQ_LIMIT = /too many subrequests/i;
+function snapDue(p, ageRef) {   // ageRef: age in days at today's 03:00 IST, so the set doesn't shift during the hour
+  if (p.kind === undefined || ageRef > 30) return false;
+  if (p.kind === "story") return ageRef <= 1;   // Instagram keeps story insights for 24 h only
+  return ageRef <= 7 || [14, 21, 28].includes(Math.floor(ageRef));
+}
 async function snapshot(env) {
-  // one row per post per day: metrics + where/when it was posted. Kept 60 days. This is the insights database.
+  // one row per post per due day: metrics + where/when it was posted. This is the insights database.
+  // Processes at most one chunk; returns { done: true } when every due post has today's row.
   const posted = await kv(env, "posted", {}); const day = IST().toISOString().slice(0, 10);
-  for (const [id, p] of Object.entries(posted)) {
-    const age = (Date.now() - p.t) / 86400e3; if (age > 30 || p.kind === undefined) continue;
+  const ref = Date.parse(`${day}T03:00:00+05:30`);
+  const pk = "snapprog"; let prog = await kv(env, pk, null); if (!prog || prog.day !== day) prog = { day, done: [] };
+  const doneSet = new Set(prog.done);
+  const todo = Object.entries(posted).filter(([id, p]) => !doneSet.has(id) && snapDue(p, (ref - p.t) / 86400e3));
+  const tok = await env.STATE.get("ig_login_token"); const budget = { fetches: 0 };
+  let n = 0, stopped = false;
+  for (const [id, p] of todo) {
+    if (n >= SNAP_MAX_POSTS || budget.fetches + 2 > SNAP_MAX_FETCH) { stopped = true; break; }
+    const k = `snap:${id}`; const hist = await kv(env, k, []);
+    if (hist.length && hist[hist.length - 1].day === day) { doneSet.add(id); continue; }   // already has today's row
+    const age = (Date.now() - p.t) / 86400e3;
     let v = {};
     try {
-      if (p.kind === "story" && age > 1) continue;   // Instagram keeps story insights for 24 h only
       const metrics = p.kind === "story" ? "reach,views,replies,shares,total_interactions,follows,profile_visits"   // stories have no saved/likes/comments
         : p.kind === "carousel" || p.kind === "poster" ? "reach,shares,saved,total_interactions,likes,comments" : "reach,views,shares,saved,total_interactions,likes,comments";
-      const r = await insightsGet(env, p.media, metrics);
+      const r = await insightsGet(env, p.media, metrics, tok, budget);
       v = Object.fromEntries(r.data.map(d => [d.name, d.values?.[0]?.value ?? d.total_value?.value ?? 0]));
-    } catch (e) { v = { error: String(e.message).slice(0, 80) }; }
+    } catch (e) {
+      if (SUBREQ_LIMIT.test(String(e.message))) { stopped = true; break; }   // not the post's fault: retry next minute, no row
+      v = { error: String(e.message).slice(0, 80) };
+    }
+    n++;
     const ev = await kv(env, `ev:${id}`, { comments: 0, keyword: {}, leads: 0, dms: 0 });
     const posted_ist = IST(new Date(p.t));
     const row = { day, id, kind: p.kind, segment: p.segment, scene: p.scene || null, layout: p.layout || null, trial: !!p.trial,
       posted_at: posted_ist.toISOString().slice(0, 16), weekday: posted_ist.getUTCDay(), slot: posted_ist.toISOString().slice(11, 16),
       age_days: Math.round(age * 10) / 10, ...v, keyword_comments: Object.values(ev.keyword).reduce((a, b) => a + b, 0), keywords: ev.keyword, dms: ev.dms, leads: ev.leads };
-    const k = `snap:${id}`; const hist = await kv(env, k, []); hist.push(row); await kvPut(env, k, hist.slice(-31));
+    hist.push(row); await kvPut(env, k, hist.slice(-31)); doneSet.add(id);
   }
-  await log(env, `snapshot ${day}`);
+  if (doneSet.size !== prog.done.length) await kvPut(env, pk, { day, done: [...doneSet] });
+  return { day, done: !stopped, rows: n, fetches: budget.fetches };
+}
+async function snapshotTick(env, day) {   // cron, 03:01-03:59 IST: one chunk; when all done, optimise + token refresh once
+  const dk = `snapdone:${day}`; if (await env.STATE.get(dk)) return;
+  const r = await snapshot(env); if (!r.done) return;
+  await env.STATE.put(dk, "1", { expirationTtl: 172800 });
+  await log(env, `snapshot ${day}`); await optimise(env); await refreshIgToken(env);
 }
 
 function median(a) { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; }
@@ -195,7 +226,7 @@ async function optimise(env) {
   // need >= 5 posts per group and a clear gap before moving weights, and move at most 25% per week.
   const posted = await kv(env, "posted", {}); const rows = [];
   for (const id of Object.keys(posted)) {
-    const h = await kv(env, `snap:${id}`, []); const r = h.find(x => x.age_days >= 2) || null;
+    const h = await kv(env, `snap:${id}`, []); const r = h.find(x => x.age_days >= 2 && !x.error) || null;   // skip failed snapshot rows
     if (!r || r.error || !r.reach) continue;
     r.score = ((r.shares || 0) * 3 + (r.saved || 0) * 2 + (r.keyword_comments || 0) * 10 + (r.leads || 0) * 25 + (r.total_interactions || 0)) / Math.max(50, r.reach) * 1000;
     rows.push(r);
@@ -727,7 +758,9 @@ export default {
     const day = now.toISOString().slice(0, 10);
     const stage = await stageNow(env, day);
     const slot = slotsFor(stage).find(([sh, sm]) => sh === h && mi >= sm && mi - sm < 5);
-    if (await env.STATE.get("poll_inbox")) ctx.waitUntil((async () => {   // backup route, off while Meta delivers DMs by webhook                                    // check the inbox every 10 s so replies feel instant
+    // the 03:xx snapshot chunks use most of the 50-subrequest budget, so skip the backup inbox poll while they run
+    const snapRun = h === 3 && mi >= 1 && !(await env.STATE.get(`snapdone:${day}`));
+    if (!snapRun && await env.STATE.get("poll_inbox")) ctx.waitUntil((async () => {   // backup route, off while Meta delivers DMs by webhook                                    // check the inbox every 10 s so replies feel instant
       const t0 = Date.now();
       for (let k = 0; k < 6; k++) {
         try { await pollInbox(env); } catch (e) { await alertOnce(env, "pollerr", `⚠️ Inbox check failing: ${e.message}`); }
@@ -754,7 +787,7 @@ export default {
         catch (e) { throw new Error(`${retry.what} retry also failed: ${e.message}`); }
       }
       try { await processNudges(env); } catch (eN) { await log(env, `ERROR check-ins: ${String(eN.message).slice(0, 90)}`); }
-      if (h === 3 && mi === 1) { await snapshot(env); await optimise(env); await refreshIgToken(env); }
+      if (snapRun) await snapshotTick(env, day);
       if (h === 21 && mi === 41) {
         const posted = await kv(env, "posted", {}); const today = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day).length;
         const leads = Object.values(await kv(env, "leads", {})).filter(l => (l.updated || "").startsWith(day));

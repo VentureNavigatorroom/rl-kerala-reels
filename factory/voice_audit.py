@@ -28,7 +28,7 @@ lines = lines[:N]
 def write_report():
     global still
     flag = {w: v for w, v in bad.items() if len({x['line'] for x in v}) >= 2 and not speak_ml.decided(w)}
-    still = {w: v for w, v in bad.items() if len({x['line'] for x in v}) >= 2 and w in speak_ml.RESPELL.values()}   # fixed but still misheard
+    still = {w: v for w, v in bad.items() if len({x['line'] for x in v}) >= 2 and w in speak_ml.RESPELL.values() and w not in speak_ml.REVIEWED_OK}   # fixed but still misheard
     total = collections.Counter(w for r in rows for w in toks(r["said"]))
     rep = sorted(({"word": w, "misheard": len(v), "seen": total[w], "heard_as": collections.Counter(x["heard"] for x in v).most_common(3)} for w, v in flag.items()),
                  key=lambda r: (-r["misheard"] / max(1, r["seen"]), -r["misheard"]))

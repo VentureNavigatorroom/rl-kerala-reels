@@ -75,6 +75,10 @@ RESPELL = {
 # or spells loanwords its own way (ഫയലിംഗ് -> ഫൈലിങ്, മുമ്പ് -> മുൻപ്); the voice said these right.
 REVIEWED_OK = {
     "ആകണം", "ഫയലിംഗും", "മാസം", "പിക്ക്", "ഇട്ടോ", "ഐക്കും", "ആയ", "എൽ", "ആക്കാം", "ആർ", "എൻ", "ഫീ", "നാട്ടിൽ", "പിഴ", "അല്ലേ", "ഒക്കെ", "മുമ്പ്", "ഷെയർഹോൾഡർ", "ഇല്ല", "രജിസ്റ്റേർഡ്", "സി", "എ", "ഐ", "ഫയലിംഗ്", "പിക്കും", "വരുമാനം", "അതിന്", "ഒറ്റയ്ക്ക്", "റിജക്ട്", "ആകാം", "പിയോടോ", "ഇരുപത്", "പിയോ", "ഈ", "പി", "എടുക്കാൻ", "നൂറ്", "ഫയൽ", "ഓഫീസ്", "കമ്പനി", "പേര്", "പറ്റില്ല", "രൂപ", "ഷെയർ", "ഒരു", "പക്ഷേ",
+    # audit 14-18 Nov: recogniser joins sandhi (പൂജ്യം ആണെങ്കിലും -> പൂജ്യമാണെങ്കിലും, ഒരു വർഷം ആയില്ലേ -> ഒരുവർഷമായില്ലേ, എനിക്ക് തന്നെ -> എനിക്കുതന്നെ),
+    # writes മൂന്ന് as മൂന്നു and ഡ as ട (ഓഡിറ്ററെ -> ഓടിറ്റരെ; ഓഡിറ്റർ heard right in 4 lines); letter ഓ (already respelled from ഒ) heard right
+    # in 5 of 7 OPC/NOC lines, the other 2 only written as short ഒ: the voice said all of these right.
+    "വർഷം", "ആണെങ്കിലും", "മൂന്ന്", "പൂജ്യം", "തന്നെ", "ഓഡിറ്ററെ", "ഓ",
 }
 def decided(word):
     """True when a word has already been fixed (RESPELL / SAY) or judged fine: the audit skips it."""
