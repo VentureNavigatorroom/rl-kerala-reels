@@ -11,16 +11,16 @@ STORIES FROM REAL ENQUIRIES: bank/STORY_THEMES.md holds anonymised situations di
 companies, places, numbers or anything that could identify a person). Build scripts on those situations, always with
 invented names and changed details. Never put CRM details in the repo."""
 
-NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp"]   # added 19 Nov evening
+NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val"]   # added 19 Nov evening (val = company valuation, 19:14)
 DIRS = {"co": "bank", "gst": "bank/gst", "inv": "bank/inv", "sui": "bank/sui", "sk": "bank/sk", "ud": "bank/ud", **{t: f"bank/{t}" for t in NEW7}}
 # share of each stock target (reels, carousels, stories, posters) kept for each topic; together <= 1 keeps the
 # GitHub Pages site under its 1 GB limit. Company registration posts the most reels a day, so it keeps the biggest backup.
-SHARE = {"co": 0.12, **{t: 0.073 for t in ["gst", "inv", "sui", "sk", "ud"] + NEW7}}   # same as the worker's REEL_SHARE
+SHARE = {"co": 0.11, **{t: 0.068 for t in ["gst", "inv", "sui", "sk", "ud"] + NEW7}}   # same as the worker's REEL_SHARE
 
 # general keywords (the worker's KW_TOPIC). Each post also gets its own unique keyword from build.KW_POOL.
 BASES = {"co": ["START", "NAME", "AFTER", "CHECKLIST"], "gst": ["GST", "LIMIT", "PENALTY"], "inv": ["INVEST", "TERMSHEET", "FUNDING"],
          "sui": ["DPIIT", "BENEFITS"], "sk": ["KSUM", "GRANT"], "ud": ["UDYAM", "MSME"],
-         "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"]}
+         "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"], "val": ["VALUATION", "WORTH"]}
 ALL_BASES = {k for v in BASES.values() for k in v}
 
 # CTAs: (pill text, promise). The first word of the pill is the keyword.
@@ -44,7 +44,8 @@ CTA_IEC, CTA_EXPORT = _c("IEC", "IEC ഗൈഡ്\nഅയച്ചുതരാ�
 CTA_NDA, CTA_SECRET = _c("NDA", "നല്ല NDA-യിൽ വേണ്ടത്\nഅയച്ചുതരാം"), _c("SECRET", "ഐഡിയ പങ്കുവെക്കും മുമ്പ്\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം")
 CTA_COFOUNDER, CTA_VESTING = _c("COFOUNDER", "കോ-ഫൗണ്ടർ എഗ്രിമെന്റിന്റെ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("VESTING", "വെസ്റ്റിംഗ് എങ്ങനെ എന്ന്\nഅയച്ചുതരാം")
 CTA_PROJECTION, CTA_FORECAST = _c("PROJECTION", "ഇൻവെസ്റ്റർ നോക്കുന്നത് എന്ത്\nഎന്ന് അയച്ചുതരാം"), _c("FORECAST", "3 വർഷ ഫോർകാസ്റ്റ്\nഎങ്ങനെ എന്ന് അയച്ചുതരാം")
-CTAS = {"tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
+CTA_VALUATION, CTA_WORTH = _c("VALUATION", "എപ്പോൾ, ഏത് രീതി എന്ന\nഗൈഡ് അയച്ചുതരാം"), _c("WORTH", "കമ്പനിയുടെ മൂല്യം എങ്ങനെ\nകണക്കാക്കുന്നു എന്ന് അയച്ചുതരാം")
+CTAS = {"val": [CTA_VALUATION, CTA_WORTH], "tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
         "nda": [CTA_NDA, CTA_SECRET], "cfa": [CTA_COFOUNDER, CTA_VESTING], "fp": [CTA_PROJECTION, CTA_FORECAST], "ud": [CTA_UDYAM, CTA_MSME], "gst": [CTA_GST, CTA_LIMIT, CTA_PENALTY], "inv": [CTA_INVEST, CTA_TERMSHEET, CTA_FUNDING], "sui": [CTA_DPIIT, CTA_BENEFITS], "sk": [CTA_KSUM, CTA_GRANT]}
 
 SEGMENTS = {
@@ -85,6 +86,7 @@ SEGMENTS = {
     "iec": ["first_exporter", "importer", "spice_trade", "handicraft_export", "service_export"],
     "nda": ["founder_pitching", "agency_client", "freelancer_nda", "vendor_supplier", "employee_nda"],
     "cfa": ["friends_cofounders", "tech_nontech", "family_cofounders", "late_joiner", "remote_cofounder"],
+    "val": ["raising_round", "esop_plan", "partner_exit", "nri_share_issue", "share_transfer"],
     "fp": ["investor_pitch", "bank_loan", "grant_application", "early_revenue", "pre_revenue"],
 }
 
@@ -177,3 +179,8 @@ articles. Never decide the split."""
 FACTS_FP = """financial projections: investors, banks and grant panels ask for them; 3 years, month by month for year 1; revenue
 drivers (customers, price, growth), costs and hiring, P&L, cash flow, break-even, written assumptions; realistic and
 tied to traction (inflated numbers lose trust); banks may ask for a project report for loans. NEVER mention our fee."""
+FACTS_VAL = """company valuation: needed when raising investment, issuing ESOPs, transferring shares, a founder/partner exits,
+buy-backs, mergers, and for NRI/foreign investment (shares not below fair value by an accepted method, certified by a CA,
+SEBI-registered merchant banker or cost accountant); preferential allotment of shares needs a registered valuer's report;
+methods: discounted cash flow, comparable companies/deals, net asset value; early startups lean on comparables and
+projections; a valuation is for a specific purpose and date. NEVER state a value or our fee."""

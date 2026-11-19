@@ -6,7 +6,7 @@ Also read GROWTH_PLAN.md every run: it has the checkpoints and decision rules (l
 While the account has fewer than 100 followers and KV `low_reach_mode` is not "0":
 - **What posts:** from 20 Nov every slot is a reel. No carousels, stories or posters; they reach about 0 people without followers.
 - **How many:** the total ramps to 40 (20 Nov), 60 (21 Nov), 80 (22 Nov), then 90 a day (REEL_RAMP in worker/src/index.js).
-- **Topic split (19 Nov evening, 13 topics):** co 12%, and 7.3% each for gst, inv, sui, sk, ud, tm (trademark), roc (ROC annual compliance), fssai, iec, nda, cfa (co-founder agreements), fp (financial projections) (REEL_SHARE). Folders bank/<topic>/; id prefixes tm, rc, fs, ie, nd, cf, fp; facts in factory/topics.py FACTS_*; DM texts in NEWT in the worker. Earlier split was, limited by each topic's built stock. Leftovers go to topics with stock. ud = Udyam (MSME), added 19 Nov: bank/ud/, ids start with "y".
+- **Topic split (19 Nov evening, 14 topics):** co 11%, and 6.8% each for val (company valuation, any purpose; prefix qv, keywords VALUATION/WORTH),  gst, inv, sui, sk, ud, tm (trademark), roc (ROC annual compliance), fssai, iec, nda, cfa (co-founder agreements), fp (financial projections) (REEL_SHARE). Folders bank/<topic>/; id prefixes tm, rc, fs, ie, nd, cf, fp; facts in factory/topics.py FACTS_*; DM texts in NEWT in the worker. Earlier split was, limited by each topic's built stock. Leftovers go to topics with stock. ud = Udyam (MSME), added 19 Nov: bank/ud/, ids start with "y".
 - **When the plan is set:** it is frozen once a day in KV `plan:<day>`, at the first cron tick after midnight.
 
 ## Refill priority
