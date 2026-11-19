@@ -1,5 +1,7 @@
 # Standing rules for the scheduled tasks (read first; overrides older task text)
 
+Also read GROWTH_PLAN.md every run: it has the checkpoints and decision rules (low watch time, reach drop, funnel, topic shares (reduce, never drop below 5%), research of other causes, backups).
+
 ## Reel-max mode (owner, 19 Nov 2026)
 While the account has fewer than 100 followers and KV `low_reach_mode` is not "0":
 - **What posts:** from 20 Nov every slot is a reel. No carousels, stories or posters; they reach about 0 people without followers.
