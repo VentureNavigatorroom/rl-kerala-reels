@@ -8,7 +8,7 @@ These rules run whether the owner is present or not. The monitor (every 3 h) and
 
 ## Projection updated 19 Nov 19:20 for 14 topics (replaces the 6-topic table below for judging results)
 
-Total volume stays the same: up to 90 reels a day, about 350-400 reels from 20 to 25 Nov. The original 6 topics post from 20 Nov. The 8 newest (tm, roc, fssai, iec, nda, cfa, fp, val) post from about 21 Nov, once their reels are built, about 6 a day each.
+Volume (updated 19 Nov 23:40): normal reels ramp 40 / 60 / 80 and stay at 80 a day, plus 1 tip reel per topic a day (14) and up to 4 news / opportunity / correction reels. About 330-370 normal reels and 70-84 tips from 20 to 25 Nov, roughly the same total as before; tips are short and saveable, so they should lift saves, shares and follows rather than raw views. The original 6 topics post from 20 Nov. The 8 newest (tm, roc, fssai, iec, nda, cfa, fp, val) post from about 21 Nov, once their reels are built, about 6 a day each.
 
 ### Whole account, 20-25 Nov
 | | Low | Middle (best guess) | High (with owner's push) |
@@ -25,6 +25,8 @@ Total volume stays the same: up to 90 reels a day, about 350-400 reels from 20 t
 - **Likely to lead:** inv, fp, val, sui, sk and cfa. Founder and funding situations dominate the CRM, so these match the real audience.
 - **Likely steady:** co, gst, ud and fssai (large, everyday audiences).
 - **Likely slower:** iec, nda, tm and roc (narrower, or "I'll do it later" needs). These convert well once people do engage.
+- **Tips (per topic, 20-25 Nov):** 5-6 tip reels each; expect more saves and shares per view than story reels (target: saves + shares at least 2x the story-reel average). Judged at the 25 Nov review like any other theme.
+- **News / opportunity:** depends on official announcements; 0-6 over the week is normal. A verified same-day update is the most likely route to a breakout reel.
 
 ### Goal path, per topic: 10 clients a month (about 100 enquiries a month)
 - **By 25 Nov:** learn which topics, story sources (crm/faq/new) and hooks work.
@@ -34,9 +36,10 @@ Total volume stays the same: up to 90 reels a day, about 350-400 reels from 20 t
 
 ## Optimisation plan, in order (applied automatically)
 1. **Every 3 h (monitor):** posting health, stock per topic, reach and watch-time safety (reel_cap), and 100 followers switches carousels and stories back on.
-2. **Every 4 h (writer):** scripts for the shortest runway first, mixing 40% crm, 40% faq and 20% new; the d904 pattern; max 6 lines.
+2. **Every 4 h (writer):** 300 scripts per topic (one month), tips kept at 10+ per topic, scripts for the shortest runway first, mixing 40% crm, 40% faq and 20% new; the d904 pattern; max 6 lines.
+2b. **4 times a day (news watch):** same-day official updates, opportunities and corrections (OPS_RULES "Tips, news and corrections").
 3. **22 Nov checkpoint:** watch time, reach, funnel and other causes (rules 1, 2, 3 and 5).
-4. **25 Nov review:** topic shares (rule 4, reduce but never below 5%), the theme mix, and new 2-week targets per topic.
+4. **25 Nov review:** topic shares (rule 4, reduce but never below 5%), the theme mix (crm / faq / new / tip / news), and new 2-week targets per topic.
 5. **Weekly after that:** the same review, at most 2 share changes a week, and the owner is told every time.
 
 ## Original projection (19 Nov afternoon, 6 topics), for reference
