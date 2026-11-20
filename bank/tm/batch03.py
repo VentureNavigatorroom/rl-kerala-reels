@@ -65,18 +65,6 @@ duo("tm008", "food_brand", "B", "veranda", "\"2016-ൽ എടുത്ത\nട�
  cap_en="An old couple's pappadam brand was registered in 2016 and they assume it lasts forever. A trademark registration is valid for 10 years and then must be renewed. Which year was yours registered?",
  cap_mg="Trademark orikkal kittiyaal jeevithakaalam muzhuvano? Alla. Registration 10 varshathekkaanu, pinne puthukkanam. Ningalude trademark ethu varsham register aayi?")
 
-chat("tmc001", "d2c_brand", "C", "ഇന്ന് ഫയൽ ചെയ്തു.\nനാളെ ലേബലിൽ\nഏത് ചിഹ്നം?", ("ഉഷ", "മോഹനൻ"), [
- (1,"ഉഷേ, ബുട്ടീക്കിന്റെ ട്രേഡ്മാർക്ക് ഇന്ന് ഫയൽ ചെയ്തു. നാളെ മുതൽ ലേബലിൽ ആ വട്ടത്തിലുള്ള R ഇടട്ടെ?"),
- (0,"മോഹനേട്ടാ, വേണ്ട. R രജിസ്ട്രേഷൻ കിട്ടിയ ശേഷം മാത്രം."),
- (1,"അപ്പോ ഇപ്പോ ഒന്നും ഇടാൻ പറ്റില്ലേ?"),
- (0,"ഫയൽ ചെയ്ത ശേഷം TM ഇടാം. രജിസ്റ്റർ ആയാൽ R."),
- (1,"ശരി, ആദ്യം ചെറിയ രണ്ടക്ഷരം."),
- (0,"TM ക്യൂവിൽ, R സ്റ്റേജിൽ.")],
- "ഫയൽ ചെയ്താൽ TM,\nരജിസ്റ്റർ ആയാൽ R", CTA_BRAND, theme="faq",
- cap_ml="ട്രേഡ്മാർക്ക് ഫയൽ ചെയ്ത പിറ്റേന്ന് ലേബലിൽ ഏത് ചിഹ്നം? ഫയൽ ചെയ്താൽ TM, രജിസ്ട്രേഷൻ കിട്ടിയ ശേഷം മാത്രം R. നിങ്ങളുടെ ലേബലിൽ ഇപ്പോൾ ഏതാണ്: TM, R, ഒന്നുമില്ല?",
- cap_en="Filed your trademark today: which symbol goes on the label tomorrow? TM once you have filed; the R symbol only after registration. Which is on your label now: TM, R or none?",
- cap_mg="Trademark file cheytha pittennu label-il ethu chihnam? File cheythaal TM, registration kittiya shesham maathram R. Ningalude label-il ippol ethaanu: TM, R, onnumilla?")
-
 duo("tm009", "copied_brand", "A", "shop", "ട്രേഡ്മാർക്ക് ഫയൽ\nചെയ്തു, തീർന്നു എന്ന് കരുതി.\nപിന്നെ ഓപ്പോസിഷൻ", [
  ("A","wide","സുരേഷേ, നമ്മുടെ പെയിന്റ് ബ്രാൻഡിന് എതിരെ ഒരു വലിയ കമ്പനി ഓപ്പോസിഷൻ ഫയൽ ചെയ്തു."),
  ("V","V","ബിനൂ, ഫയൽ ചെയ്തതല്ലേ? അത് കഴിഞ്ഞപ്പോൾ എല്ലാം തീർന്നില്ലേ?"),
