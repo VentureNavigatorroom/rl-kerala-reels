@@ -782,7 +782,7 @@ async function processNudges(env, force = null) {
       thread.push({ role: "assistant", content: nt.text }); await kvPut(env, `t:${id}`, thread);
       ops[id] = { ...e, n: e.n + 1, tot: (e.tot || 0) + 1, ls: now }; sent++; stats.push("sent"); out.push(`${id}: dm ${e.n + 1}`);
       await log(env, `check-in ${e.n + 1} sent to @${meta.username || id}`);
-      if (L?.phone && !L.alerted && L.intent !== "low") {                          // gave a number but stopped: still worth a call
+      if (L?.phone && !L.alerted) {                                                // gave a number but stopped: still worth a call (any intent)
         const all = await kv(env, "leads", {}); if (all[id]) { all[id].alerted = true; await kvPut(env, "leads", all); leads = all; }
         await discord(env, `🔔 **[${TOPICS[L.topic]?.label || TOPICS.co.label}] Lead stopped midway, but left a number** (${L.intent} intent)\n📞 ${L.phone}  ·  🗣 ${L.language || "not answered"}\n🏢 ${L.business || "?"}\n📍 Came from: ${L.source_item || "?"}\nThey went quiet about ${Math.round(age / 3600e3)} h ago; a check-in message has been sent.\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
       }
@@ -790,6 +790,21 @@ async function processNudges(env, force = null) {
   }
   await nudgeApply(env, ops, stats);
   return { sent, out };
+}
+async function backfillLeadAlerts(env, max = 2) {   // one-time catch-up: stored leads with phone + language that never got an alert (e.g. rated "low" before the rule changed)
+  const all = await kv(env, "leads", {});
+  const due = Object.keys(all).filter(id => all[id]?.phone && all[id]?.language && !all[id].alerted).slice(0, max);
+  if (!due.length) return 0;
+  const fresh = await kv(env, "leads", {});                 // re-read just before writing so a lead saved meanwhile is not lost
+  const send = due.filter(id => fresh[id] && !fresh[id].alerted); if (!send.length) return 0;
+  for (const id of send) fresh[id].alerted = true;
+  await kvPut(env, "leads", fresh);                          // mark first: never alert the same lead twice
+  for (const id of send) {
+    const L = fresh[id];
+    await discord(env, `🔔 **[${TOPICS[L.topic]?.label || TOPICS.co.label}] New ${String(L.intent || "?").toUpperCase()}-intent lead (missed earlier, not alerted at the time)** (budget fit: ${L.can_afford_30k ?? "?"})\n📞 ${L.phone}  ·  🗣 ${L.language}${L.role ? "\n🧭 " + L.role : ""}\n🏢 ${L.business || "?"}\n📍 Came from: ${L.source_item || "?"}${L.source_keyword ? " (" + L.source_keyword + ")" : ""}\n⏱ ${L.timeline || "?"}\nWhy: ${L.reason || "?"}\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
+  }
+  await log(env, `backfill: alerted ${send.length} earlier lead(s): ${send.join(", ")}`);   // ids only, never the phone
+  return send.length;
 }
 
 async function pollInbox(env) {
@@ -897,7 +912,7 @@ async function handleWebhook(env, body) {
           leads[uid] = { ...lead, topic, alerted: prev?.alerted || false, ig_user: uid, source_item: fromItem, source_keyword: s0.keyword || null, source_via: s0.via || "dm", status: prev?.status || "new", updated: IST().toISOString().slice(0, 16) };
           await kvPut(env, "leads", leads); await log(env, `lead ${uid}: ${lead.intent}/${lead.can_afford_30k} from ${fromItem}`);
           if (!prev) await bumpPost(env, fromItem, "leads");
-          if (ready && !prev?.alerted && lead.intent !== "low") {
+          if (ready && !prev?.alerted) {                                // every lead with a phone gets one alert; the text shows the intent
             leads[uid].alerted = true; await kvPut(env, "leads", leads);
             await discord(env, `🔔 **[${TOPICS[topic].label}] New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}${lead.role ? "\n🧭 " + lead.role : ""}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders || "-"}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}${lead.interstate ? "\n🚚 " + lead.interstate : ""}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`, true);
           }
@@ -1147,6 +1162,7 @@ export default {
         catch (e) { throw new Error(`${retry.what} retry also failed: ${e.message}`); }
       }
       try { await processNudges(env); } catch (eN) { await log(env, `ERROR check-ins: ${String(eN.message).slice(0, 90)}`); }
+      if (!snapRun && mi % 10 === 7) { try { await backfillLeadAlerts(env); } catch (eB) { await log(env, `ERROR lead alert backfill: ${String(eB.message).slice(0, 90)}`); } }   // every 10 min, at most 2 alerts per run
       if (snapRun) await snapshotTick(env, day);
       if (h === 21 && mi === 41) {
         const posted = await kv(env, "posted", {}); const todayP = Object.values(posted).filter(p => IST(new Date(p.t)).toISOString().slice(0, 10) === day); const today = todayP.length;
