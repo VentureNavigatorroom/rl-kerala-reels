@@ -58,6 +58,12 @@ for name in ("reels", "carousels", "posters", "stories"):
         if name != "stories" and tuple(x.get("cta") or ()) not in ctas[t]: err(f"{x['id']}: cta is not one of the {t} topic's CTAs (topics.py / batch01.py)")
         if x.get("segment") and x["segment"] not in topics.SEGMENTS[t]: err(f"{x['id']}: segment {x['segment']} is not a {t} segment (topics.SEGMENTS)")
         if t in PREFIX and not x["id"].startswith(PREFIX[t]): err(f"{x['id']}: {t} ids must start with '{PREFIX[t]}' (unique across topics)")
+# 3a. every topic segment has a "who it is for" line in captions.SEGMENT (otherwise its captions miss the segment line)
+import captions
+for t, segs in topics.SEGMENTS.items():
+    for g in segs:
+        if g not in captions.SEGMENT: err(f"topic {t}: segment {g} has no line in captions.SEGMENT (add ml/en/mg in factory/captions.py)")
+        elif any(not captions.SEGMENT[g].get(l) for l in ("ml", "en", "mg")): err(f"captions.SEGMENT[{g}] needs ml, en and mg")
 for t in banks["stories"]:
     if t["kind"] == "contact" and t["kw"] not in topics.BASES[t.get("topic") or "co"]: err(f"{t['id']}: keyword {t['kw']} is not one of its topic's keywords")
 for p in banks["posters"]:

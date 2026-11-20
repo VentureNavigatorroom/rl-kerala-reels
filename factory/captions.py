@@ -126,6 +126,54 @@ SEGMENT = {   # who it is for, using the phrases each group searches
     "campus": dict(ml="കോളേജിൽ നിന്ന് സ്റ്റാർട്ടപ്പ് തുടങ്ങുന്നവർക്ക്.", en="For student founders starting up from campus.", mg="College-il ninnu startup thudangunnavarkku."),
     "women_founder": dict(ml="സ്വന്തം സ്റ്റാർട്ടപ്പ് നടത്തുന്ന സ്ത്രീകൾക്ക്.", en="For women founders in Kerala.", mg="Swantham startup nadathunna sthreekalkku."),
     "cofounder_split": dict(ml="ഷെയർ എങ്ങനെ വീതിക്കണം എന്ന് ആലോചിക്കുന്ന കോ-ഫൗണ്ടർമാർക്ക്.", en="For co-founders deciding the share split before outside money arrives.", mg="Share engane veethikkanam ennu aalochikkunna co-founders-nu."),
+    # tm
+    "d2c_brand": dict(ml="ഓൺലൈനായി സ്വന്തം ബ്രാൻഡ് വിൽക്കുന്ന D2C ബ്രാൻഡുകൾക്ക്.", en="For D2C brands in Kerala selling their own products online.", mg="Online-il swantham brand vilkkunna D2C brands-nu."),
+    "food_brand": dict(ml="സ്വന്തം പേരിൽ ഫുഡ് പ്രോഡക്റ്റുകൾ വിൽക്കുന്ന ഫുഡ് ബ്രാൻഡുകൾക്ക്.", en="For food brands in Kerala selling under their own name.", mg="Swantham peril food products vilkkunna food brands-nu."),
+    "salon_clinic": dict(ml="സലൂണും ക്ലിനിക്കും നടത്തുന്നവർക്ക്.", en="For salon and clinic owners in Kerala.", mg="Salon-um clinic-um nadathunnavarkku."),
+    "app_founder": dict(ml="സ്വന്തം ആപ്പ് ലോഞ്ച് ചെയ്യുന്ന ഫൗണ്ടർമാർക്ക്.", en="For founders launching an app under their own brand name.", mg="Swantham app launch cheyyunna founders-nu."),
+    "copied_brand": dict(ml="ബ്രാൻഡ് പേര് മറ്റാരെങ്കിലും കോപ്പി ചെയ്തെന്ന് സംശയിക്കുന്നവർക്ക്.", en="For business owners who think someone has copied their brand name.", mg="Brand name aarenkilum copy cheythu ennu samshayikkunnavarkku."),
+    # roc
+    "dormant_company": dict(ml="രജിസ്റ്റർ ചെയ്തിട്ടും ബിസിനസ് ഒന്നും നടക്കാത്ത കമ്പനികൾക്ക്.", en="For companies in Kerala that are registered but not doing any business yet.", mg="Register cheythittum business onnum nadakkaatha company-kalkku."),
+    "new_company_roc": dict(ml="ആദ്യ വർഷത്തെ ROC ഫയലിംഗിലേക്ക് എത്തുന്ന പുതിയ കമ്പനികൾക്ക്.", en="For newly registered companies coming up to their first year of ROC filings.", mg="First year ROC filing-ilekku ethunna puthiya company-kalkku."),
+    "late_filer": dict(ml="ROC ഫയലിംഗ് വൈകിപ്പോയ കമ്പനികൾക്ക്.", en="For companies that have missed or delayed their ROC filings.", mg="ROC filing late aayippoya company-kalkku."),
+    "llp_owner": dict(ml="LLP നടത്തുന്ന പാർട്ണർമാർക്ക്.", en="For partners running an LLP in Kerala.", mg="LLP nadathunna partners-nu."),
+    "nri_director": dict(ml="ഗൾഫിലിരുന്ന് നാട്ടിലെ കമ്പനിയുടെ ഡയറക്ടറായ NRI-കൾക്ക്.", en="For NRI directors in the Gulf with a company in Kerala.", mg="Gulf-il irunnu naattile company-yude director aaya NRI-kalkku."),
+    # fssai
+    "home_baker": dict(ml="വീട്ടിൽ നിന്ന് കേക്കും സ്നാക്സും വിൽക്കുന്ന ഹോം ബേക്കർമാർക്ക്.", en="For home bakers in Kerala selling cakes and snacks from home.", mg="Veettil ninnu cake-um snacks-um vilkkunna home bakers-nu."),
+    "cloud_kitchen": dict(ml="സ്വിഗ്ഗി, സൊമാറ്റോ വഴി വിൽക്കുന്ന ക്ലൗഡ് കിച്ചണുകൾക്ക്.", en="For cloud kitchens in Kerala selling on Swiggy and Zomato.", mg="Swiggy, Zomato vazhi vilkkunna cloud kitchens-nu."),
+    "spice_exporter": dict(ml="സ്പൈസസ് പായ്ക്ക് ചെയ്ത് വിൽക്കുന്നവർക്കും എക്സ്പോർട്ട് ചെയ്യുന്നവർക്കും.", en="For spice packers and exporters in Kerala.", mg="Spices pack cheythu vilkkunnavarkkum export cheyyunnavarkkum."),
+    "cafe_owner": dict(ml="കഫേയും ചെറിയ റെസ്റ്റോറന്റും നടത്തുന്നവർക്ക്.", en="For cafe and small restaurant owners in Kerala.", mg="Cafe-um cheriya restaurant-um nadathunnavarkku."),
+    "packaged_food": dict(ml="പായ്ക്ക് ചെയ്ത ഫുഡ് പ്രോഡക്റ്റുകൾ ഉണ്ടാക്കി വിൽക്കുന്നവർക്ക്.", en="For businesses making and selling packaged food.", mg="Packaged food products undaakki vilkkunnavarkku."),
+    # iec
+    "first_exporter": dict(ml="ആദ്യമായി എക്സ്പോർട്ട് ചെയ്യാൻ ഒരുങ്ങുന്നവർക്ക്.", en="For businesses in Kerala getting ready for their first export order.", mg="Aadyamaayi export cheyyaan orungunnavarkku."),
+    "importer": dict(ml="വിദേശത്ത് നിന്ന് സാധനങ്ങൾ ഇമ്പോർട്ട് ചെയ്യുന്നവർക്ക്.", en="For businesses importing goods from abroad.", mg="Foreign-il ninnu saadhanangal import cheyyunnavarkku."),
+    "spice_trade": dict(ml="സ്പൈസസ് കച്ചവടം വിദേശത്തേക്ക് എത്തിക്കാൻ ആലോചിക്കുന്നവർക്ക്.", en="For spice traders in Kerala looking for buyers abroad.", mg="Spice kachavadam foreign-ilekku ethikkaan aalochikkunnavarkku."),
+    "handicraft_export": dict(ml="കൈത്തറി, കയർ, കരകൗശല ഉൽപ്പന്നങ്ങൾ വിദേശത്ത് വിൽക്കാൻ ആലോചിക്കുന്നവർക്ക്.", en="For handloom, coir and handicraft makers in Kerala selling abroad.", mg="Handloom, coir, handicraft products foreign-il vilkkaan aalochikkunnavarkku."),
+    "service_export": dict(ml="വിദേശ ക്ലയന്റുകൾക്ക് സർവീസ് കൊടുക്കുന്ന ഫ്രീലാൻസർമാർക്കും ഏജൻസികൾക്കും.", en="For freelancers and agencies in Kerala serving clients abroad.", mg="Foreign clients-nu service kodukkunna freelancers-num agencies-num."),
+    # nda
+    "founder_pitching": dict(ml="ഐഡിയ മറ്റുള്ളവരോട് പിച്ച് ചെയ്യാൻ പോകുന്ന ഫൗണ്ടർമാർക്ക്.", en="For founders about to pitch their idea to others.", mg="Idea mattullavarodu pitch cheyyaan pokunna founders-nu."),
+    "agency_client": dict(ml="ക്ലയന്റിന്റെ രഹസ്യ വിവരങ്ങൾ കൈകാര്യം ചെയ്യുന്ന ഏജൻസികൾക്ക്.", en="For agencies in Kerala handling confidential client information.", mg="Client-inte confidential details handle cheyyunna agencies-nu."),
+    "freelancer_nda": dict(ml="ക്ലയന്റ് NDA ഒപ്പിടാൻ ആവശ്യപ്പെടുന്ന ഫ്രീലാൻസർമാർക്ക്.", en="For freelancers whose clients ask them to sign an NDA.", mg="Client NDA sign cheyyaan parayunna freelancers-nu."),
+    "vendor_supplier": dict(ml="വെണ്ടർമാരുമായും സപ്ലയർമാരുമായും വിവരങ്ങൾ പങ്കുവെക്കുന്ന ബിസിനസുകൾക്ക്.", en="For businesses sharing details with vendors and suppliers.", mg="Vendors-umaayum suppliers-umaayum details share cheyyunna business-nu."),
+    "employee_nda": dict(ml="ആദ്യമായി ജീവനക്കാരെ എടുക്കുന്ന ബിസിനസുകൾക്ക്.", en="For business owners in Kerala hiring their first employees.", mg="Aadyamaayi staff-ne edukkunna business owners-nu."),
+    # cfa
+    "friends_cofounders": dict(ml="സുഹൃത്തുക്കളുമായി ചേർന്ന് ബിസിനസ് തുടങ്ങുന്നവർക്ക്.", en="For friends starting a business together in Kerala.", mg="Friends-umaayi chernnu business thudangunnavarkku."),
+    "tech_nontech": dict(ml="ടെക്, നോൺ-ടെക് കോ-ഫൗണ്ടർമാർ ഒന്നിച്ച് തുടങ്ങുന്ന സ്റ്റാർട്ടപ്പുകൾക്ക്.", en="For startups with one tech and one non-tech co-founder.", mg="Tech, non-tech co-founders orumichu thudangunna startups-nu."),
+    "family_cofounders": dict(ml="കുടുംബാംഗങ്ങൾ ചേർന്ന് ബിസിനസ് തുടങ്ങുന്നവർക്ക്.", en="For family members starting a business together.", mg="Family members chernnu business thudangunnavarkku."),
+    "late_joiner": dict(ml="തുടങ്ങിയ ശേഷം പുതിയ കോ-ഫൗണ്ടറെ ചേർക്കുന്ന സ്റ്റാർട്ടപ്പുകൾക്ക്.", en="For startups bringing in a co-founder after they have started.", mg="Thudangiya shesham puthiya co-founder-ne cherkkunna startups-nu."),
+    "remote_cofounder": dict(ml="ഗൾഫിലോ മറ്റൊരു നഗരത്തിലോ ഉള്ള കോ-ഫൗണ്ടറുമായി സ്റ്റാർട്ടപ്പ് നടത്തുന്നവർക്ക്.", en="For startups with a co-founder working from the Gulf or another city.", mg="Gulf-ilo vere city-yilo ulla co-founder-umaayi startup nadathunnavarkku."),
+    # val
+    "raising_round": dict(ml="ഫണ്ടിംഗ് റൗണ്ടിന് ഒരുങ്ങുന്ന സ്റ്റാർട്ടപ്പ് ഫൗണ്ടർമാർക്ക്.", en="For startup founders in Kerala preparing for a funding round.", mg="Funding round-nu orungunna startup founders-nu."),
+    "esop_plan": dict(ml="ടീമിന് ESOP കൊടുക്കാൻ ആലോചിക്കുന്ന കമ്പനികൾക്ക്.", en="For companies planning ESOPs for their team.", mg="Team-nu ESOP kodukkaan aalochikkunna company-kalkku."),
+    "partner_exit": dict(ml="ഒരു പാർട്ണറോ ഡയറക്ടറോ കമ്പനി വിടുന്ന സാഹചര്യത്തിലുള്ളവർക്ക്.", en="For companies where a partner or director is exiting.", mg="Oru partner-o director-o company vidunna situation-il ullavarkku."),
+    "nri_share_issue": dict(ml="NRI-കൾക്ക് ഷെയർ കൊടുക്കാൻ ആലോചിക്കുന്ന കമ്പനികൾക്ക്.", en="For companies issuing shares to NRI investors.", mg="NRI-kalkku shares kodukkaan aalochikkunna company-kalkku."),
+    "share_transfer": dict(ml="ഷെയറുകൾ കൈമാറ്റം ചെയ്യാൻ ആലോചിക്കുന്ന ഷെയർഹോൾഡർമാർക്ക്.", en="For shareholders planning to transfer shares.", mg="Shares transfer cheyyaan aalochikkunna shareholders-nu."),
+    # fp
+    "investor_pitch": dict(ml="ഇൻവെസ്റ്റർമാരോട് പിച്ച് ചെയ്യാൻ ഒരുങ്ങുന്ന ഫൗണ്ടർമാർക്ക്.", en="For founders preparing to pitch to investors.", mg="Investors-inodu pitch cheyyaan orungunna founders-nu."),
+    "bank_loan": dict(ml="ബാങ്ക് ലോണിന് അപേക്ഷിക്കുന്ന ബിസിനസുകൾക്ക്.", en="For businesses in Kerala applying for a bank loan.", mg="Bank loan-nu apply cheyyunna business-nu."),
+    "grant_application": dict(ml="സ്റ്റാർട്ടപ്പ് ഗ്രാന്റിന് അപേക്ഷിക്കുന്ന ഫൗണ്ടർമാർക്ക്.", en="For founders applying for a startup grant.", mg="Startup grant-nu apply cheyyunna founders-nu."),
+    "early_revenue": dict(ml="ആദ്യ വരുമാനം വന്നു തുടങ്ങിയ സ്റ്റാർട്ടപ്പുകൾക്ക്.", en="For startups that have started earning their first revenue.", mg="First revenue vannu thudangiya startups-nu."),
+    "pre_revenue": dict(ml="ഇതുവരെ വരുമാനം ഇല്ലാത്ത സ്റ്റാർട്ടപ്പുകൾക്ക്.", en="For pre-revenue startups with no sales yet.", mg="Ithuvare revenue illaatha startups-nu."),
 }
 CTA = dict(ml="{base} അല്ലെങ്കിൽ {kw} എന്ന് കമന്റ് ചെയ്യൂ, DM-ൽ അയച്ചുതരാം 👇",
            en="Comment {base} or {kw} and we'll send it to your DM 👇",
@@ -175,12 +223,20 @@ def caption(s, head):
     """s: script (needs id, segment, base, kw; optional cap_ml/cap_en/cap_mg). head: the first line people see (hook)."""
     base, kw, seg = s["base"], s["kw"], s.get("segment", "")
     t, g = TOPIC.get(base, TOPIC["START"]), SEGMENT.get(seg, {})
-    parts = [head.strip()]
-    for lang in ("ml", "en", "mg"):
-        body = s.get("cap_" + lang) or t[lang]
-        para = body + (" " + g[lang] if g and not s.get("cap_" + lang) else "")
-        parts.append(para + "\n" + CTA[lang].format(base=base, kw=kw))
-    parts.append(hashtags(s["id"], base, seg, s.get("topic") or "co"))
-    out = "\n\n".join(parts)[:2200]
-    assert out.count("#") <= 5, s["id"]
+    tags = hashtags(s["id"], base, seg, s.get("topic") or "co")
+    def build(with_seg):
+        parts = [head.strip()]
+        for lang in ("ml", "en", "mg"):
+            own = s.get("cap_" + lang)
+            para = own or t[lang]
+            if g and (with_seg or not own):   # topic text always had the segment; custom text gets it on its own line
+                para += ("\n" if own else " ") + g[lang]
+            parts.append(para + "\n" + CTA[lang].format(base=base, kw=kw))
+        return "\n\n".join(parts + [tags])
+    out = build(True)
+    if len(out) > 2200: out = build(False)   # too long: drop the segment line from custom captions, never the CTA / hashtags
+    if len(out) > 2200:                       # still too long: shorten the opening line, keep the end intact
+        cut = len(out) - 2200 + 1
+        out = out[:max(0, len(head.strip()) - cut)] + "…" + out[len(head.strip()):]
+    assert out.count("#") <= 5 and len(out) <= 2200, s["id"]
     return out
