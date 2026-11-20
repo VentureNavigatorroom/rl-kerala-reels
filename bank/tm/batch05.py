@@ -122,15 +122,3 @@ duo("tm030", "food_brand", "B", "munnar", "മലയിൽ റേഞ്ച് �
  cap_en="A hill-estate chocolate brand had no network and missed a trademark objection email for 3 weeks. An objection must be answered within 30 days. Who checks your trademark emails?",
  cap_mg="Malayile estate-il range illaathe chocolate brand-inte trademark objection mail 3 aazhcha kaanaathe kidannu. Objection-inu 30 divasathinullil marupadi venam. Ningalude trademark mail aara nokkunnathu?")
 
-# new, d904 pattern: a 30-year wedding band, look-alike name in the journal 2 months ago
-duo("tm031", "copied_brand", "C", "weddinghall", "30 വർഷത്തെ കല്യാണ\nബാൻഡ്. അതേ പോലൊരു\nപേര് ജേണലിൽ", [
- ("A","wide","ശരത്തേ, നമ്മുടെ ബാൻഡിന്റെ പേരിൽ നിന്ന് ഒരക്ഷരം മാറ്റി ഒരു പുതിയ ടീം ട്രേഡ്മാർക്ക് ഫയൽ ചെയ്തു. ജേണലിൽ വന്നു."),
- ("V","V","കാവ്യേ, ജേണലിൽ വന്നിട്ട് എത്ര നാളായി?"),
- ("A","A","രണ്ട് മാസം. ഇനി ഒന്നും ചെയ്യാൻ പറ്റില്ലേ?"),
- ("V","wide","പറ്റും. ജേണലിൽ വന്ന് 4 മാസത്തിനുള്ളിൽ ആർക്കും ഓപ്പോസിഷൻ ഫയൽ ചെയ്യാം. നമുക്ക് ഇനിയും 2 മാസമുണ്ട്."),
- ("A","A","അപ്പോ അടുത്ത കല്യാണത്തിന് മുമ്പ് ഓപ്പോസിഷൻ."),
- ("V","V","താളം തെറ്റിയാലും തീയതി തെറ്റരുത്.")],
- "ജേണലിൽ വന്നാൽ\n4 മാസം മാത്രം", CTA_BRAND, theme="new",
- cap_ml="30 വർഷം പഴയ കല്യാണ ബാൻഡിന്റെ പേരിനോട് സാമ്യമുള്ള പേര് ട്രേഡ്മാർക്ക് ജേണലിൽ വന്നിട്ട് 2 മാസം. ജേണലിൽ വന്ന് 4 മാസത്തിനുള്ളിൽ ആർക്കും ഓപ്പോസിഷൻ ഫയൽ ചെയ്യാം. നിങ്ങൾ ജേണൽ നോക്കാറുണ്ടോ?",
- cap_en="A 30-year-old wedding band found a look-alike name published in the Trade Marks Journal 2 months ago. Anyone can file an opposition within 4 months of journal publication, so they still have 2 months. Do you ever check the journal?",
- cap_mg="30 varsham pazhaya kalyana band-inte perinodu saamyamulla peru Trade Marks Journal-il vannittu 2 maasam. Journal-il vannu 4 maasathinullil aarkkum opposition file cheyyaam. Ningal journal nokkarundo?")
