@@ -5,18 +5,6 @@ _s = importlib.util.spec_from_file_location("h", os.path.join(os.path.dirname(__
 duo, chat, lst, car, tip, quiz, contact, S, C, T, topics = _h.duo, _h.chat, _h.lst, _h.car, _h.tip, _h.quiz, _h.contact, _h.S, _h.C, _h.T, _h.topics
 CTA_KSUM, CTA_GRANT = topics.CTA_KSUM, topics.CTA_GRANT
 
-duo("md020", "idea_stage", "A", "classroom", "ഐഡിയ ഗ്രാന്റിന്\nകമ്പനി വേണോ?\nഉത്തരം ഇതാ", [
- ("A","wide","ആദർശേ, ഐഡിയ ഗ്രാന്റിന് അപേക്ഷിക്കാൻ കമ്പനി ഇപ്പോഴും വേണോ?"),
- ("V","V","നിമ്മീ, അപേക്ഷ കമ്പനിക്ക് മുമ്പും കൊടുക്കാം. പക്ഷേ പണം കിട്ടാൻ കമ്പനിയും യുണീക്ക് ID-യും വേണം."),
- ("A","A","അപ്പോ ആദ്യം അപേക്ഷ, പിന്നെ കമ്പനി?"),
- ("V","V","അതെ. പക്ഷേ പണം വരുന്നതിന് മുമ്പ് രണ്ടും നിർബന്ധം."),
- ("A","wide","അതുകൊണ്ട് കമ്പനി രജിസ്ട്രേഷൻ വേഗം തുടങ്ങണം."),
- ("V","wide","അപേക്ഷയ്ക്ക് മാത്രം കാത്തിരിക്കരുത്.")],
- "അപേക്ഷയ്ക്ക് മുമ്പ്\nഅല്ല, പണത്തിന് മുമ്പ്", CTA_KSUM, theme="faq",
- cap_ml="ഐഡിയ ഗ്രാന്റിന് കമ്പനിയ്ക്ക് മുമ്പും അപേക്ഷിക്കാം. പക്ഷേ പണം വിട്ടുകിട്ടാൻ കമ്പനിയും യുണീക്ക് ID-യും വേണം. നിങ്ങളുടെ കമ്പനി രജിസ്റ്റർ ചെയ്തോ?",
- cap_en="You may apply for the idea grant before incorporating, but the company and the Unique ID are needed before any money is released. Is your company registered yet?",
- cap_mg="Idea grant-nu company-kku mumpum apply cheyyam. Pakshe panam kittaan company-yum Unique ID-yum venam. Ningalude company register cheythoo?")
-
 duo("md021", "kerala_registered", "A", "airport", "കേരളത്തിൽ രജിസ്റ്റർ\nചെയ്യാതെ KSUM\nഇല്ല", [
  ("A","wide","റഫീഖേ, ബെംഗളൂരുവിൽ രജിസ്റ്റർ ചെയ്ത കമ്പനി, KSUM-ന് അപേക്ഷിക്കാമോ?"),
  ("V","V","ഷമീറേ, സ്റ്റാർട്ടപ്പ് കേരളത്തിൽ രജിസ്റ്റർ ചെയ്തിരിക്കണം. അതാണ് ആദ്യ നിബന്ധന."),
