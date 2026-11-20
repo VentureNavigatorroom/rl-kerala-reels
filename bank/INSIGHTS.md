@@ -142,3 +142,10 @@ What to change in new writing (all topics, about 40% of each batch until more da
 - Fact fix while reviewing: val NRI lines now say "repatriation basis" (FACTS_INV: non-repatriation NRI money is treated as domestic), so val no longer contradicts inv.
 - Narrow fact lists (fssai, fp, nda, roc, tm): new scripts differ by situation, job and place; tips in fssai already circle the same few facts, so future fssai tips need new situations.
 - Counts after (normal / tips): roc 17/10, tm 17/10, gst 19/10, sui 19/10, sk 19/10, ud 19/10, inv 20/10, val 23/10, iec 24/10, nda 26/10, cfa 27/10, fp 27/10, fssai 27/10, co 445/10. Next run: roc, tm, gst, sui, sk, ud first.
+
+## Run 15: 20 Nov 2026 (writer, ~01:50-02:30 UTC; insights updated 2026-11-20T07:22 IST): observe only, month backlog
+- Data: 125 posts (124 co, first non-co reel cf007 posted 07:14 IST); 48 with reach, median 106; leads_total 2 (owner tests). No tip reel posted yet. Under 14 posting days and under 40 judged posts per topic -> no audience-led shift, no theme shift.
+- Tips: every topic still has 10 unposted -> GOAL 2 met, nothing written.
+- Reels (GOAL 1, smallest banks first): batch04 for roc, tm, sk, ud, gst, sui = 60 scripts, each 4 crm / 4 faq / 2 new, every scene new for its topic, 3-4 d904-pattern reels per batch (trawling-ban boat LLP, coconut-climbing machine, boat-race oar maker, nettipattam stall, Theyyam crown, Kalaripayattu academy, fishing nets, festival lights...). Facts used that were new to the topic: GST composition limits, casual taxable person, GSTR-3B late fee cap; DPIIT Deep Tech 20 years / 300 crore, cooperative societies, patent / trademark rebates; Udyam medium limits, Samadhaan, PAN-linked Udyam after conversion to a company; LLP Form 11 / Form 8.
+- Workflows: reel-factory, check-bank, deploy-autopilot, render-scenes all green.
+- Counts after (normal / tips): inv 20/10, val 23/10, iec 24/10, nda 26/10, roc / fssai / fp / cfa / tm 27/10, gst / sk / sui / ud 29/10, co 445/10. At 80 a day each non-co topic uses ~5.4 a day, so ~4-5 days of runway. Next run: inv, val, iec, nda first, then fssai, fp, cfa.
