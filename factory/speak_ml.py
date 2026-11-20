@@ -68,6 +68,7 @@ SAY = {
 RESPELL = {
     "ഇൻവോയ്സ്": "ഇൻവോയിസ്",   # invoice: heard as ഇൻഡ്വവൈസ്; audit 13 Nov
     "സ്റ്റോൾ": "സ്റ്റാൾ",      # stall
+    "ഫെയർ": "ഫേയർ",   # fair (fair value): heard as ഫേർ / വേർ in 2 of 3 lines; audit 20 Nov
     "ഒ": "ഓ",   # letter O in OPC / NOC / ROC: short ഒ ran into the next word (OPC heard as ഓഫീസി, NOC as എന്നോസി); audit 13 Nov
 }
 # Words already checked and found fine (the recogniser just spells them differently). Never flagged again.
@@ -82,6 +83,9 @@ REVIEWED_OK = {
     # audit 19 Nov: recogniser joins ക്യാഷ് ഫ്ലോ into കാഷ്ഫ്ലോ, writes ആര് as chillu ആർ, and spells വാല്യുവേഷൻ as വാലുവേഷൻ
     # (heard right in 9 of 12 lines): the voice said these right.
     "ക്യാഷ്", "ആര്", "വാല്യുവേഷൻ",
+    # audit 20 Nov: recogniser joins sandhi (പ്രൊജക്ഷനും ആണ് -> പ്രൊജക്ഷനുമാണ്, ആസ്തി രണ്ട് -> ആസ്ഥിരണ്ട്, സമാന ഇടപാടുകൾ -> സമാനടപാടുകൾ,
+    # കണക്ക് ഇറങ്ങണം -> കണക്കിറങ്ങണം, അംഗീകൃത രീതി -> അംഗീകൃതരീതി); heard right in the other lines: the voice said these right.
+    "ആണ്", "ആസ്തി", "സമാന", "അംഗീകൃത", "കണക്ക്",
 }
 def decided(word):
     """True when a word has already been fixed (RESPELL / SAY) or judged fine: the audit skips it."""
