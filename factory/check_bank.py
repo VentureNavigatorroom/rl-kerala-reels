@@ -39,6 +39,7 @@ for s in banks["reels"]:
         elif not duo3d.fits(sc, nm): err(f"{sid}: names {nm} do not match the people drawn in {sc} {duo3d.SCENES[sc]['names']}")
         for who, cam, txt in s["lines"]:
             if who not in ("A", "V") or cam not in ("A", "V", "wide"): err(f"{sid}: bad speaker/camera {who}/{cam}")
+            elif cam not in (who, "wide"): err(f"{sid}: camera {cam} on a line spoken by {who}: close-ups exist only of the speaker (stills {cam}_{who.lower()} missing); use cam '{who}' or 'wide'")
     elif s["kind"] == "chat":
         for n in s["names"]:
             if not voice.gender_known(n): err(f"{sid}: chat name {n} is in neither FEMALE nor MALE in voice.py")
