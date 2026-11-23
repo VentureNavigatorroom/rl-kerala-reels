@@ -230,6 +230,22 @@ const json = (o, s = 200) => new Response(JSON.stringify(o, null, 1), { status: 
 
 async function kv(env, k, d) { const v = await env.STATE.get(k); return v ? JSON.parse(v) : d; }
 async function kvPut(env, k, v) { await env.STATE.put(k, JSON.stringify(v)); }
+// Claim a key once: write our own token, wait, read back. If two copies of the same webhook run at the same moment,
+// only the copy whose token survives goes on. Fixes the double comment replies / double DMs (22 Nov log).
+async function claimOnce(env, key, ttl = 86400) {
+  if (await env.STATE.get(key)) return false;
+  const tok = crypto.randomUUID(); await env.STATE.put(key, tok, { expirationTtl: ttl });
+  await new Promise(r => setTimeout(r, 1200 + Math.floor(Math.random() * 800)));
+  return (await env.STATE.get(key)) === tok;
+}
+// Keyword text clean-up before matching: fancy fonts (𝐒𝐓𝐀𝐑𝐓), zero-width marks, and letters split by dots,
+// spaces or dashes ("G.S.T", "s t a r t", "N-D-A") become plain words; punctuation around a word never blocks a match.
+function normKw(text) {
+  let t = String(text || "").normalize("NFKC").replace(/[\u200b\u200e\u200f\u2060\ufeff]/g, "");
+  t = t.replace(/(?<![A-Za-z])(?:[A-Za-z][.\-_*•·\/ ]+){2,}[A-Za-z](?![A-Za-z])/g, m => m.replace(/[^A-Za-z]/g, ""));
+  return t;
+}
+const realWords = t => normKw(t).split(/\s+/).filter(w => /[\p{L}\p{N}]/u.test(w));   // emoji and punctuation are not words
 async function log(env, msg) {
   const l = await kv(env, "log", []); l.unshift(`${IST().toISOString().slice(0, 16)} ${msg}`); await kvPut(env, "log", l.slice(0, 300));
 }
@@ -634,12 +650,14 @@ function editDist(a, b) {   // Damerau-Levenshtein (adjacent swaps count as one 
   return d[a.length][b.length];
 }
 async function uniqueKw(env, text, item = null) {
+  text = normKw(text);
   const toks = (text.toUpperCase().match(/[A-Z]+[0-9]*/g) || []).filter(t => t.length >= 3); if (!toks.length) return null;
   // an own keyword that is also a general keyword of another topic (old posts used INVEST, LIMIT...) counts only on its own post
   try { const map = (await manifest(env)).kwmap || {}; for (const t of toks) if (map[t] && KEYWORDS.includes(map[t].base) && (!KW_TOPIC[t] || map[t].item === item)) return { kw: t, ...map[t] }; } catch (e) {}
   return null;
 }
 function matchKeyword(text) {
+  text = normKw(text);
   for (const [re, kw] of KW_ML) if (re.test(text)) return kw;
   const w = (text.toLowerCase().match(/[a-z]+/g) || []);
   const toks = [...w, ...w.slice(1).map((x, i) => w[i] + x)];   // "check list" -> "checklist"
@@ -673,7 +691,7 @@ async function sendMsg(env, recipient, text, buttons = []) {
   const msg = buttons.length ? { text, quick_replies: qr(buttons) } : { text };
   try { return await igMsg(env, { recipient: JSON.stringify(recipient), message: JSON.stringify(msg) }); }
   catch (e) {   // if Instagram rejects the buttons, still deliver the text
-    if (!buttons.length) throw e;
+    if (!buttons.length || /already has a reply/i.test(e.message)) throw e;
     await log(env, `buttons rejected, sent plain text: ${e.message}`);
     return igMsg(env, { recipient: JSON.stringify(recipient), message: JSON.stringify({ text }) });
   }
@@ -762,8 +780,11 @@ async function processNudges(env, force = null) {
         const L = (await getLeads())[id] || (e.f ? (await getLeads())[e.f] : null);
         ops[id] = null;
         if (metas.some(m => m && (m.last_in > e.t - 60e3 || m.no_nudge)) || (L?.phone && L?.language)) continue;   // they did reply, opted out, or are already a full lead
-        await graph(env, `${e.c}/replies`, { message: `${e.u ? "@" + e.u + " " : ""}${NUDGE_PUBLIC[Math.floor(Math.random() * NUDGE_PUBLIC.length)]}` });
-        sent++; stats.push("pub"); out.push(`${id}: public`); await log(env, `check-in: public reply to @${e.u || id} (no DM reply yet)`);
+        // one public reply per comment is enough (we already said "Sent you a DM"); Instagram's API can't DM them again,
+        // so the owner gets them in the follow-up list with a ready message to send by hand (owner's 23 Nov finding: that works)
+        const fq = await kv(env, "fu_queue", []); const tpc = metas.find(m => m?.topic)?.topic || "co";
+        if (e.u && !fq.some(x => x.u === e.u)) { fq.push({ u: e.u, topic: TOPICS[tpc] ? tpc : "co", t: e.t }); await kvPut(env, "fu_queue", fq.slice(-60)); }
+        stats.push("fuq"); out.push(`${id}: follow-up list`); await log(env, `follow-up list: @${e.u || id} (commented, no DM reply in 3 h)`);
         continue;
       }
       const age = now - e.li;
@@ -791,6 +812,20 @@ async function processNudges(env, force = null) {
   await nudgeApply(env, ops, stats);
   return { sent, out };
 }
+// Commenters who never opened our DM: Instagram only lets a person (not the API) message them again.
+// Three times a day the owner gets a Discord list: tap the link, paste the message, send. Their reply is picked up by the bot.
+const FU_TEXT = [
+  "Hi {u} 👋 Rejection List team here. You asked for our {noun} guide on Instagram and we sent it to your message requests. Did it reach you? Reply here and we'll help you with the next step 🙂",
+  "Hey {u} 🙂 Just checking: our {noun} guide went to your message requests (Instagram hides it sometimes). Shall we send it again here?",
+  "Hi {u}! You'd commented on our {noun} post. Any doubt we can clear for you? Reply here, happy to help 🙏",
+];
+async function followupDigest(env) {
+  const fq = await kv(env, "fu_queue", []); if (!fq.length) return 0;
+  await kvPut(env, "fu_queue", []);
+  const lines = fq.slice(0, 20).map((x, i) => `**${i + 1}. @${x.u}** (${TOPICS[x.topic]?.label || "?"}) → https://ig.me/m/${x.u}\n> ${pick(FU_TEXT).replace("{u}", x.u).replace("{noun}", TOPICS[x.topic]?.noun || "free")}`);
+  for (let i = 0; i < lines.length; i += 5) await discord(env, (i ? "" : `📝 **Follow up by hand (${fq.length})**: they commented the keyword but never opened our DM. Tap the link, paste the message, send. The bot takes over when they reply.\n\n`) + lines.slice(i, i + 5).join("\n\n"), i === 0);
+  await log(env, `follow-up list sent to owner: ${fq.length}`); return fq.length;
+}
 async function backfillLeadAlerts(env, max = 2) {   // one-time catch-up: stored leads with phone + language that never got an alert (e.g. rated "low" before the rule changed)
   const all = await kv(env, "leads", {});
   const due = Object.keys(all).filter(id => all[id]?.phone && all[id]?.language && !all[id].alerted).slice(0, max);
@@ -810,14 +845,14 @@ async function backfillLeadAlerts(env, max = 2) {   // one-time catch-up: stored
 async function pollInbox(env) {
   const since = Date.now() - 15 * 60e3;   // look-back window; dup: keys stop double handling
   let j;   // the publisher app's token can read the inbox
-  try { j = await graph(env, `${env.IG_USER_ID}/conversations`, { platform: "instagram", limit: "15", fields: "updated_time,messages.limit(6){id,message,from,created_time}" }, "GET"); }
+  try { j = await graph(env, `${env.IG_USER_ID}/conversations`, { platform: "instagram", limit: "10", fields: "updated_time,messages.limit(4){id,message,from,created_time}" }, "GET"); }
   catch (e) { await log(env, `ERROR inbox poll: ${e.message}`); return; }
   const evs = [];
   for (const c of j.data || []) {
     if (Date.parse(c.updated_time) < since - 120e3) continue;
     for (const m of c.messages?.data || []) {
       if (!m.message || !m.from || m.from.id === env.IG_USER_ID || (m.from.username || "").toLowerCase() === OWN_USERNAME) continue;
-      if (Date.parse(m.created_time) < since - 120e3) continue;
+      if (Date.parse(m.created_time) < since - 120e3 || Date.now() - Date.parse(m.created_time) < 150e3) continue;   // newer ones belong to the webhook
       if (await env.STATE.get(`dup:${m.id}`)) continue;
       evs.push({ t: Date.parse(m.created_time), ev: { sender: { id: m.from.id }, message: { mid: m.id, text: m.message } } });
     }
@@ -830,7 +865,7 @@ async function handleWebhook(env, body) {
   await log(env, `webhook in: ${body.object || "?"} ${n[0]} message(s), ${n[1]} change(s) ${(body.entry || []).flatMap(e => (e.changes || []).map(c => c.field)).join(",")}`);
   for (const entry of body.entry || []) {
     for (const ev of entry.messaging || []) {
-      const mid = ev.message?.mid || ev.postback?.mid; if (mid) { if (await env.STATE.get(`dup:${mid}`)) continue; await env.STATE.put(`dup:${mid}`, "1", { expirationTtl: 86400 }); }
+      const mid = ev.message?.mid || ev.postback?.mid; if (mid && !(await claimOnce(env, `dup:${mid}`))) continue;
       if (ev.postback && !ev.message) ev.message = { text: ev.postback.title || ev.postback.payload || "" };   // button taps of other kinds
       if (ev.message && !ev.message.is_echo && (ev.message.attachments || []).some(a => a?.type === "story_mention")) { await storyMention(env, ev.sender.id); continue; }   // not a lead message
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
@@ -843,6 +878,7 @@ async function handleWebhook(env, body) {
       }
       const thread = await kv(env, key, []);
       const meta = await kv(env, `m:${uid}`, { first: Date.now(), sources: [] });
+      { const tx0 = ev.message.text.trim().toLowerCase(); if (meta.last_txt === tx0 && Date.now() - (meta.last_in || 0) < 120e3) { await log(env, `duplicate DM ignored from ${uid}`); continue; } meta.last_txt = tx0; }
       meta.last_in = Date.now();                                     // 24h window starts from their last message
       if (OPT_OUT.test(ev.message.text)) {                           // asked us to stop: no check-ins for this person, and no further questions now
         meta.no_nudge = true; await kvPut(env, `m:${uid}`, meta); await nudgeApply(env, { [uid]: null });
@@ -873,8 +909,13 @@ async function handleWebhook(env, body) {
         if (pk) { meta.pending_kw = pk; await env.STATE.delete(`pk:${meta.username.toLowerCase()}`); }
       }
       if (!meta.pending_kw) {   // keyword typed straight into DMs or as a story reply (contact stories ask for this)
-        const short = ev.message.text.trim().split(/\s+/).length <= 2;   // answers like "home food business" must not trigger the FOOD guide mid-chat
+        const short = realWords(ev.message.text).length <= 2;   // answers like "home food business" must not trigger the FOOD guide mid-chat
         const dk = short ? ((await uniqueKw(env, ev.message.text))?.base || matchKeyword(ev.message.text)) : null;
+        if (dk && meta.served_kw?.[dk] && Date.now() - meta.served_kw[dk] < 7 * 864e5) {   // already sent: don't send the same guide twice
+          const again = "We've already sent this just above 👆 Scroll up in this chat to see it. Want our team to help you with the next step?";
+          thread.push({ role: "assistant", content: again }); await kvPut(env, `m:${uid}`, meta); await kvPut(env, key, thread);
+          await sendDM(env, uid, again, NEXT[KW_TOPIC[dk]] || NEXT_BUTTONS); await log(env, `keyword ${dk} repeated in DM by @${meta.username || uid}: not resent`); continue;
+        }
         if (dk) { meta.pending_kw = dk; meta.follow_asks = 0; await log(env, `keyword ${dk} via DM from @${meta.username || uid}`); }
       }
       if (meta.pending_kw && KW_TOPIC[meta.pending_kw]) meta.topic = KW_TOPIC[meta.pending_kw];
@@ -893,7 +934,7 @@ async function handleWebhook(env, body) {
           delete meta.pending_more;
           buttons = NEXT[topic];
           await log(env, `sent ${meta.pending_kw} resource to @${meta.username || uid} (follows: ${prof.follows})`);
-          delete meta.pending_kw; meta.follow_asks = 0; meta.served = true;
+          meta.served_kw = { ...(meta.served_kw || {}), [meta.pending_kw]: Date.now() }; delete meta.pending_kw; meta.follow_asks = 0; meta.served = true;
         }
         await kvPut(env, `m:${uid}`, meta);
       } else { await kvPut(env, `m:${uid}`, meta); reply = await botReply(env, thread, topic); }
@@ -928,7 +969,7 @@ async function handleWebhook(env, body) {
       } catch (e9) { await log(env, `check-in index: ${String(e9.message).slice(0, 80)}`); }
     }
     for (const ch of entry.changes || []) {
-      if (ch.value?.id) { const dk = `dup:c:${ch.field}:${ch.value.id}`; if (await env.STATE.get(dk)) continue; await env.STATE.put(dk, "1", { expirationTtl: 86400 }); } // keyword comments -> one private reply opens the DM
+      if (ch.value?.id && !(await claimOnce(env, `dup:c:${ch.field}:${ch.value.id}`))) continue; // keyword comments -> one private reply opens the DM
       if (ch.field !== "comments" || !ch.value?.text) continue;
       const who = ch.value.from?.username || ch.value.from?.id || "?";
       await log(env, `comment from @${who}${ch.value.parent_id ? " (reply in thread)" : ""}: ${ch.value.text.slice(0, 60)}`);
@@ -950,6 +991,7 @@ async function handleWebhook(env, body) {
         await kvPut(env, mk, meta);
       }
       const kw = m[1].toUpperCase();
+      if (ch.value.from?.id && !(await claimOnce(env, `kwc:${ch.value.from.id}:${ch.value.media?.id}:${kw}`, 86400))) { await log(env, `@${who} repeated ${kw} on the same post: answered once`); continue; }
       try {
         // Until Meta lets the app read incoming DMs (flag dm_inbound), the one private reply carries the whole resource + the callback form.
         const inbound = await env.STATE.get("dm_inbound");
@@ -965,6 +1007,7 @@ async function handleWebhook(env, body) {
         try { await graph(env, `${ch.value.id}/replies`, { message: PUBLIC_DONE[Math.floor(Math.random() * PUBLIC_DONE.length)] }); } catch (e3) { await log(env, `public note failed: ${e3.message}`); }
       }
       catch (e) {   // Instagram refuses some private replies (e.g. replies inside a thread): answer publicly and invite a DM
+        if (/already has a reply/i.test(e.message)) { await log(env, `duplicate ${kw} comment event ignored (already answered)`); continue; }
         await log(env, `private reply failed, replying publicly: ${e.message}`);
         if (ch.value.from?.username) await env.STATE.put(`pk:${ch.value.from.username.toLowerCase()}`, kw, { expirationTtl: 7 * 86400 });
         try { await graph(env, `${ch.value.id}/replies`, { message: PUBLIC_REPLY }); await log(env, `public reply to ${m[1]} comment`); }
@@ -986,6 +1029,8 @@ const PUBLIC_DONE = [
 ];
 // Every other genuine comment gets one short public reply (AI, with fixed fallbacks). Spam gets none; emoji-only gets a fixed one.
 const CREPLY_CAP = 150;   // per IST day, well under Instagram's comment-spam limits
+const CREPLY_Q = ["Any doubt? 🙂 Type your question here, or comment the keyword from the post for our free guide.", "Ask away 😊 Write your question here or DM us, we'll answer."];
+const CREPLY_Q_ML = ["എന്ത് സംശയമാണ്? 🙂 ഇവിടെ ചോദിക്കൂ, അല്ലെങ്കിൽ post-ലെ keyword comment ചെയ്യൂ."];
 const CREPLY_EMOJI = ["🙌", "❤️ Thank you!", "😊🙏", "Thank you! 🙌"];
 const CREPLY_EN = ["Thank you! 🙌", "Glad this helped 😊 Comment the keyword from the post if you want our free guide.", "Thanks a lot! 🙏 DM us anytime if you need help.", "Appreciate it 😊 More tips coming every day!"];
 const CREPLY_ML = ["നന്ദി! 🙌", "വളരെ സന്തോഷം 😊 Free guide വേണമെങ്കിൽ post-ലെ keyword comment ചെയ്യൂ.", "Thank you! 🙏 എന്ത് സംശയവും DM ചെയ്യാം."];
@@ -994,7 +1039,9 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 function commentKind(text) {   // "spam" | "emoji" (emoji/punctuation/tags only) | "text"
   const t = String(text || "");
   if (/https?:\/\/|www\.|\b[a-z0-9-]+\.(com|in|net|org|ly|io|me|link|xyz)\b|promot|collab|follower|onlyfans|crypto|bitcoin|forex|giveaway|earn (money|\$|₹)|check (my|our) (page|profile|bio)|dm (me|us) for/i.test(t)) return "spam";
-  return /^[\p{P}\p{S}\p{Extended_Pictographic}\p{M}\s\u200c\u200d\ufe0f]*$/u.test(t.replace(/@[\w.]+/g, "")) ? "emoji" : "text";
+  const bare = t.replace(/@[\w.]+/g, "");
+  if (!/^[\p{P}\p{S}\p{Extended_Pictographic}\p{M}\s\u200c\u200d\ufe0f]*$/u.test(bare)) return "text";
+  return /[?？¿🤔]/u.test(bare) ? "question" : "emoji";
 }
 function cleanReply(s) {   // sanitise AI output; "" when unusable so the caller falls back
   let t = String(s || "").replace(/^\s*(reply|response|answer)\s*:\s*/i, "").replace(/["“”«»]/g, "").replace(/^['‘’`\s]+|['‘’`\s]+$/g, "").replace(/@[\w.]+/g, "").replace(/\s+/g, " ").trim();
@@ -1009,7 +1056,7 @@ async function commentReply(env, c, item) {   // c = webhook comment value; neve
   const uk = `cru:${IST().toISOString().slice(0, 10)}:${c.from?.id || c.from?.username || "?"}`; const un = +(await env.STATE.get(uk) || 0);
   if (un >= 2) return;   // at most 2 replies per person per day, so a "thanks" exchange can't go back and forth
   const ml = /[\u0D00-\u0D7F]/.test(c.text);
-  let msg = kind === "emoji" ? pick(CREPLY_EMOJI) : "";
+  let msg = kind === "emoji" ? pick(CREPLY_EMOJI) : kind === "question" ? pick(ml ? CREPLY_Q_ML : CREPLY_Q) : "";
   if (!msg) {
     let hook = "", point = "", kwBase = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); point = it?.point || ""; kwBase = it?.base || ""; } catch (e0) {}
     try { const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: CREPLY_SYS },
@@ -1161,6 +1208,7 @@ export default {
         try { await postKind(env, retry.what, retry.topic || "co"); await log(env, `retry of ${retry.what} succeeded`); }
         catch (e) { throw new Error(`${retry.what} retry also failed: ${e.message}`); }
       }
+      if ([11, 16, 20].includes(h) && mi === 13 && !(await env.STATE.get(`fud:${day}:${h}`))) { await env.STATE.put(`fud:${day}:${h}`, "1", { expirationTtl: 172800 }); try { await followupDigest(env); } catch (eF) { await log(env, `ERROR follow-up list: ${String(eF.message).slice(0, 90)}`); } }
       try { await processNudges(env); } catch (eN) { await log(env, `ERROR check-ins: ${String(eN.message).slice(0, 90)}`); }
       if (!snapRun && mi % 10 === 7) { try { await backfillLeadAlerts(env); } catch (eB) { await log(env, `ERROR lead alert backfill: ${String(eB.message).slice(0, 90)}`); } }   // every 10 min, at most 2 alerts per run
       if (snapRun) await snapshotTick(env, day);
