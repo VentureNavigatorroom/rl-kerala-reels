@@ -53,8 +53,33 @@ ACR = re.compile(r"(?<![A-Za-z])([A-Z]{2,6})(?![a-z])")
 from speak_ml import spoken   # numbers -> Malayalam words, English words -> Malayalam spelling, acronyms letter by letter
 HAS_ACR = lambda t: bool(ACR.search(t)) and any(w not in AS_WORD for w in ACR.findall(t))
 
+PAUSE = {".": 0.38, "?": 0.48, "!": 0.45}   # seconds of silence after a sentence (owner, 23 Nov: full stops and questions ran together)
+ABBR = {"ഡോ.", "Dr.", "Pvt.", "Ltd.", "Mr.", "Mrs.", "Ms.", "Rs.", "No.", "St.", "Co.", "Sr.", "Jr.", "vs."}
+def sentences(text):
+    """Split at . ? ! followed by a space, but not after short abbreviations (ഡോ., Pvt.) or inside numbers (1.5)."""
+    parts, cur = [], ""
+    for piece in re.split(r"(?<=[.?!])\s+", text.strip()):
+        cur = (cur + " " + piece).strip() if cur else piece
+        if cur[-1:] in ".?!" and cur.split()[-1] not in ABBR: parts.append(cur); cur = ""
+    if cur: parts.append(cur)
+    return parts or [text]
+
 def say(text, voice):
-    text = spoken(text)
+    """One line of dialogue. Each sentence is spoken on its own (so a question sounds like a question) and joined with a real pause."""
+    sents = [spoken(x) for x in sentences(text)]
+    if len(sents) == 1: return _say(sents[0], voice)
+    key = hashlib.sha1(f"{voice}|{VOICES[voice]}|{'|'.join(sents)}|p1".encode()).hexdigest()[:16]
+    out = f"{CACHE}/{key}.wav"
+    if os.path.exists(out): return out
+    import numpy as np, soundfile as sf
+    chunks, sr = [], None
+    for t in sents:
+        a, sr = sf.read(_say(t, voice), dtype="float32")
+        chunks += [a, np.zeros(int(sr * PAUSE.get(t[-1:], 0.3)), np.float32)]
+    sf.write(out + ".tmp.wav", np.concatenate(chunks[:-1]), sr); os.replace(out + ".tmp.wav", out)
+    return out
+
+def _say(text, voice):
     key = hashlib.sha1(f"{voice}|{VOICES[voice]}|{text}".encode()).hexdigest()[:16]
     out = f"{CACHE}/{key}.wav"
     if os.path.exists(out): return out
