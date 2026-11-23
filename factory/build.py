@@ -117,7 +117,8 @@ def pick(bank, man, n):
     fails = man.get("failed", {})
     todo = [s for s in bank if s["id"] not in built and fails.get(s["id"], 0) < 2]   # skip scripts that failed twice
     w = json.load(open(f"{LIB}/weights.json")) if os.path.exists(f"{LIB}/weights.json") else {}
-    kw = w.get("kind", {"duo3d": 0.45, "chat": 0.35, "list": 0.2}); sw = w.get("segment", {})
+    kw = {"toon": 0.4, **w.get("kind", {"duo3d": 0.45, "chat": 0.35, "list": 0.2})};   # toon: 2D story series, A/B test from 23 Nov
+    sw = w.get("segment", {})
     out, last_kind, last_seg = [], None, None
     for _ in range(n):
         cand = [s for s in todo if s not in out]
@@ -203,14 +204,22 @@ def place(s, man):
     import duo3d
     s = dict(s); home = s.get("scene") or "teashop"
     if s.get("scene_lock") or home not in duo3d.GROUPS:
-        return s
+        return pick_look(dict(s, scene=home), man)
     if not s.get("names"): s["names"] = duo3d.SCENES[home]["names"]       # dialogue mentions these names
     # only places whose drawn people match the script's names (a woman's name never lands on a man with a moustache)
     opts = [x for x in duo3d.GROUPS[home] if x in duo3d.SCENES and duo3d.available(x) and duo3d.fits(x, s["names"])] or [home]
     hist = [i.get("scene") for i in sorted(man["items"], key=lambda i: i.get("built", 0))]
     def last(x): return max([k for k, v in enumerate(hist) if v == x], default=-1)
     opts.sort(key=lambda x: (last(x), abs(hash(s["id"] + x)) % 97))
-    s["scene"] = opts[0]; return s
+    s["scene"] = opts[0]; return pick_look(s, man)
+
+def pick_look(s, man):
+    """Cast look for the chosen place: the one used least recently there, so the same faces don't repeat."""
+    import duo3d
+    if "look" in s: return s
+    hist = [(i.get("scene"), i.get("look", 0)) for i in sorted(man["items"], key=lambda i: i.get("built", 0))]
+    def last(n): return max([k for k, v in enumerate(hist) if v == (s["scene"], n)], default=-1)
+    s["look"] = sorted(duo3d.looks(s["scene"]), key=lambda n: (last(n), abs(hash(s["id"] + str(n))) % 7))[0]; return s
 
 def drop_orphans(man, byid):
     """Unposted reels whose script was deleted from the bank (e.g. a removed near-duplicate) must not be posted:
@@ -299,7 +308,7 @@ def main():
     t0 = time.time()
     for s in todo:
         if time.time() - t0 > budget: print("time budget reached"); break
-        mod = {"duo3d": "duo3d", "chat": "chat", "list": "listreel"}[s["kind"]]
+        mod = {"duo3d": "duo3d", "chat": "chat", "list": "listreel", "toon": "toon"}[s["kind"]]
         build = importlib.import_module(mod).build
         if s["kind"] == "duo3d": s = place(s, man)
         s = with_kw(s, man)
@@ -313,7 +322,7 @@ def main():
         man.setdefault("stories", [])
         man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"], topic=topic_of(s))]
         cap = captions.caption(s, s["hook"].replace("\n", " "))
-        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], topic=topic_of(s), theme=s.get("theme"), expires=s.get("expires"), source=s.get("source"), kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
+        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], topic=topic_of(s), theme=s.get("theme"), expires=s.get("expires"), source=s.get("source"), kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), look=s.get("look", 0), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
             video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)

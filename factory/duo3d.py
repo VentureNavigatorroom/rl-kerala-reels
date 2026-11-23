@@ -40,10 +40,15 @@ def available(scene):
     d = f"{ROOT}/assets/stills" + ("/" + SCENES[scene]["dir"] if SCENES[scene]["dir"] else "")
     return (os.path.exists(f"{d}/wide_rest.png") or os.path.exists(f"{d}/wide_rest.jpg")) and os.path.exists(f"{d}/V_v.png")
 _CACHE = {}
-def assets(scene="teashop"):
+def looks(scene):
+    """Cast looks rendered for this location: 0 = the original pair, 1-3 = extra looks (same genders, new faces/clothes)."""
     import os
-    if scene not in _CACHE:
+    return [0] + [n for n in (1, 2, 3) if os.path.exists(f"{ROOT}/assets/stills/looks/{scene}/{n}/V_v.png")]
+def assets(scene="teashop", look=0):
+    import os
+    if (scene, look) not in _CACHE:
         ST = f"{ROOT}/assets/stills" + ("/" + SCENES[scene]["dir"] if SCENES[scene]["dir"] else "")
+        if look: ST = f"{ROOT}/assets/stills/looks/{scene}/{look}"
         ov = json.load(open(f"{ST}/ov.json")) if os.path.exists(f"{ST}/ov.json") else None
         def load(cam, tag):
             rp = f"{ST}/{cam}_rest.jpg" if os.path.exists(f"{ST}/{cam}_rest.jpg") else f"{ST}/{cam}_rest.png"
@@ -59,12 +64,12 @@ def assets(scene="teashop"):
             fg = {c: Image.open(f"{ST}/{c}_fgmask.png").convert("RGBA").getchannel("A") for c in ("wide", "A", "V")}
             spr = {(c, n): Image.open(f"{ST}/{c}_{n}.png").convert("RGBA") for c in ("wide", "A", "V") for n in ("auto", "cyc")}
         else: mov, fg, spr = None, None, None
-        _CACHE[scene] = (img, mov, fg, spr)
-    return _CACHE[scene]
+        _CACHE[(scene, look)] = (img, mov, fg, spr)
+    return _CACHE[(scene, look)]
 
 def build(s, out, seed=0):
     from voice import voice_for
-    scene = s.get("scene", "teashop"); IMG, MOV, FG, SPR = assets(scene)
+    scene = s.get("scene", "teashop"); IMG, MOV, FG, SPR = assets(scene, s.get("look", 0))
     nm = s.get("names") or SCENES[scene]["names"]
     if not fits(scene, nm): raise ValueError(f"names {nm} do not match the people drawn in {scene} {SCENES[scene]['names']}")
     NAMES = {"A": (nm[0], (255, 196, 40)), "V": (nm[1], (120, 190, 255))}

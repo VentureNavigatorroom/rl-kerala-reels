@@ -5,6 +5,10 @@ def duo(id, segment, bucket, scene, hook, lines, end, cta, names=None, sound=Non
     d = dict(id=id, kind="duo3d", scene=scene, names=names, segment=segment, bucket=bucket, hook=hook, lines=lines, end=end, cta=cta, **kw)
     if sound: d["sound"] = sound
     S.append(d)
+def toon(id, segment, bucket, cast, hook, lines, card, rules, end, cta, **kw):
+    """2D cartoon story-series reel: cast {"A": name | (name, type)}, lines [(key, text)], card {title, rows [(label, value)], total},
+    rules [text] spoken by kw mentor (default "B"), optional series / ep / next / scene (teashop, busstop, road, home, office, shop)."""
+    S.append(dict(id=id, kind="toon", segment=segment, bucket=bucket, cast=cast, hook=hook, lines=lines, card=card, rules=rules, end=end, cta=cta, **kw))
 def chat(id, segment, bucket, hook, names, lines, end, cta, **kw): S.append(dict(id=id, kind="chat", segment=segment, bucket=bucket, hook=hook, names=names, lines=lines, end=end, cta=cta, **kw))
 def lst(id, segment, bucket, hook, items, end, cta, **kw): S.append(dict(id=id, kind="list", segment=segment, bucket=bucket, hook=hook, items=items, end=end, cta=cta, **kw))
 def car(id, segment, tag, hook, slides, end, cta, **kw): C.append(dict(id=id, kind="carousel", segment=segment, tag=tag, hook=hook, slides=slides, end=end, cta=cta, **kw))

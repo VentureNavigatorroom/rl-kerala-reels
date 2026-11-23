@@ -59,3 +59,16 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - Opportunity: a new government scheme / grant call / programme window: what it is, who is eligible, the official deadline. Never promise selection, funding or returns; never investment advice.
 - Corrections: if a posted item was wrong or is overridden, post a correction reel (first in the news queue), add a correction comment on the wrong reel (/ops/correct), fix any unposted scripts repeating it, tell the owner. Never delete the wrong reel. Instagram's API cannot edit a published caption; the owner can edit it by hand.
 - Topics never clash: a news item that changes a fact updates FACTS_ in topics.py in the same commit, so tips and normal reels written afterwards use the new fact.
+
+## Comments, DMs and follow-ups (owner, 23 Nov)
+- **One answer per keyword comment:** the worker claims each comment / DM id before answering (claimOnce), ignores Instagram's "already has a reply" duplicate, and posts only ONE public reply under a keyword comment (no 3 h public check-in any more).
+- **Keyword typed again in DM** after the guide was sent from a comment: no second copy, a short "sent above 👆" with the next-step buttons.
+- **Commenters who never open the DM:** the API can't message them again. They go to KV `fu_queue`; at 11:13, 16:13 and 20:13 IST the owner gets a Discord list with a tap-to-open chat link and a ready message to send by hand. Ask the owner for the wording that worked for them and put it in FU_TEXT.
+- **Keyword matching** ignores punctuation, spaced / dotted letters ("G.S.T", "s t a r t") and fancy fonts; a "?"-only comment gets a question reply, not "thank you".
+
+## New reel type: toon (2D cartoon story series), A/B test from 23 Nov
+- factory/toon.py; scripts with `toon(...)` in bank/<topic>/batch_toonNN.py (bank/batch_toonNN.py for co). Ids: prefix + "x" (gx, tmx, rcx, fsx, iex, ndx, cfx, fpx, qvx, yx, vx, ux, mx; co kx).
+- Flow: hook + 2-3 person story (max 6 lines) -> breakdown card (max 4 rows + total) -> mentor's Rule #1-3 -> episode ribbon + keyword end card. One recurring hero per topic (series + ep + next), mentor usually അപ്പൂപ്പൻ / അമ്മൂമ്മ.
+- The cast is NOT fixed: each reel draws types (young man/woman, uncle, auntie, student, NRI, shopkeeper, pro woman) with random skin, clothes, hair and specs, matched to the names' gender; backgrounds teashop / busstop / road / home / office / shop.
+- Build weight 0.4 (build.pick); the optimiser's `kind` weights compare toon vs duo3d/chat/list. Judge after 10+ posted toon reels per the usual reach / watch time / keyword-comment rules; write more episodes for the winning style.
+- 3D duo reels also vary now: rooms.py CAST_LOOK 1-3 renders extra looks per location (assets/stills/looks/<scene>/<n>, same genders, new age / hair / specs / beard / clothes / skin); build.pick_look rotates them.

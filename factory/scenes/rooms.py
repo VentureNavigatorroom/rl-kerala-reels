@@ -6,7 +6,8 @@ import numpy as np
 SCENE = sys.argv[1]
 import os as _os
 D = _os.path.dirname(_os.path.abspath(__file__)); ROOTDIR = _os.path.dirname(_os.path.dirname(D))
-_OUT = _os.environ.get("SCENE_OUT") or f"{ROOTDIR}/assets/stills/{SCENE}"
+LOOK = int(_os.environ.get("CAST_LOOK", "0"))   # 0 = the original pair; 1-3 = extra cast looks (assets/stills/looks/<scene>/<n>)
+_OUT = _os.environ.get("SCENE_OUT") or (f"{ROOTDIR}/assets/stills/looks/{SCENE}/{LOOK}" if LOOK else f"{ROOTDIR}/assets/stills/{SCENE}")
 exec(open(f"{D}/helpers.py").read().replace('OUT = "/home/claude/sample_work/stills"', f'OUT = {_OUT!r}'))
 import os; os.makedirs(OUT, exist_ok=True)
 exec(open(f"{D}/charfn.py").read())
@@ -520,8 +521,22 @@ elif SCENE == "mall":   # Gulf mall corridor with shopfronts
     plants(((-1.8, 2.8), (1.8, 2.8))); person(4.2, 3.0, 200, (0.95, 0.95, 0.95), (0.95, 0.95, 0.95))
     table_and_benches(top=((0.95, 0.95, 0.95), 0.15), leg=(0.7, 0.6, 0.4), chair_col=(0.3, 0.3, 0.33)); desk_items("cups")
     A = ((0.62, 0.42, 0.28), (0.4, 0.3, 0.55), (0.25, 0.25, 0.3)); V = ((0.52, 0.34, 0.22), (0.85, 0.85, 0.8), (0.3, 0.3, 0.35)); SUN = (55, 10, 170, 2.0); SKY = ((0.95, 0.95, 1.0), 1.1)
-A_c, A_o = character((-1.12, 0.05, 0), -38, A[0], A[1], A[2], "A" if SCENE in ("office", "home", "hospital", "canteen", "beach", "bank", "ferry", "metro", "fishmarket", "textile", "weddinghall", "classroom", "library", "gym", "salon", "mobileshop", "bakery", "hotellobby", "rooftop", "balcony", "kitchen", "railway", "hostel", "garage", "pharmacy", "tailor", "homestay", "munnar", "handloom", "park", "juiceshop", "foodcourt", "akshaya", "photocopy", "courier", "gulfoffice", "mall") else "V")
-V_c, V_o = character((1.12, 0.05, 0), 218, V[0], V[1], V[2], "V")
+LA = LV = None
+if LOOK:   # same genders as the original pair (the dialogue names depend on it); new age, hair, clothes, skin
+    import random as _r; R = _r.Random(f"{SCENE}:{LOOK}")
+    SKINS = [(0.72, 0.5, 0.35), (0.62, 0.42, 0.28), (0.52, 0.34, 0.22), (0.44, 0.28, 0.18), (0.66, 0.45, 0.3)]
+    TOPS = [(0.95, 0.95, 0.95), (0.2, 0.45, 0.8), (0.85, 0.25, 0.3), (0.95, 0.75, 0.2), (0.3, 0.6, 0.45), (0.55, 0.35, 0.6), (0.9, 0.55, 0.35), (0.25, 0.25, 0.3), (0.6, 0.8, 0.95)]
+    BOTS = [(0.95, 0.95, 0.92), (0.25, 0.25, 0.3), (0.2, 0.3, 0.55), (0.4, 0.3, 0.22), (0.3, 0.3, 0.32)]
+    MAN = [dict(grey=True, specs=True), dict(bald=True, grey=True), dict(clean=True, pants=True), dict(beard=True, pants=True), dict(specs=True, pants=True), dict(beard=True), dict(clean=True)]
+    WOMAN = [dict(braid=True), dict(grey=True, specs=True), dict(dupatta=(0.95, 0.4, 0.5)), dict(braid=True, dupatta=(0.3, 0.6, 0.9)), dict(specs=True, trim=(0.95, 0.8, 0.2)), dict(dupatta=(0.95, 0.85, 0.3), trim=(0.2, 0.5, 0.4))]
+    _ka = "A" if SCENE in ("office", "home", "hospital", "canteen", "beach", "bank", "ferry", "metro", "fishmarket", "textile", "weddinghall", "classroom", "library", "gym", "salon", "mobileshop", "bakery", "hotellobby", "rooftop", "balcony", "kitchen", "railway", "hostel", "garage", "pharmacy", "tailor", "homestay", "munnar", "handloom", "park", "juiceshop", "foodcourt", "akshaya", "photocopy", "courier", "gulfoffice", "mall") else "V"
+    sk = R.sample(SKINS, 2); tp = R.sample(TOPS, 2)
+    LA = dict(R.choice(WOMAN if _ka == "A" else MAN)); LV = dict(R.choice(MAN))
+    if LA == LV: LV = dict(R.choice([m for m in MAN if m != LA]))
+    A = (sk[0], tp[0], R.choice(BOTS)); V = (sk[1], tp[1], (0.25, 0.25, 0.3) if LV.get("pants") else R.choice(BOTS))
+    if _ka == "V" and LA.get("pants"): A = (A[0], A[1], (0.25, 0.25, 0.3))
+A_c, A_o = character((-1.12, 0.05, 0), -38, A[0], A[1], A[2], "A" if SCENE in ("office", "home", "hospital", "canteen", "beach", "bank", "ferry", "metro", "fishmarket", "textile", "weddinghall", "classroom", "library", "gym", "salon", "mobileshop", "bakery", "hotellobby", "rooftop", "balcony", "kitchen", "railway", "hostel", "garage", "pharmacy", "tailor", "homestay", "munnar", "handloom", "park", "juiceshop", "foodcourt", "akshaya", "photocopy", "courier", "gulfoffice", "mall") else "V", look=LA)
+V_c, V_o = character((1.12, 0.05, 0), 218, V[0], V[1], V[2], "V", look=LV)
 
 bpy.ops.object.light_add(type='SUN'); sun = bpy.context.object; sun.rotation_euler = (math.radians(SUN[0]), math.radians(SUN[1]), math.radians(SUN[2]))
 sun.data.energy = SUN[3]; sun.data.color = (1, 0.95, 0.88); sun.data.angle = math.radians(5)

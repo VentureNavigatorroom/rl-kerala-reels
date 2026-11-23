@@ -40,6 +40,19 @@ for s in banks["reels"]:
         for who, cam, txt in s["lines"]:
             if who not in ("A", "V") or cam not in ("A", "V", "wide"): err(f"{sid}: bad speaker/camera {who}/{cam}")
             elif cam not in (who, "wide"): err(f"{sid}: camera {cam} on a line spoken by {who}: close-ups exist only of the speaker (stills {cam}_{who.lower()} missing); use cam '{who}' or 'wide'")
+    elif s["kind"] == "toon":
+        import toon as _toon
+        for k, v in s["cast"].items():
+            n, ty = (v if isinstance(v, (tuple, list)) else (v, None))
+            if not voice.gender_known(n): err(f"{sid}: toon name {n} is in neither FEMALE nor MALE in voice.py")
+            if ty and ty not in _toon.TYPES: err(f"{sid}: toon type {ty} unknown (toon.TYPES)")
+        for who, txt in s["lines"]:
+            if who not in s["cast"]: err(f"{sid}: toon speaker {who} not in cast")
+            if len(txt) > 130: err(f"{sid}: toon line over 130 chars")
+        if len(s["lines"]) > 6: err(f"{sid}: toon story over 6 lines")
+        if s.get("mentor", "B") not in s["cast"]: err(f"{sid}: mentor not in cast")
+        if not (1 <= len(s["rules"]) <= 3): err(f"{sid}: toon needs 1-3 rules")
+        if len(s["card"]["rows"]) > 4: err(f"{sid}: toon card over 4 rows")
     elif s["kind"] == "chat":
         for n in s["names"]:
             if not voice.gender_known(n): err(f"{sid}: chat name {n} is in neither FEMALE nor MALE in voice.py")

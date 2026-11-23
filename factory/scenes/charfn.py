@@ -1,6 +1,8 @@
 # ---------- characters ----------
-def character(loc, rotz, skin, top, bottom, kind):
-    e = empty(loc, rotz); P = dict(parent=e); H = BLACK
+def character(loc, rotz, skin, top, bottom, kind, look=None):
+    # look (optional, for the extra cast looks): grey hair, bald, clean-shaven, beard, specs, long braid, dupatta, shirt over pants
+    L = look or {}
+    e = empty(loc, rotz); P = dict(parent=e); H = (0.72, 0.72, 0.7) if L.get("grey") else BLACK
     box((0.5, 0.4, 0.2), (0.2, 0, 0.6), bottom, **P); box((0.17, 0.38, 0.5), (0.42, 0, 0.28), bottom, **P)
     box((0.26, 0.36, 0.07), (0.48, 0, 0.035), (0.3, 0.2, 0.15), **P)
     cyl(0.27, 0.62, (0, 0, 1.0), top, v=8, r2=0.2, scale=(1, 1.3, 1), **P)
@@ -19,11 +21,23 @@ def character(loc, rotz, skin, top, bottom, kind):
         ico(0.262, (-0.05, 0, 1.66), H, sub=2, scale=(1, 1.03, 1), **P); ico(0.12, (-0.27, 0, 1.78), H, sub=1, **P)
         ico(0.014, (0.26, 0, 1.7), (0.8, 0.1, 0.1), **P)
         for s in (-1, 1): ico(0.022, (0.02, s * 0.25, 1.55), (0.95, 0.75, 0.2), **P)
-        box((0.03, 0.2, 0.34), (0.245, 0, 1.08), (0.85, 0.3, 0.2), rot=(0, 7, 0), **P)              # kurta placket
+        box((0.03, 0.2, 0.34), (0.245, 0, 1.08), L.get("trim", (0.85, 0.3, 0.2)), rot=(0, 7, 0), **P)              # kurta placket
+        if L.get("braid"): box((0.08, 0.1, 0.55), (-0.27, 0, 1.4), H, rot=(0, 12, 0), **P)
+        if L.get("dupatta"): box((0.05, 0.16, 0.62), (0.18, -0.2, 1.08), L["dupatta"], rot=(28, 6, 0), **P)
     else:
-        ico(0.258, (-0.045, 0, 1.675), H, sub=2, scale=(1, 1.0, 0.92), **P)
-        box((0.025, 0.15, 0.035), (0.25, 0, 1.522), H, **P)
-        box((0.18, 0.39, 0.035), (0.42, 0, 0.07), (0.85, 0.68, 0.2), **P)                           # kasavu border on the mundu
+        if L.get("bald"):
+            for s in (-1, 1): ico(0.1, (-0.08, s * 0.2, 1.62), H, sub=1, scale=(1.2, 0.6, 0.8), **P)       # hair only around the sides
+            ico(0.11, (-0.2, 0, 1.6), H, sub=1, scale=(0.8, 1.6, 0.9), **P)
+        else: ico(0.258, (-0.045, 0, 1.675), H, sub=2, scale=(1, 1.0, 0.92), **P)
+        if not L.get("clean"): box((0.025, 0.15, 0.035), (0.25, 0, 1.522), H, **P)
+        if L.get("beard"): box((0.1, 0.34, 0.12), (0.2, 0, 1.45), H, **P); box((0.08, 0.2, 0.08), (0.22, 0, 1.39), H, **P)
+        if not L.get("pants"): box((0.18, 0.39, 0.035), (0.42, 0, 0.07), (0.85, 0.68, 0.2), **P)       # kasavu border on the mundu
         for z in (1.2, 1.08, 0.96): ico(0.016, (0.262, 0, z), WHITE, **P)
+    if L.get("specs"):
+        F = (0.12, 0.1, 0.1)
+        for s in (-1, 1):
+            box((0.014, 0.11, 0.012), (0.268, s * 0.095, 1.675), F, **P); box((0.014, 0.11, 0.012), (0.268, s * 0.095, 1.605), F, **P)
+            box((0.014, 0.012, 0.07), (0.268, s * 0.15, 1.64), F, **P); box((0.2, 0.012, 0.012), (0.17, s * 0.245, 1.66), F, **P)
+        box((0.014, 0.08, 0.012), (0.268, 0, 1.66), F, **P)
     return mc, mo
 

@@ -19,8 +19,11 @@ jobs:
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import re, os, json
           s = open("factory/scenes/rooms.py").read()
-          todo = [x for x in re.findall(r'SCENE == "(\w+)"', s) if not os.path.exists(f"assets/stills/{x}/V_v.png")]
-          print("todo=" + json.dumps(todo))
+          names = re.findall(r'SCENE == "(\w+)"', s)
+          todo = [x for x in names if not os.path.exists(f"assets/stills/{x}/V_v.png")]
+          # extra cast looks (1-3) for every location, so the same two people don't appear in every reel
+          todo += [f"{x}:{n}" for x in names for n in (1, 2, 3) if not os.path.exists(f"assets/stills/looks/{x}/{n}/V_v.png")]
+          print("todo=" + json.dumps(todo[:250]))
           PY
   render:
     needs: plan
@@ -36,9 +39,14 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.13" }
       - run: pip install bpy==5.3.0 pillow numpy
-      - run: THREADS=$(nproc) python factory/scenes/rooms.py ${{ matrix.scene }} && python factory/scenes/pack.py assets/stills/${{ matrix.scene }}
+      - id: n
+        run: |
+          M="${{ matrix.scene }}"; SC="${M%%:*}"; LK=""; [ "$M" != "$SC" ] && LK="${M#*:}"
+          if [ -n "$LK" ]; then D="assets/stills/looks/$SC/$LK"; else D="assets/stills/$SC"; fi
+          echo "sc=$SC" >> $GITHUB_OUTPUT; echo "lk=${LK:-0}" >> $GITHUB_OUTPUT; echo "dir=$D" >> $GITHUB_OUTPUT; echo "art=${M/:/-}" >> $GITHUB_OUTPUT
+      - run: CAST_LOOK=${{ steps.n.outputs.lk }} THREADS=$(nproc) python factory/scenes/rooms.py ${{ steps.n.outputs.sc }} && python factory/scenes/pack.py ${{ steps.n.outputs.dir }}
       - uses: actions/upload-artifact@v4
-        with: { name: "scene-${{ matrix.scene }}", path: "assets/stills/${{ matrix.scene }}" }
+        with: { name: "scene-${{ steps.n.outputs.art }}", path: "${{ steps.n.outputs.dir }}" }
   commit:
     needs: render
     if: always() && needs.render.result != 'skipped'
@@ -48,6 +56,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with: { path: /tmp/scenes, pattern: "scene-*" }
       - run: |
-          for d in /tmp/scenes/scene-*; do n=${d#/tmp/scenes/scene-}; mkdir -p assets/stills/$n; cp -r $d/* assets/stills/$n/; done
+          for d in /tmp/scenes/scene-*; do n=${d#/tmp/scenes/scene-}
+            case "$n" in *-[123]) t="assets/stills/looks/${n%-*}/${n##*-}";; *) t="assets/stills/$n";; esac
+            mkdir -p "$t"; cp -r $d/* "$t/"; done
           git config user.name "rl-kerala-bot"; git config user.email "bot@users.noreply.github.com"
-          git add assets/stills && git commit -m "Rendered new 3D locations" && git pull --rebase && git push || echo "nothing to commit"
+          git add assets/stills && git commit -m "Rendered new 3D locations / cast looks" && git pull --rebase && git push || echo "nothing to commit"
