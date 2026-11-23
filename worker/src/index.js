@@ -289,7 +289,9 @@ async function postReel(env, topic = "co", want = "reel") {
   if (avail.length < 35 && IST().getUTCHours() === 7 && IST().getUTCMinutes() < 30) await alertOnce(env, "lowreel_" + topic, `⚠️ [${L}] Reel backup is low: ${avail.length} left. The refill task writes more scripts automatically.`);
   const recent = Object.values(posted).filter(p => topicOf(p) === topic).sort((a, b) => b.t - a.t).slice(0, 2);
   const score = i => (w?.kind?.[i.kind] ?? 1) * (w?.segment?.[i.segment] ?? 1) * (recent.some(r => r.kind === i.kind) ? 0.5 : 1) * (0.8 + Math.random() * 0.4);
-  const it = avail.sort((a, b) => score(b) - score(a))[0];
+  // A/B start (23 Nov): a topic's first cartoon (toon) reel goes out at that topic's first reel slot after it is built
+  const firstToon = !Object.values(posted).some(p => p.kind === "toon" && topicOf(p) === topic) && avail.find(i => i.kind === "toon");
+  const it = firstToon || avail.sort((a, b) => score(b) - score(a))[0];
   return publishReel(env, it, topic, m, posted);
 }
 async function publishReel(env, it, topic, m, posted) {
