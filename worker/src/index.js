@@ -731,7 +731,7 @@ async function bumpPost(env, item, field, n = 1) {        // live engagement cou
 //                       | { c: comment id, t: time, u, f }   (commented, got our DM, never replied) , _s: today's counters }
 // Instagram only allows a DM within 24 h of the person's last message, so DM check-ins go out 2 h, 9 h and 22 h after it.
 // Someone who only commented cannot be DM'd a second time, so they get one public reply under their comment instead.
-const NUDGE_AT = [2, 9, 22].map(h => h * 3600e3), NUDGE_GAP = 3 * 3600e3, NUDGE_MAX_TOTAL = 6, NUDGE_COMMENT_AT = 3 * 3600e3;
+const NUDGE_AT = [2, 9, 22].map(h => h * 3600e3), NUDGE_GAP = 3 * 3600e3, NUDGE_MAX_TOTAL = 6, NUDGE_COMMENT_AT = 1 * 3600e3;
 const NUDGE_OPEN = [
   "Hey, just checking in 👋 We were halfway through your {noun} chat and didn't want to leave you hanging.",
   "Hi again 🙂 No rush at all. One quick answer and we can take this forward for you.",
@@ -784,7 +784,7 @@ async function processNudges(env, force = null) {
         // so the owner gets them in the follow-up list with a ready message to send by hand (owner's 23 Nov finding: that works)
         const fq = await kv(env, "fu_queue", []); const tpc = metas.find(m => m?.topic)?.topic || "co";
         if (e.u && !fq.some(x => x.u === e.u)) { fq.push({ u: e.u, topic: TOPICS[tpc] ? tpc : "co", t: e.t }); await kvPut(env, "fu_queue", fq.slice(-60)); }
-        stats.push("fuq"); out.push(`${id}: follow-up list`); await log(env, `follow-up list: @${e.u || id} (commented, no DM reply in 3 h)`);
+        stats.push("fuq"); out.push(`${id}: follow-up list`); await log(env, `follow-up list: @${e.u || id} (commented, no DM reply in 1 h)`);
         continue;
       }
       const age = now - e.li;
@@ -856,7 +856,7 @@ async function pollInbox(env) {
     if (Date.parse(c.updated_time) < since - 120e3) continue;
     for (const m of c.messages?.data || []) {
       if (!m.message || !m.from || m.from.id === env.IG_USER_ID || (m.from.username || "").toLowerCase() === OWN_USERNAME) continue;
-      if (Date.parse(m.created_time) < since - 120e3 || Date.now() - Date.parse(m.created_time) < 70e3) continue;   // newer ones belong to the webhook (Meta often sends none: then the poll answers ~1 min later)
+      if (Date.parse(m.created_time) < since - 120e3 || Date.now() - Date.parse(m.created_time) < 25e3) continue;   // newer ones belong to the webhook (Meta often sends none: then the poll answers ~1 min later)
       if (await env.STATE.get(`dup:${m.id}`)) continue;
       evs.push({ t: Date.parse(m.created_time), ev: { sender: { id: m.from.id }, message: { mid: m.id, text: m.message } } });
     }
@@ -1212,7 +1212,7 @@ export default {
         try { await postKind(env, retry.what, retry.topic || "co"); await log(env, `retry of ${retry.what} succeeded`); }
         catch (e) { throw new Error(`${retry.what} retry also failed: ${e.message}`); }
       }
-      if ([11, 16, 20].includes(h) && mi === 13 && !(await env.STATE.get(`fud:${day}:${h}`))) { await env.STATE.put(`fud:${day}:${h}`, "1", { expirationTtl: 172800 }); try { await followupDigest(env); } catch (eF) { await log(env, `ERROR follow-up list: ${String(eF.message).slice(0, 90)}`); } }
+      if ([10, 12, 14, 16, 18, 20].includes(h) && mi === 13 && !(await env.STATE.get(`fud:${day}:${h}`))) { await env.STATE.put(`fud:${day}:${h}`, "1", { expirationTtl: 172800 }); try { await followupDigest(env); } catch (eF) { await log(env, `ERROR follow-up list: ${String(eF.message).slice(0, 90)}`); } }
       try { await processNudges(env); } catch (eN) { await log(env, `ERROR check-ins: ${String(eN.message).slice(0, 90)}`); }
       if (!snapRun && mi % 10 === 7) { try { await backfillLeadAlerts(env); } catch (eB) { await log(env, `ERROR lead alert backfill: ${String(eB.message).slice(0, 90)}`); } }   // every 10 min, at most 2 alerts per run
       if (snapRun) await snapshotTick(env, day);

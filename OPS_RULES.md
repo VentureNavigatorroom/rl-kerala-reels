@@ -63,7 +63,7 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 ## Comments, DMs and follow-ups (owner, 23 Nov)
 - **One answer per keyword comment:** the worker claims each comment / DM id before answering (claimOnce), ignores Instagram's "already has a reply" duplicate, and posts only ONE public reply under a keyword comment (no 3 h public check-in any more).
 - **Keyword typed again in DM** after the guide was sent from a comment: no second copy, a short "sent above 👆" with the next-step buttons.
-- **Commenters who never open the DM:** the API can't message them again. They go to KV `fu_queue`; at 11:13, 16:13 and 20:13 IST the owner gets a Discord list with a tap-to-open chat link and a ready message to send by hand. Ask the owner for the wording that worked for them and put it in FU_TEXT.
+- **Commenters who never open the DM:** the API can't message them again. They go to KV `fu_queue`; every 2 h (10:13-20:13 IST), 1 h after the comment, the owner gets a Discord list with a tap-to-open chat link and a ready message to send by hand. Ask the owner for the wording that worked for them and put it in FU_TEXT.
 - **Keyword matching** ignores punctuation, spaced / dotted letters ("G.S.T", "s t a r t") and fancy fonts; a "?"-only comment gets a question reply, not "thank you".
 
 ## New reel type: toon (2D cartoon story series), A/B test from 23 Nov
