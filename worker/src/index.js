@@ -814,10 +814,10 @@ async function processNudges(env, force = null) {
 }
 // Commenters who never opened our DM: Instagram only lets a person (not the API) message them again.
 // Three times a day the owner gets a Discord list: tap the link, paste the message, send. Their reply is picked up by the bot.
-const FU_TEXT = [
-  "Hi {u} 👋 Rejection List team here. You asked for our {noun} guide on Instagram and we sent it to your message requests. Did it reach you? Reply here and we'll help you with the next step 🙂",
-  "Hey {u} 🙂 Just checking: our {noun} guide went to your message requests (Instagram hides it sometimes). Shall we send it again here?",
-  "Hi {u}! You'd commented on our {noun} post. Any doubt we can clear for you? Reply here, happy to help 🙏",
+const FU_TEXT = [   // owner's own follow-ups that got people to reply (Business Suite, Nov 2026): short, personal, ask for the number
+  "Hi {u}, did you get our message about the {noun} guide? If not, please share your number. I'm Alan from the team.",
+  "Hi {u} 👋 Did you get any response from our team on {noun}? If not, please share your number and we'll call you. I'm Alan from the team.",
+  "Hi {u}, we couldn't connect with you. Can you send a number we can call you on? I'm Alan from the team.",
 ];
 async function followupDigest(env) {
   const fq = await kv(env, "fu_queue", []); if (!fq.length) return 0;
