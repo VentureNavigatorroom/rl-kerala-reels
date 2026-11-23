@@ -856,7 +856,7 @@ async function pollInbox(env) {
     if (Date.parse(c.updated_time) < since - 120e3) continue;
     for (const m of c.messages?.data || []) {
       if (!m.message || !m.from || m.from.id === env.IG_USER_ID || (m.from.username || "").toLowerCase() === OWN_USERNAME) continue;
-      if (Date.parse(m.created_time) < since - 120e3 || Date.now() - Date.parse(m.created_time) < 150e3) continue;   // newer ones belong to the webhook
+      if (Date.parse(m.created_time) < since - 120e3 || Date.now() - Date.parse(m.created_time) < 70e3) continue;   // newer ones belong to the webhook (Meta often sends none: then the poll answers ~1 min later)
       if (await env.STATE.get(`dup:${m.id}`)) continue;
       evs.push({ t: Date.parse(m.created_time), ev: { sender: { id: m.from.id }, message: { mid: m.id, text: m.message } } });
     }
