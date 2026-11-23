@@ -183,10 +183,13 @@ def build(s, out, seed=0):
         nm, kind = (v if isinstance(v, (tuple, list)) else (v, None))
         if not kind and k == s.get("mentor", "B" if "B" in cast else None):
             kind = "ammachi" if is_female(nm) else "elder"        # the mentor is the appooppan / ammachi
+        # a series keeps its people: the same name in the same series always looks the same; one-off reels vary
+        import hashlib
+        prng = np.random.default_rng(int(hashlib.md5(f"{s.get('series') or s['id']}|{nm}".encode()).hexdigest()[:8], 16))
         if not kind:
             pool = [t for t in (FEMALE_T if is_female(nm) else MALE_T) if t not in used and (t not in ("elder", "ammachi") or k == s.get("mentor"))]
-            kind = pool[rng.integers(len(pool))]
-        used.add(kind); people[k] = dict(name=nm, look=make_look(kind, rng))
+            kind = pool[prng.integers(len(pool))]
+        used.add(kind); people[k] = dict(name=nm, look=make_look(kind, prng))
     keys = list(cast)
     voice = {k: voice_for(people[k]["name"], i) for i, k in enumerate(keys)}
     for i, k in enumerate(keys[1:], 1):
