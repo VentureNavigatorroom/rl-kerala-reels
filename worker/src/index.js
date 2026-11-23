@@ -848,6 +848,10 @@ async function pollInbox(env) {
   try { j = await graph(env, `${env.IG_USER_ID}/conversations`, { platform: "instagram", limit: "10", fields: "updated_time,messages.limit(4){id,message,from,created_time}" }, "GET"); }
   catch (e) { await log(env, `ERROR inbox poll: ${e.message}`); return; }
   const evs = [];
+  if (new Date().getUTCMinutes() % 5 === 0 && new Date().getUTCSeconds() < 10) {   // health line every 5 min: what the poll can see
+    const top = (j.data || [])[0]; const m0 = top?.messages?.data?.[0];
+    await log(env, `inbox poll sees ${(j.data || []).length} chats; newest ${top?.updated_time || "-"} from @${m0?.from?.username || "?"}: ${String(m0?.message || "").slice(0, 30)}`);
+  }
   for (const c of j.data || []) {
     if (Date.parse(c.updated_time) < since - 120e3) continue;
     for (const m of c.messages?.data || []) {
