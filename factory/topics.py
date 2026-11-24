@@ -163,9 +163,14 @@ FACTS_ROC = """ROC (Pvt Ltd): AGM by 30 September; AOC-4 within 30 days of AGM; 
 director by 30 September; late fee Rs 100 per day per form, no cap; INC-20A within 180 days of incorporation; first
 auditor within 30 days; 3 years of non-filing can disqualify directors for 5 years and the company can be struck off;
 LLP: Form 11 by 30 May, Form 8 by 30 October; due even with zero business."""
-FACTS_FSSAI = """FSSAI: basic registration up to Rs 12 lakh turnover a year (home bakers too); state licence up to Rs 20 crore; central
-licence above that and for importers; 14-digit FSSAI number printed on packaged food; selling without it: penalty up to
-Rs 5 lakh and up to 6 months' imprisonment; valid 1-5 years, renew before expiry; delivery apps ask for the number."""
+FACTS_FSSAI = """FSSAI (changed 1 Apr 2026: FSS Licensing and Registration Amendment Regulations 2026, gazette 10 Mar 2026, FSSAI
+order 13 Mar 2026): basic registration up to Rs 1.5 crore turnover a year (home bakers too; was Rs 12 lakh); state
+licence above Rs 1.5 crore up to Rs 50 crore (was Rs 20 crore); central licence above Rs 50 crore, and for importers
+whatever the turnover; some kinds of business need a licence regardless of turnover, so check the category on FoSCoS.
+Registrations and licences now have perpetual validity (no 1-5 year renewal), subject to compliance; a business that
+now falls in a lower category can surrender its licence for registration. 14-digit FSSAI number printed on packaged
+food; selling without it: penalty up to Rs 5 lakh and up to 6 months' imprisonment; delivery apps ask for the number.
+NEVER quote the old Rs 12 lakh / Rs 20 crore limits or a renewal date."""
 FACTS_IEC = """IEC: 10-digit Import Export Code from DGFT linked to the business PAN; needed to import or export goods (customs and
 banks ask); one per PAN; never expires but must be updated online every year between April and June or it is
 deactivated; not needed for personal-use imports; service exporters need it to claim export benefits."""
