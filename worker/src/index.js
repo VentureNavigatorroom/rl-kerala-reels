@@ -1171,6 +1171,7 @@ const KEYWORD_REPLY = {
 };
 
 async function postKind(env, what, topic = "co") {
+  if (await env.STATE.get(`pause_${topic}`)) { await log(env, `${topic} paused (KV pause_${topic}): slot skipped`); return; }   // e.g. facts being corrected
   const left = await quotaLeft(env);   // never run into Instagram's 24 h limit: skip and log instead
   if (left !== null && left <= 1) { await log(env, `SKIP ${topic} ${what}: Instagram 24 h posting limit nearly used (${left} left)`); await alertOnce(env, "quota", `⚠️ Instagram's 24-hour posting limit is nearly used; skipped a ${TOPICS[topic].label} ${what}. Planned volume will be lowered by the monitor if this repeats.`); return; }
   return what === "reel" || what === "tip" || what === "news" ? postReel(env, topic, what) : what === "story" ? postStory(env, topic) : what === "poster" ? postPoster(env, topic) : postCarousel(env, topic);
