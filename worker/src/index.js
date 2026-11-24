@@ -1170,8 +1170,9 @@ const KEYWORD_REPLY = {
   FUNDING: "Here you go! Legal steps after an investor says yes:\n\n1. Sign the term sheet\n2. Share subscription + shareholders' agreements\n3. Board and shareholder approvals, offer letter (PAS-4), money into a separate bank account\n4. Allot shares within 60 days, file PAS-3 within 15 days of allotment (the money can be used only after that)\n5. NRI or foreign investor on repatriation basis: report to RBI (FC-GPR) within 30 days of allotment\n\nAre you a founder raising money, or an investor putting money in?",
 };
 
+const PAUSED = ["fssai"];   // 24 Nov: FSSAI turnover limits / validity changed 1 Apr 2026; built reels quote the old ones. Remove once fixed reels are built.
 async function postKind(env, what, topic = "co") {
-  if (await env.STATE.get(`pause_${topic}`)) { await log(env, `${topic} paused (KV pause_${topic}): slot skipped`); return; }   // e.g. facts being corrected
+  if (PAUSED.includes(topic) || await env.STATE.get(`pause_${topic}`)) { await log(env, `${topic} paused (KV pause_${topic}): slot skipped`); return; }   // e.g. facts being corrected
   const left = await quotaLeft(env);   // never run into Instagram's 24 h limit: skip and log instead
   if (left !== null && left <= 1) { await log(env, `SKIP ${topic} ${what}: Instagram 24 h posting limit nearly used (${left} left)`); await alertOnce(env, "quota", `⚠️ Instagram's 24-hour posting limit is nearly used; skipped a ${TOPICS[topic].label} ${what}. Planned volume will be lowered by the monitor if this repeats.`); return; }
   return what === "reel" || what === "tip" || what === "news" ? postReel(env, topic, what) : what === "story" ? postStory(env, topic) : what === "poster" ? postPoster(env, topic) : postCarousel(env, topic);
