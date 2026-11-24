@@ -296,14 +296,17 @@ async function postReel(env, topic = "co", want = "reel") {
 }
 async function publishReel(env, it, topic, m, posted) {
   const p = { media_type: "REELS", video_url: `${env.LIB_BASE}/${it.video}`, cover_url: `${env.LIB_BASE}/${it.cover}`, caption: fixCaption(it.caption), share_to_feed: "true" };
+  if (it.collab?.length) p.collaborators = JSON.stringify(it.collab.slice(0, 3));   // collab invite: shows on their profile too if they accept
   const trialOff = await kv(env, "trial_unavailable", false);
-  const asTrial = !trialOff && !["news", "opportunity", "correction"].includes(it.theme) && Math.random() < TRIAL_SHARE;   // news goes to followers too
+  const asTrial = !trialOff && !it.collab?.length && !["news", "opportunity", "correction"].includes(it.theme) && Math.random() < TRIAL_SHARE;   // news goes to followers too
   let c;
   try { c = await graph(env, `${env.IG_USER_ID}/media`, asTrial ? { ...p, trial_params: JSON.stringify({ graduation_strategy: "SS_PERFORMANCE" }) } : p); }
   catch (e) {
-    if (!asTrial) throw e;
+    if (!asTrial && p.collaborators) { await log(env, `collab invite refused (${String(e.message).slice(0, 80)}); posting without it`); delete p.collaborators; c = await graph(env, `${env.IG_USER_ID}/media`, p); }
+    else if (!asTrial) throw e;
+    else {
     await kvPut(env, "trial_unavailable", true); await log(env, `trial reels not available yet (${e.message}); posting normally`);
-    c = await graph(env, `${env.IG_USER_ID}/media`, p);
+    c = await graph(env, `${env.IG_USER_ID}/media`, p); }
   }
   await waitReady(env, c.id);
   const pub = await graph(env, `${env.IG_USER_ID}/media_publish`, { creation_id: c.id });

@@ -322,7 +322,7 @@ def main():
         man.setdefault("stories", [])
         man["stories"] = [x for x in man["stories"] if x["id"] != "s_" + s["id"]] + [dict(id="s_" + s["id"], image=f"media/{s['id']}_story.jpg", reel=s["id"], topic=topic_of(s))]
         cap = captions.caption(s, s["hook"].replace("\n", " "))
-        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], topic=topic_of(s), theme=s.get("theme"), expires=s.get("expires"), source=s.get("source"), kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), look=s.get("look", 0), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
+        man["items"] = [i for i in man["items"] if i["id"] != s["id"]] + [dict(id=s["id"], topic=topic_of(s), theme=s.get("theme"), collab=s.get("collab"), expires=s.get("expires"), source=s.get("source"), kind=s["kind"], segment=s["segment"], bucket=s["bucket"], scene=s.get("scene"), look=s.get("look", 0), sound=None, kw=s["kw"], base=s["base"], point=s["end"].replace("\n", " "),
             video=f"media/{s['id']}.mp4", cover=f"media/{s['id']}.jpg", caption=cap, duration=info["duration"], built=int(time.time()), posted=None, v=VERSION)]
         json.dump(man, open(MAN, "w"), ensure_ascii=False, indent=1)
         print("built", s["id"], info["duration"], flush=True)

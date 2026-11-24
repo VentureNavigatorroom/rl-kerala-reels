@@ -75,6 +75,6 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 
 ## FSSAI correction (24 Nov)
 - A follower corrected us: since 1 Apr 2026 FSSAI registration covers turnover up to Rs 1.5 crore, state licence Rs 1.5-50 crore, central above Rs 50 crore (importers always central), and registrations / licences have perpetual validity. FACTS_FSSAI updated.
-- 41 FSSAI scripts that quoted the old Rs 12 lakh / Rs 20 crore limits or 1-5 year renewal were removed from bank/fssai (their unposted reels are dropped by drop_orphans). The cartoon episodes were rewritten as fsy01-fsy04. Correction reel fsfix01 (theme correction, corrects fsx04) goes first in the news queue.
+- 41 FSSAI scripts that quoted the old Rs 12 lakh / Rs 20 crore limits or 1-5 year renewal were removed from bank/fssai (their unposted reels are dropped by drop_orphans). The cartoon episodes were rewritten as fsy01-fsy04. Correction reel fsfix02 (cartoon, theme correction, corrects fsx04) thanks @rishad_pkr by name and is posted as a collab invite to him (collab=[...] -> Graph "collaborators"; refused invites post without it); it goes first in the news queue.
 - Before writing any FSSAI script: never quote the old limits or a renewal date. When refilling, bring FSSAI back to 7+ days of stock first (it lost most of its bank).
 - Already-posted wrong FSSAI reels: Instagram's API can't edit captions; add a correction comment by hand on the most-viewed ones.

@@ -353,7 +353,7 @@ def build(s, out, seed=0):
     t_end = t + 0.3; DUR = t_end + 4.5
 
     END, PILL, (PX, PY) = end_card(s)
-    if s.get("series"):
+    if s.get("series") and s.get("ep"):
         rib = rrect(760, 96, 48, (204, 92, 52, 255)); tdraw(ImageDraw.Draw(rib), (760 - tlen(f"{s['series']} · Episode {s.get('ep', 1)}", 40)) / 2, 64, f"{s['series']} · Episode {s.get('ep', 1)}", 40, (255, 255, 255))
         END.alpha_composite(rib, ((W - 760) // 2, 220))
         if s.get("next"):
