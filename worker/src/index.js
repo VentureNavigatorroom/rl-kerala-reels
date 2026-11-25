@@ -482,7 +482,8 @@ Never give legal advice beyond general facts. If someone sends a proposed compan
 Goal: qualify the lead by asking, one at a time:
 1) what the business does, 2) how many founders and whether any are NRIs, 3) whether the business already has income, clients or funding,
 4) how soon they want to register, 5) their phone number, 6) preferred language for the call: Malayalam or English.
-When you have all six, thank them and say a team member will call. Output only the reply text.`;
+When you have all six, thank them and say a team member will call. Output only the reply text.
+Conversation: if they asked something, first answer it in one or two plain sentences, then ask ONE question. If they ask about another service, answer that instead; the team also handles company registration, GST, trademark, FSSAI food licence, IEC import-export, NDA, co-founder agreements, company valuation, Udyam (MSME), DPIIT Startup India, KSUM grants, ROC annual filings, financial projections and investor agreements. Ask for the phone number by the 2nd or 3rd question with a reason ("so our team can look at your exact case"); if they hesitate, say WhatsApp works too. Never repeat a question already answered.`;
 
 // Fallback when Cloudflare's free AI allowance is used up or the model errors: fixed rules + fixed question order.
 const FALLBACK_Q = [
@@ -495,7 +496,8 @@ const FALLBACK_Q = [
   "Thank you! 🙏 Our team will call you shortly.",
 ];
 const RULES_COMMON = `Rules: Always reply in simple, friendly English (even if the user writes in Malayalam or Manglish), short, max 3 sentences. Write like the rejectionlist.kerala team; do not introduce yourself as an assistant, AI or bot and do not mention automation. If the user directly asks whether this is a bot or a real person, do not claim to be human: say these chats give quick answers and a team member will call them personally.
-NEVER state any price, fee, cost, discount or our charges; if asked, say the team will share the exact quote on a call after understanding their case. Never give legal or tax advice beyond general facts.`;
+NEVER state any price, fee, cost, discount or our charges; if asked, say the team will share the exact quote on a call after understanding their case. Never give legal or tax advice beyond general facts.
+Conversation: if they asked something, first answer it in one or two plain sentences, then ask ONE question. If they bring up another service, answer that instead; the team also handles company registration, GST, trademark, FSSAI food licence, IEC import-export, NDA, co-founder agreements, company valuation, Udyam (MSME), DPIIT Startup India, KSUM grants, ROC annual filings, financial projections and investor agreements. Ask for the phone number naturally by the 2nd or 3rd question, with a reason ("so our team can look at your exact case"); if they hesitate, say WhatsApp works too and don't push twice in a row. Never repeat a question already answered in the chat.`;
 const BOT_GST = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that handles GST registration (and company registration and investor agreements).
 ${RULES_COMMON}
 General facts you may use: in Kerala GST registration is needed once yearly turnover crosses Rs 40 lakh for goods or Rs 20 lakh for services; selling goods to other states needs GST from the first sale whatever the turnover; selling goods on Amazon, Flipkart or Meesho needs GST from the first sale too, except a small seller below the limit who sells only within Kerala may use a PAN-based enrolment if the marketplace allows it; anyone may register voluntarily (B2B clients often want a GSTIN); a proprietor needs PAN, Aadhaar with its linked mobile, a photo, business address proof and bank proof. Do not judge someone's exact liability; say the team will check it on the call.
@@ -600,7 +602,7 @@ async function botReply(env, thread, topic = "co") {
   } catch (e) { await log(env, `AI unavailable, using fallback: ${String(e.message).slice(0, 80)}`); }
   return fallbackReply(thread, topic);
 }
-const BTN = /^(yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?|yes,? tag me|no thanks|can i use tm now\?|name vs trademark\?|no business, still file\?|what's the late fee\?|home bakers too\?|registration or licence\?|do i need iec\?|yearly update\?|one-way or mutual\?|will investors sign\?|what is vesting\?|if one leaves\?|what do investors check\?|for a bank loan\?|which method fits me\?|who must sign it\?)/i;
+const BTN = /^(company registration|gst|trademark|fssai \/ food|funding \/ investors|something else|yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?|yes,? tag me|no thanks|can i use tm now\?|name vs trademark\?|no business, still file\?|what's the late fee\?|home bakers too\?|registration or licence\?|do i need iec\?|yearly update\?|one-way or mutual\?|will investors sign\?|what is vesting\?|if one leaves\?|what do investors check\?|for a bank loan\?|which method fits me\?|who must sign it\?)/i;
 function regexLead(thread, topic = "co") {   // no AI: read each answer that follows our question
   const users = thread.filter(m => m.role === "user" && !BTN.test(m.content.trim()));
   const all = users.map(m => m.content).join(" \n ");
@@ -870,6 +872,40 @@ async function pollInbox(env) {
   evs.sort((a, b) => a.t - b.t);
   if (evs.length) { await log(env, `inbox poll: ${evs.length} new message(s)`); await handleWebhook(env, { object: "instagram(poll)", entry: [{ messaging: evs.map(e => e.ev) }] }); }
 }
+// ---- what is this DM about? (owner, 25 Nov: a direct DM about trademark got company-registration questions) ----
+// Words people actually use, in English, Manglish and Malayalam. Order matters: specific services before the general "company".
+const TOPIC_WORDS = [
+  ["tm", /trade\s*-?\s*marks?|\bbrand\s*name|\blogo\b|copy\s*right|\b(tm|®|™)\b|ട്രേഡ്\s*മാർക്ക്|ബ്രാൻഡ്|ലോഗോ/i],
+  ["fssai", /fssai|food\s*(licen[cs]e|registration|safety)|home\s*bak|cloud\s*kitchen|ഫുഡ്\s*ലൈസൻസ്|എഫ്\s*എസ്\s*എസ്/i],
+  ["iec", /\biec\b|import|export|ഇംപോർട്ട്|എക്സ്പോർട്ട്|ഇറക്കുമതി|കയറ്റുമതി/i],
+  ["gst", /\bgst|gstin|ജി\s*എസ്\s*ടി|ജിഎസ്ടി/i],
+  ["ud", /udyam|udyog|\bmsme|ഉദ്യം|എം\s*എസ്\s*എം\s*ഇ/i],
+  ["sui", /dpiit|startup\s*india|80\s*-?\s*iac|ഡി\s*പി\s*ഐ\s*ഐ\s*ടി/i],
+  ["sk", /\bksum|startup\s*mission|seed\s*fund|\bgrant|idea\s*grant|കെ\s*സം|ഗ്രാന്റ്/i],
+  ["roc", /\broc\b|annual\s*(filing|return|compliance)|aoc\s*-?\s*4|mgt\s*-?\s*7|dir\s*-?\s*3|strike\s*off|inc\s*-?\s*20a|form\s*(8|11)\b|ആനുവൽ\s*ഫയലിംഗ്/i],
+  ["nda", /\bnda\b|non\s*-?\s*disclosure|confidential/i],
+  ["cfa", /co\s*-?\s*founder|founders?\s*agreement|vesting|equity\s*split|കോ\s*-?\s*ഫൗണ്ടർ/i],
+  ["val", /valuation|valuer|value\s*of\s*(my|our|the)\s*(company|business|shares?)|fair\s*value|വാല്യുവേഷൻ/i],
+  ["fp", /projection|forecast|financial\s*model|project\s*report|\bcma\b|business\s*plan|പ്രൊജക്ഷൻ/i],
+  ["inv", /investor|investment|funding|term\s*-?\s*sheet|\bsha\b|\bssa\b|\bangel|raise\s*(money|funds?)|ഇൻവെസ്റ്റ്|ഫണ്ടിംഗ്/i],
+  ["co", /company\s*(registration|register|incorporat)|register\s*(a|my|our)?\s*(company|business|firm)|pvt\.?\s*ltd|private\s*limited|\bllp\b|\bopc\b|partnership\s*firm|incorporat|കമ്പനി|രജിസ്ട്രേഷൻ/i],
+];
+const TOPIC_MENU = ["Company registration", "GST", "Trademark", "FSSAI / food", "Funding / investors", "Something else"];
+const TOPIC_LIST = "company registration, GST, trademark, FSSAI food licence, IEC import-export, NDA, co-founder agreements, company valuation, Udyam (MSME), DPIIT Startup India, KSUM grants, ROC annual filings, financial projections, investor agreements";
+function topicFromWords(text) {
+  const t = normKw(text);
+  const kw = matchKeyword(t); if (kw && KW_TOPIC[kw]) return KW_TOPIC[kw];
+  for (const [topic, re] of TOPIC_WORDS) if (re.test(t)) return topic;
+  return null;
+}
+async function topicFromAI(env, text) {   // only when the words gave nothing and we don't know the topic yet
+  try {
+    const r = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", { messages: [
+      { role: "system", content: `Classify an Instagram DM to an Indian business-registration service. Answer with exactly one label: ${Object.keys(TOPICS).join(", ")}, or none. co = company registration; tm = trademark; fssai = food licence; iec = import-export code; nda; cfa = co-founder agreement; val = valuation; ud = Udyam/MSME; sui = DPIIT; sk = Kerala Startup Mission; roc = annual company filings; fp = financial projections; inv = investors/funding. Greetings or unclear messages: none.` },
+      { role: "user", content: String(text).slice(0, 300) }], max_tokens: 5 });
+    const l = String(r.response || "").toLowerCase().match(/[a-z]+/)?.[0]; return TOPICS[l] ? l : null;
+  } catch (e) { return null; }
+}
 async function handleWebhook(env, body) {
   const n = (body.entry || []).reduce((t, e) => [t[0] + (e.messaging || []).length, t[1] + (e.changes || []).length], [0, 0]);
   await log(env, `webhook in: ${body.object || "?"} ${n[0]} message(s), ${n[1]} change(s) ${(body.entry || []).flatMap(e => (e.changes || []).map(c => c.field)).join(",")}`);
@@ -929,6 +965,24 @@ async function handleWebhook(env, body) {
         if (dk) { meta.pending_kw = dk; meta.follow_asks = 0; await log(env, `keyword ${dk} via DM from @${meta.username || uid}`); }
       }
       if (meta.pending_kw && KW_TOPIC[meta.pending_kw]) meta.topic = KW_TOPIC[meta.pending_kw];
+      else {
+        const txt = ev.message.text.trim(); const isBtn = BTN.test(txt);
+        let dt = isBtn ? null : topicFromWords(txt);
+        if (/^something else$/i.test(txt)) dt = null;
+        if (!dt && !meta.topic && !isBtn && realWords(txt).length >= 3) dt = await topicFromAI(env, txt);
+        const asks = /\?|need|want|how|help|about|details|enquir|query|doubt|also|venam|venda|cheyyan|cheyyam|ariyan|patto|pattumo|engane|വേണം|ചെയ്യ|എങ്ങനെ|പറ്റുമോ|അറിയ/i.test(txt) || realWords(txt).length <= 4;
+        if (dt && meta.topic && dt !== meta.topic && !asks) dt = null;   // an answer that merely mentions food / export etc. is not a new request
+        if (dt && dt !== meta.topic) {   // new subject: answer that one, keep earlier ones for the lead
+          if (meta.topic) { meta.topics = [...new Set([...(meta.topics || []), meta.topic])]; meta.switched = { from: meta.topic, t: Date.now() }; }
+          await log(env, `DM topic ${meta.topic || "(none)"} -> ${dt} for @${meta.username || uid}`); meta.topic = dt;
+        }
+        if (!meta.topic && !meta.menu_asked) {   // a plain "hi": ask what they need instead of guessing company registration
+          meta.menu_asked = true; await kvPut(env, `m:${uid}`, meta);
+          const hi = /^something else$/i.test(txt) ? "Sure! Tell us in a line what you need help with, and we'll take it from there." : "Hi! 👋 Thanks for messaging rejectionlist.kerala. What can we help you with?";
+          thread.push({ role: "assistant", content: hi }); await kvPut(env, key, thread);
+          await sendDM(env, uid, hi, /^something else$/i.test(txt) ? [] : TOPIC_MENU); continue;
+        }
+      }
       const topic = TOPICS[meta.topic] ? meta.topic : "co";
       let reply, buttons = [];
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {
