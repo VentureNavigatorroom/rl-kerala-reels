@@ -74,7 +74,13 @@ jobs:
         if: ${{ !cancelled() && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}   # keep what was built even if a later reel crashed
         with: { path: library }
       - uses: actions/deploy-pages@v4
+        id: deploy1
+        continue-on-error: true   # GitHub sometimes can't find the just-uploaded artifact (25 Nov 04:40); try again below
         if: ${{ !cancelled() && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}
+      - if: ${{ !cancelled() && steps.deploy1.outcome == 'failure' }}
+        run: sleep 60
+      - uses: actions/deploy-pages@v4
+        if: ${{ !cancelled() && steps.deploy1.outcome == 'failure' }}
       - name: Fail the run if the bank check found problems (after building and publishing, so nothing is lost)
         if: ${{ !cancelled() && steps.bankcheck.outcome == 'failure' }}
         run: echo "::error::check_bank.py found problems in bank/ (see the Check bank step)"; exit 1
