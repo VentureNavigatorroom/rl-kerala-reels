@@ -57,7 +57,7 @@ def numbers(text):
     return text
 
 # English words people write in Latin letters, as a Malayali says them. Keys are matched case-insensitively.
-SAY = {
+SAY = {"foscos": "ഫോസ്കോസ്", 
     "pvt": "പ്രൈവറ്റ്", "ltd": "ലിമിറ്റഡ്", "private": "പ്രൈവറ്റ്", "limited": "ലിമിറ്റഡ്", "bank": "ബാങ്ക്", "insurance": "ഇൻഷുറൻസ്",
     "pan": "പാൻ", "start": "സ്റ്റാർട്ട്", "name": "നെയിം", "after": "ആഫ്റ്റർ", "checklist": "ചെക്ക്‌ലിസ്റ്റ്", "done": "ഡൺ", "stop": "സ്റ്റോപ്പ്",
     "company": "കമ്പനി", "director": "ഡയറക്ടർ", "startup": "സ്റ്റാർട്ടപ്പ്", "client": "ക്ലയന്റ്", "freelancer": "ഫ്രീലാൻസർ",
