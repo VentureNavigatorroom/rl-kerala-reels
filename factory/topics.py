@@ -167,8 +167,9 @@ FACTS_FSSAI = """FSSAI (changed 1 Apr 2026: FSS Licensing and Registration Amend
 order 13 Mar 2026): basic registration up to Rs 1.5 crore turnover a year (home bakers too; was Rs 12 lakh); state
 licence above Rs 1.5 crore up to Rs 50 crore (was Rs 20 crore); central licence above Rs 50 crore, and for importers
 whatever the turnover; some kinds of business need a licence regardless of turnover, so check the category on FoSCoS.
-Registrations and licences now have perpetual validity (valid until suspended, cancelled or surrendered; no renewal
-application), but the ANNUAL FEE is still payable (it can be paid ahead for several years) and annual returns continue; a business that
+Registrations and licences ISSUED ON OR AFTER 1 Apr 2026 have perpetual validity (valid until suspended, cancelled or
+surrendered; no renewal application). FSSAI's FAQ does not say how licences issued before April 2026 move to it: never tell
+someone with an older licence that they can skip renewal; tell them to check its expiry on FoSCoS. In all cases the ANNUAL FEE is still payable (it can be paid ahead for several years) and annual returns continue; a business that
 now falls in a lower category can surrender its licence for registration. 14-digit FSSAI number printed on packaged
 food; selling without it: penalty up to Rs 5 lakh and up to 6 months' imprisonment; delivery apps ask for the number.
 NEVER quote the old Rs 12 lakh / Rs 20 crore limits or a renewal date."""
