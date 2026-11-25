@@ -925,6 +925,7 @@ async function handleWebhook(env, body) {
       const thread = await kv(env, key, []);
       const meta = await kv(env, `m:${uid}`, { first: Date.now(), sources: [] });
       { const tx0 = ev.message.text.trim().toLowerCase(); if (meta.last_txt === tx0 && Date.now() - (meta.last_in || 0) < 120e3) { await log(env, `duplicate DM ignored from ${uid}`); continue; } meta.last_txt = tx0; }
+      const prevIn = meta.last_in || 0;
       meta.last_in = Date.now();                                     // 24h window starts from their last message
       if (OPT_OUT.test(ev.message.text)) {                           // asked us to stop: no check-ins for this person, and no further questions now
         meta.no_nudge = true; await kvPut(env, `m:${uid}`, meta); await nudgeApply(env, { [uid]: null });
@@ -976,6 +977,7 @@ async function handleWebhook(env, body) {
           if (meta.topic) { meta.topics = [...new Set([...(meta.topics || []), meta.topic])]; meta.switched = { from: meta.topic, t: Date.now() }; }
           await log(env, `DM topic ${meta.topic || "(none)"} -> ${dt} for @${meta.username || uid}`); meta.topic = dt;
         }
+        if (!dt && meta.topic && prevIn && Date.now() - prevIn > 72 * 3600e3) { meta.topics = [...new Set([...(meta.topics || []), meta.topic])]; delete meta.topic; delete meta.menu_asked; }   // back after 3+ days with a plain hello: ask afresh
         if (!meta.topic && !meta.menu_asked) {   // a plain "hi": ask what they need instead of guessing company registration
           meta.menu_asked = true; await kvPut(env, `m:${uid}`, meta);
           const hi = /^something else$/i.test(txt) ? "Sure! Tell us in a line what you need help with, and we'll take it from there." : "Hi! 👋 Thanks for messaging rejectionlist.kerala. What can we help you with?";
