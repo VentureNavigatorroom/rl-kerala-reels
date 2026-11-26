@@ -132,6 +132,7 @@ const REEL_RAMP = [["2026-11-20", 40], ["2026-11-21", 60], ["2026-11-22", 80]]; 
 // checklist, comparison, what-if), and NEWS_SLOTS slots for verified news / opportunity / correction reels (theme
 // "news" | "opportunity" | "correction"). These themes are reserved: normal reel slots never use them. Empty slots post nothing.
 const NEWS_SLOTS = 4;
+const RETIRED = ["thx01", "thx02"];   // merged into thx03 (owner: one thank-you reel per person); never post them even if a build made them
 const SPECIAL = ["tip", "news", "opportunity", "correction", "thanks"];
 const todayIST = () => IST().toISOString().slice(0, 10);
 const live_ = i => !i.expires || i.expires >= todayIST();   // a news item is never posted after its "as of" deadline
@@ -303,7 +304,7 @@ async function waitReady(env, id) {
 async function postReel(env, topic = "co", want = "reel") {
   const m = await manifest(env); const posted = await kv(env, "posted", {});
   const w = await kv(env, "weights", null); const L = TOPICS[topic].label;
-  const avail = m.items.filter(i => !posted[i.id] && live_(i) && (want === "news" ? ["correction", "thanks", "news", "opportunity"].includes(i.theme)
+  const avail = m.items.filter(i => !posted[i.id] && !RETIRED.includes(i.id) && live_(i) && (want === "news" ? ["correction", "thanks", "news", "opportunity"].includes(i.theme)
     : (topicOf(i) === topic && (want === "tip" ? i.theme === "tip" : !SPECIAL.includes(i.theme)))));
   if (want === "news") avail.sort((a, b) => ["correction", "thanks", "news", "opportunity"].indexOf(a.theme) - ["correction", "thanks", "news", "opportunity"].indexOf(b.theme) || (b.built || 0) - (a.built || 0));
   if (want !== "reel") { if (!avail.length) { await log(env, `no ${want} item for ${topic}: slot left empty`); return; } return publishReel(env, avail[0], topicOf(avail[0]), m, posted); }

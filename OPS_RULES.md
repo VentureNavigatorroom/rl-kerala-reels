@@ -86,7 +86,7 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 
 ## Suggestions, corrections, complaints (owner, 26 Nov)
 - DMs and comments that suggest something, correct us or complain (FEEDBACK_HINT words + an AI check) get a reply about exactly what they said (thanks + "noted / we'll check"), never sales questions or the keyword DM; the owner gets a Discord alert; DM check-ins stop for that message. A 1-3 word follow-up right after (typo fixes like "Voiceover**") gets no second reply.
-- When the owner acts on a suggestion, make a thank-you reel: theme "thanks" (posted in the news slots right after corrections), collab=[their username], e.g. bank/batch_thanks01.py.
+- When the owner acts on a suggestion, make ONE thank-you reel per person covering everything they said (owner, 27 Nov; never 2-3 reels for one person): theme "thanks" (posted in the news slots right after corrections), collab=[their username], e.g. bank/batch_thanks01.py.
 - 26 Nov: @dev_onthe.move asked for a faster voiceover -> atempo 1.24 (was 1.14), sentence pauses 0.26-0.34 s. Keep this pace.
 
 ## 26 Nov growth review (automatic changes)
