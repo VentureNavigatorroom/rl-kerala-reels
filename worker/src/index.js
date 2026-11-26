@@ -118,7 +118,7 @@ const REEL_RAMP = [["2026-11-20", 40], ["2026-11-21", 60], ["2026-11-22", 80]]; 
 // checklist, comparison, what-if), and NEWS_SLOTS slots for verified news / opportunity / correction reels (theme
 // "news" | "opportunity" | "correction"). These themes are reserved: normal reel slots never use them. Empty slots post nothing.
 const NEWS_SLOTS = 4;
-const SPECIAL = ["tip", "news", "opportunity", "correction"];
+const SPECIAL = ["tip", "news", "opportunity", "correction", "thanks"];
 const todayIST = () => IST().toISOString().slice(0, 10);
 const live_ = i => !i.expires || i.expires >= todayIST();   // a news item is never posted after its "as of" deadline
 // owner, 19 Nov: company-registration reels were starting to feel repetitive, so co drops to 25% and Udyam joins at 15%
@@ -282,9 +282,9 @@ async function waitReady(env, id) {
 async function postReel(env, topic = "co", want = "reel") {
   const m = await manifest(env); const posted = await kv(env, "posted", {});
   const w = await kv(env, "weights", null); const L = TOPICS[topic].label;
-  const avail = m.items.filter(i => !posted[i.id] && live_(i) && (want === "news" ? ["correction", "news", "opportunity"].includes(i.theme)
+  const avail = m.items.filter(i => !posted[i.id] && live_(i) && (want === "news" ? ["correction", "thanks", "news", "opportunity"].includes(i.theme)
     : (topicOf(i) === topic && (want === "tip" ? i.theme === "tip" : !SPECIAL.includes(i.theme)))));
-  if (want === "news") avail.sort((a, b) => ["correction", "news", "opportunity"].indexOf(a.theme) - ["correction", "news", "opportunity"].indexOf(b.theme) || (b.built || 0) - (a.built || 0));
+  if (want === "news") avail.sort((a, b) => ["correction", "thanks", "news", "opportunity"].indexOf(a.theme) - ["correction", "thanks", "news", "opportunity"].indexOf(b.theme) || (b.built || 0) - (a.built || 0));
   if (want !== "reel") { if (!avail.length) { await log(env, `no ${want} item for ${topic}: slot left empty`); return; } return publishReel(env, avail[0], topicOf(avail[0]), m, posted); }
   if (!avail.length) { await log(env, `NO STOCK: ${topic} reel library empty`); await alertOnce(env, "noreel_" + topic, `⚠️ [${L}] Reel library is empty. Nothing to post. Check the factory on GitHub.`); return; }
   if (avail.length < 35 && IST().getUTCHours() === 7 && IST().getUTCMinutes() < 30) await alertOnce(env, "lowreel_" + topic, `⚠️ [${L}] Reel backup is low: ${avail.length} left. The refill task writes more scripts automatically.`);
@@ -299,7 +299,7 @@ async function publishReel(env, it, topic, m, posted) {
   const p = { media_type: "REELS", video_url: `${env.LIB_BASE}/${it.video}`, cover_url: `${env.LIB_BASE}/${it.cover}`, caption: fixCaption(it.caption), share_to_feed: "true" };
   if (it.collab?.length) p.collaborators = JSON.stringify(it.collab.slice(0, 3));   // collab invite: shows on their profile too if they accept
   const trialOff = await kv(env, "trial_unavailable", false);
-  const asTrial = !trialOff && !it.collab?.length && !["news", "opportunity", "correction"].includes(it.theme) && Math.random() < TRIAL_SHARE;   // news goes to followers too
+  const asTrial = !trialOff && !it.collab?.length && !["news", "opportunity", "correction", "thanks"].includes(it.theme) && Math.random() < TRIAL_SHARE;   // news goes to followers too
   let c;
   try { c = await graph(env, `${env.IG_USER_ID}/media`, asTrial ? { ...p, trial_params: JSON.stringify({ graduation_strategy: "SS_PERFORMANCE" }) } : p); }
   catch (e) {
@@ -906,6 +906,26 @@ async function topicFromAI(env, text) {   // only when the words gave nothing an
     const l = String(r.response || "").toLowerCase().match(/[a-z]+/)?.[0]; return TOPICS[l] ? l : null;
   } catch (e) { return null; }
 }
+// ---- feedback, suggestions, corrections (owner, 26 Nov: "Voice kurach speed akkumo" got company-registration questions) ----
+const FEEDBACK_HINT = /speed|slow|fast|voice|audio|sound|music|font|subtitle|caption|video|reel|content|post|animation|character|suggest|feedback|you should|better if|improve|please (add|make|change)|mistake|wrong|incorrect|not correct|outdated|thettu|thett|sheriyalla|shariyalla|kurach|kurachu|akkumo|aakkumo|aakko|akkoo|cheythoode|cheyyamo|nannayirikkum|nallathaa|onnu (maatt|mati)|തെറ്റ്|ശരിയല്ല|നിർദേശം|വേഗം|സ്പീഡ്|ശബ്ദം|വോയ്സ്/i;
+async function feedbackKind(env, text, context = "") {   // "feedback" | "correction" | "complaint" | null
+  if (!FEEDBACK_HINT.test(text)) return null;
+  try {
+    const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
+      { role: "system", content: "An Instagram follower wrote to @rejectionlist.kerala, a Kerala page that posts reels about company registration, GST, trademark, FSSAI and similar topics, and offers those services. Classify the message with exactly one word: feedback (a suggestion about our reels, voice, videos, page or service), correction (says something we posted is wrong or outdated), complaint (unhappy with us), or request (asking for our service, describing their own business, answering our question, or anything else). A person describing their own business (e.g. 'I run a voiceover business') is request." },
+      { role: "user", content: (context ? `Our last message: ${context.slice(0, 200)}\n` : "") + `Their message: ${String(text).slice(0, 400)}` }], max_tokens: 4 });
+    const k = String(r.response || "").toLowerCase().match(/feedback|correction|complaint/)?.[0]; return k || null;
+  } catch (e) { return null; }
+}
+async function feedbackReply(env, text, kind) {
+  const fixed = { feedback: "Thanks a lot for the suggestion! 🙏 We've noted it and the team will work on it.", correction: "Thank you for pointing this out! 🙏 Our team will check it and correct it.", complaint: "Sorry about that, and thank you for telling us. 🙏 Our team will look into it personally." }[kind];
+  try {
+    const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
+      { role: "system", content: `You reply on Instagram for @rejectionlist.kerala to a follower's ${kind}. In 1-2 short sentences: thank them warmly, show you understood exactly what they said (mention it), and say ${kind === "correction" ? "the team will check it and fix it" : kind === "complaint" ? "the team will look into it personally" : "the team has noted it and will work on it"}. Reply in the same language style they used (English, Manglish or Malayalam script). Do NOT ask about their business, do NOT ask for their number, do NOT promote any service, never mention price. Never say you are a bot, AI or human. Output only the reply.` },
+      { role: "user", content: String(text).slice(0, 500) }], max_tokens: 90 });
+    const t = cleanReply(r.response); return t || fixed;
+  } catch (e) { return fixed; }
+}
 async function handleWebhook(env, body) {
   const n = (body.entry || []).reduce((t, e) => [t[0] + (e.messaging || []).length, t[1] + (e.changes || []).length], [0, 0]);
   await log(env, `webhook in: ${body.object || "?"} ${n[0]} message(s), ${n[1]} change(s) ${(body.entry || []).flatMap(e => (e.changes || []).map(c => c.field)).join(",")}`);
@@ -964,6 +984,20 @@ async function handleWebhook(env, body) {
           await sendDM(env, uid, again, NEXT[KW_TOPIC[dk]] || NEXT_BUTTONS); await log(env, `keyword ${dk} repeated in DM by @${meta.username || uid}: not resent`); continue;
         }
         if (dk) { meta.pending_kw = dk; meta.follow_asks = 0; await log(env, `keyword ${dk} via DM from @${meta.username || uid}`); }
+      }
+      if (!meta.pending_kw && !BTN.test(ev.message.text.trim())) {
+        const lastFb = (meta.feedback || []).slice(-1)[0];
+        if (lastFb && Date.now() - lastFb.t < 15 * 60e3 && realWords(ev.message.text).length <= 3) { thread.push({ role: "user", content: ev.message.text }); await kvPut(env, key, thread); await kvPut(env, `m:${uid}`, meta); continue; }   // "Voiceover**" right after their suggestion: a typo fix, no second reply
+        const lastA = [...thread].reverse().find(m => m.role === "assistant")?.content || "";
+        const fk = await feedbackKind(env, ev.message.text, lastA);
+        if (fk) {   // a suggestion / correction / complaint: thank them for exactly that, tell the owner, no sales questions
+          const fr = await feedbackReply(env, ev.message.text, fk);
+          meta.feedback = [...(meta.feedback || []), { kind: fk, t: Date.now() }].slice(-5); await kvPut(env, `m:${uid}`, meta);
+          thread.push({ role: "assistant", content: fr }); await kvPut(env, key, thread); await sendDM(env, uid, fr);
+          await nudgeApply(env, { [uid]: null });
+          await discord(env, `💡 **${fk.toUpperCase()} by DM** from @${meta.username || uid}:\n> ${ev.message.text.slice(0, 600)}\nBot replied: ${fr}\nTell Claude if you want to act on it (and a thank-you reel).`, true);
+          await log(env, `${fk} DM from @${meta.username || uid}: answered and sent to owner`); continue;
+        }
       }
       if (meta.pending_kw && KW_TOPIC[meta.pending_kw]) meta.topic = KW_TOPIC[meta.pending_kw];
       else {
@@ -1045,6 +1079,15 @@ async function handleWebhook(env, body) {
       if (/^\s*welcome[.!🙏 ]*$/i.test(ch.value.text)) {   // asks to be featured: one private reply with the consent question
         try { await sendMsg(env, { comment_id: ch.value.id }, SHOUT_Q, SHOUT_BTN); await shoutNote(env, ch.value.from?.username, null, { asked: true }); } catch (e) { await log(env, `welcome reply failed: ${e.message}`); }
         continue;
+      }
+      {   // a correction / suggestion / complaint under a post is answered for what it says, not with the keyword DM (26 Nov)
+        const fk = realWords(ch.value.text).length >= 4 ? await feedbackKind(env, ch.value.text) : null;
+        if (fk) {
+          const fr = await feedbackReply(env, ch.value.text, fk); const u0 = ch.value.from?.username;
+          try { await graph(env, `${ch.value.parent_id || ch.value.id}/replies`, { message: (ch.value.parent_id && u0 ? `@${u0} ` : "") + fr }); } catch (e) { await log(env, `feedback reply failed: ${e.message}`); }
+          await discord(env, `💡 **${fk.toUpperCase()} in a comment** by @${u0 || "?"} on ${item}:\n> ${ch.value.text.slice(0, 600)}\nBot replied: ${fr}\nTell Claude if something needs fixing (and a thank-you reel).`, true);
+          await log(env, `${fk} comment from @${u0 || "?"}: answered and sent to owner`); continue;
+        }
       }
       const uq = await uniqueKw(env, ch.value.text, item);                 // the post's own keyword ("LAUNCH") maps to its general one
       const k0 = uq ? uq.base : matchKeyword(ch.value.text); if (!k0) { await commentReply(env, ch.value, item); continue; } const m = [k0, k0];

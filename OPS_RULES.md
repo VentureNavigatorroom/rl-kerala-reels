@@ -83,3 +83,8 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - A DM is no longer assumed to be about company registration. The worker reads the topic from the words (TOPIC_WORDS, keywords, Malayalam / Manglish too), falls back to a small AI classifier for a first message of 3+ words, and a plain "hi" gets a menu (Company registration / GST / Trademark / FSSAI / Funding / Something else).
 - If someone asks about another service mid-chat (a request, not an answer that merely mentions it), the chat switches to that topic's questions; earlier topics stay in meta.topics for the lead.
 - Every bot prompt: answer their question first in 1-2 sentences, then one question; ask for the phone number by the 2nd-3rd question with a reason; offer WhatsApp if they hesitate; never re-ask. Check-ins (2 h / 9 h / 22 h) follow the current topic.
+
+## Suggestions, corrections, complaints (owner, 26 Nov)
+- DMs and comments that suggest something, correct us or complain (FEEDBACK_HINT words + an AI check) get a reply about exactly what they said (thanks + "noted / we'll check"), never sales questions or the keyword DM; the owner gets a Discord alert; DM check-ins stop for that message. A 1-3 word follow-up right after (typo fixes like "Voiceover**") gets no second reply.
+- When the owner acts on a suggestion, make a thank-you reel: theme "thanks" (posted in the news slots right after corrections), collab=[their username], e.g. bank/batch_thanks01.py.
+- 26 Nov: @dev_onthe.move asked for a faster voiceover -> atempo 1.24 (was 1.14), sentence pauses 0.26-0.34 s. Keep this pace.

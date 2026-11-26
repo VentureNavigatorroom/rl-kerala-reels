@@ -285,13 +285,13 @@ def main():
     for name, fn, env, dflt in (("carousels", build_carousels, "CAROUSEL_TARGET", "70"), ("stories", build_stories, "STORY_TARGET", "70"), ("posters", build_posters, "POSTER_TARGET", "70")):
         try: fn(man, int(os.environ.get(env, dflt)))
         except Exception as e: print(f"{name} build failed:", repr(e), flush=True); run_fail.append(f"{name}: {e!r}")
-    SPECIAL = ("tip", "news", "opportunity", "correction")   # tips + news (owner, 19 Nov night): reserved slots, built first
+    SPECIAL = ("tip", "news", "opportunity", "correction", "thanks")   # tips + news (owner, 19 Nov night): reserved slots, built first
     today = time.strftime("%Y-%m-%d", time.gmtime(time.time() + 19800))
     stock = {t: sum(1 for i in man["items"] if not i.get("posted") and topic_of(i) == t and i.get("theme") not in SPECIAL) for t in topics.DIRS}
     built_ids = {i["id"] for i in man["items"]}; fails = man.get("failed", {})
     fresh = lambda s: s["id"] not in built_ids and fails.get(s["id"], 0) < 2 and (not s.get("expires") or s["expires"] >= today)
-    urgent = [s for s in bank if s.get("theme") in ("correction", "news", "opportunity") and fresh(s)]   # same-day news: first in every run
-    urgent.sort(key=lambda s: ("correction", "news", "opportunity").index(s["theme"]))
+    urgent = [s for s in bank if s.get("theme") in ("correction", "thanks", "news", "opportunity") and fresh(s)]   # same-day news: first in every run
+    urgent.sort(key=lambda s: ("correction", "thanks", "news", "opportunity").index(s["theme"]))
     tip_lists = []
     for t in topics.DIRS:   # keep 2 tips ready per topic (one posts a day)
         ready = sum(1 for i in man["items"] if not i.get("posted") and topic_of(i) == t and i.get("theme") == "tip")

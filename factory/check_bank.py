@@ -195,7 +195,7 @@ OFFICIAL = ("mca.gov.in", "gst.gov.in", "cbic.gov.in", "dgft.gov.in", "dpiit.gov
             "egazette.gov.in", "pib.gov.in", "icai.org", "icsi.edu")
 for x in banks["reels"]:
     th = x.get("theme")
-    if th not in (None, "crm", "faq", "new", "tip", "news", "opportunity", "correction"): err(f"{x['id']}: unknown theme {th}")
+    if th not in (None, "crm", "faq", "new", "tip", "news", "opportunity", "correction", "thanks"): err(f"{x['id']}: unknown theme {th}")
     if th in ("news", "opportunity", "correction"):
         src = str(x.get("source") or "")
         if not any(d in src for d in OFFICIAL): err(f"{x['id']}: {th} needs source= an official URL ({', '.join(OFFICIAL[:4])} ...)")
