@@ -98,3 +98,9 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - 26 Nov night: same follower said the voice is hard to follow ("kelkkan oru problem") -> no echo on the voice, less boom (250 Hz -2 dB), more presence (3.2 kHz +4 dB), final mix normalised to -14 LUFS (was about -16). Keep these.
 - Content requests ("X kurich oru content cheyumo?") are answered "we'll make a reel on it", sent to Discord, and stored in KV content_requests (read them at /public/content_requests). Script writers: check that list every run and write those topics first, with a thank-you reel (theme "thanks") when it's one person's idea.
 - A DM with the same text from the same person is answered once per 10 min (dtx: claim), whatever route delivers it.
+
+## Two new topics (owner, 27 Nov): pg = payment gateway, web = websites
+- Why: followers ask about taking online payments right after registering (gateway KYC, documents, name mismatches), and the team now builds websites for startups payable in monthly parts. Both sit next to company registration in the founder journey: register -> bank account -> payment gateway -> website.
+- Folders bank/pg (ids "pg...") and bank/web (ids "wb..."); keywords GATEWAY / PAYMENT and WEBSITE / WEBPLAN; share 5% each (others trimmed, total 1.0). Facts only from topics.FACTS_PG / FACTS_WEB; websites are OUR service: never a price, instalment amount or delivery date; never recommend or price a gateway.
+- Seed: cartoon series ep 1-6 each (Fahad's online shop; Riya's boutique). Refill both to 7+ days like every topic; mix toon, duo3d and list reels, faq / crm / new themes as usual.
+- DM bot: both topics in TOPIC_WORDS and the "Hi" menu; every prompt now starts with "understand first" (what they want, no assuming their business from a word, ask when unclear).

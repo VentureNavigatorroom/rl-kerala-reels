@@ -11,16 +11,16 @@ STORIES FROM REAL ENQUIRIES: bank/STORY_THEMES.md holds anonymised situations di
 companies, places, numbers or anything that could identify a person). Build scripts on those situations, always with
 invented names and changed details. Never put CRM details in the repo."""
 
-NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val"]   # added 19 Nov evening (val = company valuation, 19:14)
+NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val", "pg", "web"]   # pg + web added 27 Nov   # added 19 Nov evening (val = company valuation, 19:14)
 DIRS = {"co": "bank", "gst": "bank/gst", "inv": "bank/inv", "sui": "bank/sui", "sk": "bank/sk", "ud": "bank/ud", **{t: f"bank/{t}" for t in NEW7}}
 # share of each stock target (reels, carousels, stories, posters) kept for each topic; together <= 1 keeps the
 # GitHub Pages site under its 1 GB limit. Company registration posts the most reels a day, so it keeps the biggest backup.
-SHARE = {"co": 0.11, **{t: 0.068 for t in ["gst", "inv", "sui", "sk", "ud"] + NEW7}, "inv": 0.05, "fp": 0.05, "iec": 0.086, "val": 0.086}   # same as the worker's REEL_SHARE (26 Nov review)
+SHARE = {"co": 0.11, "gst": 0.068, "inv": 0.05, "sui": 0.058, "sk": 0.058, "ud": 0.06, "tm": 0.068, "roc": 0.058, "fssai": 0.068, "iec": 0.068, "nda": 0.058, "cfa": 0.058, "fp": 0.05, "val": 0.068, "pg": 0.05, "web": 0.05}   # same as the worker's REEL_SHARE (27 Nov: 16 topics)   # same as the worker's REEL_SHARE (26 Nov review)
 
 # general keywords (the worker's KW_TOPIC). Each post also gets its own unique keyword from build.KW_POOL.
 BASES = {"co": ["START", "NAME", "AFTER", "CHECKLIST"], "gst": ["GST", "LIMIT", "PENALTY"], "inv": ["INVEST", "TERMSHEET", "FUNDING"],
          "sui": ["DPIIT", "BENEFITS"], "sk": ["KSUM", "GRANT"], "ud": ["UDYAM", "MSME"],
-         "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"], "val": ["VALUATION", "WORTH"]}
+         "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"], "val": ["VALUATION", "WORTH"], "pg": ["GATEWAY", "PAYMENT"], "web": ["WEBSITE", "WEBPLAN"]}
 ALL_BASES = {k for v in BASES.values() for k in v}
 
 # CTAs: (pill text, promise). The first word of the pill is the keyword.
@@ -45,7 +45,9 @@ CTA_NDA, CTA_SECRET = _c("NDA", "നല്ല NDA-യിൽ വേണ്ടത�
 CTA_COFOUNDER, CTA_VESTING = _c("COFOUNDER", "കോ-ഫൗണ്ടർ എഗ്രിമെന്റിന്റെ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("VESTING", "വെസ്റ്റിംഗ് എങ്ങനെ എന്ന്\nഅയച്ചുതരാം")
 CTA_PROJECTION, CTA_FORECAST = _c("PROJECTION", "ഇൻവെസ്റ്റർ നോക്കുന്നത് എന്ത്\nഎന്ന് അയച്ചുതരാം"), _c("FORECAST", "3 വർഷ ഫോർകാസ്റ്റ്\nഎങ്ങനെ എന്ന് അയച്ചുതരാം")
 CTA_VALUATION, CTA_WORTH = _c("VALUATION", "എപ്പോൾ, ഏത് രീതി എന്ന\nഗൈഡ് അയച്ചുതരാം"), _c("WORTH", "കമ്പനിയുടെ മൂല്യം എങ്ങനെ\nകണക്കാക്കുന്നു എന്ന് അയച്ചുതരാം")
-CTAS = {"val": [CTA_VALUATION, CTA_WORTH], "tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
+CTA_GATEWAY, CTA_PAYMENT = _c("GATEWAY", "റിജക്ട് ആകാതിരിക്കാനുള്ള\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("PAYMENT", "ഓൺലൈൻ പേയ്മെന്റിന് മുമ്പ്\nവേണ്ടത് അയച്ചുതരാം")
+CTA_WEBSITE, CTA_WEBPLAN = _c("WEBSITE", "നല്ല വെബ്സൈറ്റിന്റെ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("WEBPLAN", "മാസ തവണയായി വെബ്സൈറ്റ്:\nഎങ്ങനെ എന്ന് അയച്ചുതരാം")
+CTAS = {"pg": [CTA_GATEWAY, CTA_PAYMENT], "web": [CTA_WEBSITE, CTA_WEBPLAN], "val": [CTA_VALUATION, CTA_WORTH], "tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
         "nda": [CTA_NDA, CTA_SECRET], "cfa": [CTA_COFOUNDER, CTA_VESTING], "fp": [CTA_PROJECTION, CTA_FORECAST], "ud": [CTA_UDYAM, CTA_MSME], "gst": [CTA_GST, CTA_LIMIT, CTA_PENALTY], "inv": [CTA_INVEST, CTA_TERMSHEET, CTA_FUNDING], "sui": [CTA_DPIIT, CTA_BENEFITS], "sk": [CTA_KSUM, CTA_GRANT]}
 
 SEGMENTS = {
@@ -87,6 +89,8 @@ SEGMENTS = {
     "nda": ["founder_pitching", "agency_client", "freelancer_nda", "vendor_supplier", "employee_nda"],
     "cfa": ["friends_cofounders", "tech_nontech", "family_cofounders", "late_joiner", "remote_cofounder"],
     "val": ["raising_round", "esop_plan", "partner_exit", "nri_share_issue", "share_transfer"],
+    "pg": ["online_seller_pg", "service_pro_pg", "proprietor_pg", "new_company_pg", "app_founder_pg"],
+    "web": ["no_website", "insta_only", "old_website", "service_business", "online_shop"],
     "fp": ["investor_pitch", "bank_loan", "grant_application", "early_revenue", "pre_revenue"],
 }
 
@@ -173,6 +177,20 @@ someone with an older licence that they can skip renewal; tell them to check its
 now falls in a lower category can surrender its licence for registration. 14-digit FSSAI number printed on packaged
 food; selling without it: penalty up to Rs 5 lakh and up to 6 months' imprisonment; delivery apps ask for the number.
 NEVER quote the old Rs 12 lakh / Rs 20 crore limits or a renewal date."""
+FACTS_PG = """Payment gateway (checked 27 Nov 2026 against Razorpay's public KYC docs, Master KYC from 1 Jan 2026): every online
+payment gateway in India runs KYC on the business before live payments (RBI / PMLA rules); documents depend on the business
+type: proprietor = identity + address proof, a business proof and bank details; private limited company = company PAN,
+incorporation record (CIN), MOA and AOA (newly asked from Jan 2026), board resolution or authorisation, owner (UBO)
+declaration for holders above 10%, signatory KYC; settlement bank account in the business's name; the name must match
+on PAN, bank and registration or activation is delayed / rejected; existing CKYC records can make activation faster,
+otherwise video KYC; website policy pages are no longer needed at onboarding at some major gateways, but website / app
+details are commonly asked. Never name a gateway's fees or promise activation; don't recommend one gateway."""
+FACTS_WEB = """Websites (OUR service, 27 Nov): we build websites for startups and small businesses; instead of one big payment
+up front, they can pay in monthly parts until the total is paid; the amount depends on the project and the team gives the
+exact quote on a call. NEVER state a price, an instalment amount or a delivery date; never promise rankings or sales.
+Good-practice facts: mobile-friendly, a domain in the business's name, clear contact details and WhatsApp button, real
+photos of what you sell, fast loading; payment gateways commonly ask for website / app details; terms, privacy and refund
+pages help customers trust an online seller. An Instagram page alone can be lost (hacked, banned); a website is yours."""
 FACTS_IEC = """IEC: 10-digit Import Export Code from DGFT linked to the business PAN; needed to import or export goods (customs and
 banks ask); one per PAN; never expires but must be updated online every year between April and June or it is
 deactivated; not needed for personal-use imports; service exporters need it to claim export benefits."""
