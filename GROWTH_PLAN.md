@@ -6,6 +6,45 @@ with 13 the same total volume is spread thinner, so per-topic numbers are lower 
 
 These rules run whether the owner is present or not. The monitor (every 3 h) and the script writer (every 4 h) read this file on every run. Two review tasks run on 22 Nov and 25 Nov.
 
+## Projection 27 Nov - 10 Dec (set at the 26 Nov review from real 20-25 Nov numbers; replaces the tables below for judging)
+
+Basis: story reels posted 23-25 Nov averaged ~420 reach each (142 on 20-22 Nov) and 1 in 4 passed 1,000 views; tip reels ~100.
+Volume: 87 story reels a day + 7 tips (each topic every other day) + up to 4 news. Shares: co 11%, iec 8.6%, val 8.6%,
+inv 5%, fp 5%, the other 9 topics 6.8% each. The weak link is the funnel (0.04 keyword comments per 1,000 reach), so leads
+are projected from a funnel that improves (one keyword + concrete promise from 27 Nov), not from reach.
+
+### Whole account, 27 Nov - 10 Dec (14 days)
+| | Low | Middle (best guess) | High (with owner's push) |
+|---|---|---|---|
+| Views | 250k | 450-600k | 800k+ |
+| Breakout reels (1,000+ views) | 120 | 200-300 | 350+ |
+| New followers | +250 | +500-900 | +1,500 |
+| Keyword comments / DMs | 25 | 60-120 | 200+ |
+| Real leads | 5-10 | 15-30 | 40-60 |
+| Clients | 1-2 | 3-6 | 8-12 |
+
+### Per topic, 27 Nov - 10 Dec (middle case; reach = reels x 23-25 Nov reach per reel)
+| Topic | Reels | Reach | Keyword comments | Leads | Note |
+|---|---|---|---|---|---|
+| tm | ~90 | ~55k | 6-12 | 1-3 | best reach per reel |
+| iec | ~110 | ~70k | 8-15 | 2-4 | share raised to 8.6% |
+| fssai | ~90 | ~50k | 5-10 | 1-3 | high reach, 0 keyword comments so far: funnel test |
+| ud | ~90 | ~50k | 5-10 | 1-3 | |
+| gst | ~90 | ~45k | 5-10 | 1-3 | |
+| nda | ~90 | ~45k | 4-8 | 1-2 | ndd035 is the account's best reel |
+| co | ~140 | ~60k | 6-12 | 2-4 | |
+| roc | ~90 | ~35k | 4-8 | 1-2 | |
+| sui | ~90 | ~35k | 3-6 | 0-2 | |
+| val | ~110 | ~30k | 4-8 | 2-4 | only real lead with a phone so far (qv032); share raised |
+| cfa | ~90 | ~27k | 3-6 | 1-2 | direct DM lead (no phone) |
+| sk | ~90 | ~22k | 2-5 | 0-2 | low reach per reel |
+| fp | ~68 | ~15k | 1-3 | 0-1 | cut to 5% |
+| inv | ~68 | ~14k | 1-3 | 0-1 | cut to 5% |
+
+Goal path (unchanged goal: 10 clients a month per topic, ~100 enquiries a month each): by 10 Dec the best 4-6 topics
+should reach 2-4 leads a week each. If keyword comments stay under 0.1 per 1,000 reach after the CTA change (judge 3 Dec),
+rule 3 fires again: test an on-screen keyword in the first 3 seconds and a pinned-comment ask by the owner.
+
 ## Projection updated 19 Nov 19:20 for 14 topics (replaces the 6-topic table below for judging results)
 
 Volume (updated 19 Nov 23:40): normal reels ramp 40 / 60 / 80 and stay at 80 a day, plus 1 tip reel per topic a day (14) and up to 4 news / opportunity / correction reels. About 330-370 normal reels and 70-84 tips from 20 to 25 Nov, roughly the same total as before; tips are short and saveable, so they should lift saves, shares and follows rather than raw views. The original 6 topics post from 20 Nov. The 8 newest (tm, roc, fssai, iec, nda, cfa, fp, val) post from about 21 Nov, once their reels are built, about 6 a day each.

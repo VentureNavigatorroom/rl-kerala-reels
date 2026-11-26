@@ -186,3 +186,51 @@ What to change in new writing (all topics, about 40% of each batch until more da
 - Review: tm051 dropped (elderly couple, veranda, old registration needs renewal: too close to tm008). vd038 / vd044 / vd045 share the fact "only a Pvt Ltd issues shares" in different situations; later inv batches should avoid it.
 - Workflows: check-bank, reel-factory (35), deploy-autopilot, render-scenes, voice-audit all green.
 - Counts after (normal / tips incl. posted): nda 46/10, roc / fssai / cfa 47/10, fp 47/11, sk 48/11, ud / sui / gst 49/11, inv 50/11, val 53/10, iec 54/11, tm 54/10, co 445/11. At 80 a day each non-co topic uses ~5.4 a day: about 8.5-10 days of runway (co ~50 days). Next run: nda, roc, fssai, cfa, fp, sk.
+
+## 26 Nov 2026 growth review (20-25 Nov, all 14 topics). ACTION
+Data: /public/insights (updated 26 Nov 23:02 IST) + live Instagram insights for all 505 posts of 20-25 Nov (pulled 26 Nov; 24-25 Nov posts are 1-2.5 days old and still growing), /ops/leads, followers from the Graph API. /ops/insights failed (Cloudflare 1101), so keyword comments / DMs per post exist only for 20-23 Nov (judged rows). No 22 Nov checkpoint entry was found in this file or the git history, so this review also covers rules 1-3 and 5.
+
+**Against the 20-25 Nov projection**
+| | Projection (middle / high) | Actual | Column |
+|---|---|---|---|
+| Views | 45k / 70k+ | **148.7k** (reach 134.5k) | above high |
+| Breakout reels (1,000+ views) | 5-8 / 10+ | **68** (78 above 500 reach) | above high |
+| New followers | 40-80 / 150-300 | **~254** (1 -> 255) | high |
+| Keyword comments / DMs | 15-30 | **6 keyword comments + 15 DMs** (20-23 Nov judged); 41 comments in all | low |
+| Real leads | 6-12 | **2** (qv032 val reel, high intent with phone; one direct DM tagged cfa, no phone). The 2 d401 leads are the owner's tests. | low |
+| Clients | 1-3 | unknown (no outcome noted in leads) | - |
+
+Reach landed far above the high column; the funnel landed in the low column. The jump came on 23 Nov: story reels averaged 142 reach on 20-22 Nov and 418 on 23-25 Nov, with 62 breakouts in those 3 days (6 before). Average watch time 5.8 s (6.2 s for 23-25 Nov), up from 4.2 s.
+
+**Per topic (all reels incl. tips; reach per reel, avg watch, breakouts, saves+shares per 1k, keyword comments, leads, kw / 1k, leads / 1k)**
+| Topic | Reels | Reach/reel | Watch s | 1k+ | sv+sh/1k | KW | Leads | KW/1k | Leads/1k |
+|---|---|---|---|---|---|---|---|---|---|
+| tm | 37 | 389 | 6.7 | 10 | 4.0 | 1 | 0 | 0.07 | 0 |
+| iec | 33 | 373 | 5.5 | 8 | 3.8 | 2 | 0 | 0.16 | 0 |
+| fssai | 35 | 325 | 6.7 | 7 | 5.5 | 0 | 0 | 0 | 0 |
+| ud | 37 | 321 | 5.8 | 7 | 3.1 | 0 | 0 | 0 | 0 |
+| gst | 38 | 292 | 6.0 | 7 | 6.7 | 0 | 0 | 0 | 0 |
+| co | 54 | 290 | 6.8 | 9 | 3.3 | 0 | 0 | 0 | 0 |
+| nda | 32 | 269 | 6.4 | 4 | 5.8 | 0 | 0 | 0 | 0 |
+| sui | 37 | 266 | 4.4 | 4 | 3.4 | 0 | 0 | 0 | 0 |
+| roc | 33 | 234 | 4.9 | 3 | 4.5 | 1 | 0 | 0.13 | 0 |
+| val | 30 | 222 | 5.8 | 3 | 2.8 | 1 | 1 | 0.15 | 0.15 |
+| sk | 37 | 205 | 4.8 | 3 | 4.0 | 0 | 0 | 0 | 0 |
+| cfa | 33 | 194 | 6.1 | 2 | 6.1 | 1 | 0 (+1 direct) | 0.16 | 0 |
+| fp | 32 | 160 | 5.4 | 0 | 3.5 | 0 | 0 | 0 | 0 |
+| inv | 37 | 158 | 5.2 | 1 | 3.4 | 0 | 0 | 0 | 0 |
+
+**Per theme**: new 75 reels, 363 reach/reel, 6.4 s, 17 breakouts; crm 109, 291, 6.4 s, 16 (the val lead); faq 177, 277, 5.7 s, 24; tip 84, 98, 3.5 s, 0 (saves+shares 6.4/1k vs ~3.9 for story reels = 1.6x, below the 2x target); untagged co 58, 296; correction 2, 602.
+**Per format**: duo3d 294 reels, 333 reach/reel, 6.8 s, 56 breakouts; toon 59, 352, 6.0 s, 11; chat 52, 117, 3.8 s, 1; list (mostly tips) 100, 98, 3.6 s, 0.
+Best reels: ndd035 (nda, new, 1,511 views, 10.3 s, 20 shares), fs014, yd039, qv032 (the lead), fsx06 (toon), ied020, tm012, ied025, fs029, cf031 (11 saves).
+
+**Rules**
+- Rule 1 (watch time ~4 s): not fired (6.2 s over 23-25 Nov).
+- Rule 2 (reach drop / spam errors): not fired; reach per reel tripled after the step to 80.
+- Rule 3 (reach grows, keyword comments near zero): FIRED. Captions said "Comment GST or LAUNCH" (two words, no promise); end cards showed "GST / LAUNCH". Now one keyword + the concrete thing ("Comment LIMIT and we'll DM you the GST turnover limits list") in all three languages, and new end cards show one keyword. Asking for the phone earlier was already done on 25 Nov. Judge on 3 Dec.
+- Rule 4 (topic shares): all 14 topics have 6 days. Ranked by leads then keyword comments per 1,000 reach: val, iec, cfa, roc, tm, then 9 topics at zero. Among the zeros inv and fp also have the lowest reach per reel and 0-1 breakouts, so: **inv 6.8% -> 5%, fp 6.8% -> 5%** (2 changes, 1.8 points each); the 3.6 points go to **val -> 8.6%** (only real lead with a phone) and **iec -> 8.6%** (best kw/1k with high reach). Signal is thin (2 real leads), hence the small steps. GROWTH_PLAN's guess that inv / fp would lead was wrong so far.
+- Rule 5 (other causes): reach is not being held down (it tripled), so the miss is the funnel, not distribution. Checked: Instagram's 2026 originality rule demotes accounts that mostly repost others' content (judged over a month) - ours is all original, no action. Its AI-profile label rule targets AI personas posing as real people - not our brand account; no action, but the owner may add "AI info" on reels by hand if Instagram prompts. Comment-to-DM guides agree with rule 3: one keyword and a named reward.
+- Theme / format review (plan item 4): tips cut to every other day per topic (~7 a day) and the 7 freed slots go to story reels (87 a day); new tips should be scenes, not lists. Chat reels capped at 10% of new scripts. crm / faq / new mix stays 40/40/20 until 14 days of theme data (4 Dec), though "new" leads on reach so far.
+- 100-follower switch: held on purpose (see OPS_RULES "26 Nov growth review").
+
+Tested: plan simulation (87 reels + 7 tips + 4 news = 98 a day, tips alternate by day), caption output, check_bank OK.

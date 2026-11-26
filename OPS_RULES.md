@@ -88,3 +88,10 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - DMs and comments that suggest something, correct us or complain (FEEDBACK_HINT words + an AI check) get a reply about exactly what they said (thanks + "noted / we'll check"), never sales questions or the keyword DM; the owner gets a Discord alert; DM check-ins stop for that message. A 1-3 word follow-up right after (typo fixes like "Voiceover**") gets no second reply.
 - When the owner acts on a suggestion, make a thank-you reel: theme "thanks" (posted in the news slots right after corrections), collab=[their username], e.g. bank/batch_thanks01.py.
 - 26 Nov: @dev_onthe.move asked for a faster voiceover -> atempo 1.24 (was 1.14), sentence pauses 0.26-0.34 s. Keep this pace.
+
+## 26 Nov growth review (automatic changes)
+- **Topic shares (rule 4):** inv 5%, fp 5%, val 8.6%, iec 8.6%, co 11%, others 6.8% (REEL_SHARE = topics.SHARE). Writers: inv and fp need fewer scripts now; val and iec more.
+- **Tips:** one tip per topic every other day (TIP_EVERY = 2 in the worker, topics alternate, ~7 a day); the freed slots become story reels (87 a day). Writers keep 5+ unposted tips per topic (was 10). Tip reels in list format reached ~100 people each: new tips should be written as toon or duo3d scenes, not lists, when possible.
+- **One keyword (rule 3):** captions and new end cards show only the topic keyword (e.g. "LIMIT") plus the concrete thing they get. Each post's unique keyword is still registered and still answered.
+- **Format:** chat reels reached ~117 per reel (1 breakout in 52) vs ~340 for duo3d / toon. New normal scripts: at most 10% chat, at least 80% duo3d or toon.
+- **100-follower switch held:** followers passed 100 (255 on 26 Nov) but `low_reach_mode` stays on. The normal stage plan would cut story reels from ~87 to ~30 a day, bring back 70 stories, and drop tips and news, while carousels still reach ~0. Keep reel-max mode until the owner decides or a new plan keeps 80+ reels a day; do not flip it automatically.
