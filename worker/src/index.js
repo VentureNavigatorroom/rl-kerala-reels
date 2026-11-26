@@ -914,21 +914,21 @@ async function topicFromAI(env, text) {   // only when the words gave nothing an
   } catch (e) { return null; }
 }
 // ---- feedback, suggestions, corrections (owner, 26 Nov: "Voice kurach speed akkumo" got company-registration questions) ----
-const FEEDBACK_HINT = /speed|slow|fast|voice|audio|sound|music|font|subtitle|caption|video|reel|content|post|animation|character|suggest|feedback|you should|better if|improve|please (add|make|change)|mistake|wrong|incorrect|not correct|outdated|thettu|thett|sheriyalla|shariyalla|kurach|kurachu|akkumo|aakkumo|aakko|akkoo|cheythoode|cheyyamo|nannayirikkum|nallathaa|onnu (maatt|mati)|തെറ്റ്|ശരിയല്ല|നിർദേശം|വേഗം|സ്പീഡ്|ശബ്ദം|വോയ്സ്/i;
+const FEEDBACK_HINT = /speed|slow|fast|voice|audio|sound|music|font|subtitle|caption|video|reel|content|post|animation|character|kurich|kurichu|about|cheyumo|cheyyumo|cheyyaamo|video on|reel on|post on|topic|suggest|feedback|you should|better if|improve|please (add|make|change)|mistake|wrong|incorrect|not correct|outdated|thettu|thett|sheriyalla|shariyalla|kurach|kurachu|akkumo|aakkumo|aakko|akkoo|cheythoode|cheyyamo|nannayirikkum|nallathaa|onnu (maatt|mati)|തെറ്റ്|ശരിയല്ല|നിർദേശം|വേഗം|സ്പീഡ്|ശബ്ദം|വോയ്സ്/i;
 async function feedbackKind(env, text, context = "") {   // "feedback" | "correction" | "complaint" | null
   if (!FEEDBACK_HINT.test(text)) return null;
   try {
     const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
-      { role: "system", content: "An Instagram follower wrote to @rejectionlist.kerala, a Kerala page that posts reels about company registration, GST, trademark, FSSAI and similar topics, and offers those services. Classify the message with exactly one word: feedback (a suggestion about our reels, voice, videos, page or service), correction (says something we posted is wrong or outdated), complaint (unhappy with us), or request (asking for our service, describing their own business, answering our question, or anything else). A person describing their own business (e.g. 'I run a voiceover business') is request." },
+      { role: "system", content: "An Instagram follower wrote to @rejectionlist.kerala, a Kerala page that posts reels about company registration, GST, trademark, FSSAI and similar topics, and offers those services. Classify the message with exactly one word: content_request (asks us to make a reel or post about some topic), feedback (a suggestion about our reels, voice, videos, page or service), correction (says something we posted is wrong or outdated), complaint (unhappy with us), or request (asking for our service, describing their own business, answering our question, or anything else). A person describing their own business (e.g. 'I run a voiceover business') is request." },
       { role: "user", content: (context ? `Our last message: ${context.slice(0, 200)}\n` : "") + `Their message: ${String(text).slice(0, 400)}` }], max_tokens: 4 });
-    const k = String(r.response || "").toLowerCase().match(/feedback|correction|complaint/)?.[0]; return k || null;
+    const k = String(r.response || "").toLowerCase().match(/content_request|feedback|correction|complaint/)?.[0]; return k || null;
   } catch (e) { return null; }
 }
 async function feedbackReply(env, text, kind) {
-  const fixed = { feedback: "Thanks a lot for the suggestion! 🙏 We've noted it and the team will work on it.", correction: "Thank you for pointing this out! 🙏 Our team will check it and correct it.", complaint: "Sorry about that, and thank you for telling us. 🙏 Our team will look into it personally." }[kind];
+  const fixed = { content_request: "Great idea! 🙌 We'll make a reel on it soon. Thanks for the suggestion!", feedback: "Thanks a lot for the suggestion! 🙏 We've noted it and the team will work on it.", correction: "Thank you for pointing this out! 🙏 Our team will check it and correct it.", complaint: "Sorry about that, and thank you for telling us. 🙏 Our team will look into it personally." }[kind];
   try {
     const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
-      { role: "system", content: `You reply on Instagram for @rejectionlist.kerala to a follower's ${kind}. In 1-2 short sentences: thank them warmly, show you understood exactly what they said (mention it), and say ${kind === "correction" ? "the team will check it and fix it" : kind === "complaint" ? "the team will look into it personally" : "the team has noted it and will work on it"}. Reply in the same language style they used (English, Manglish or Malayalam script). Do NOT ask about their business, do NOT ask for their number, do NOT promote any service, never mention price. Never say you are a bot, AI or human. Output only the reply.` },
+      { role: "system", content: `You reply on Instagram for @rejectionlist.kerala to a follower's ${kind === "content_request" ? "request for a reel on a topic" : kind}. In 1-2 short sentences: thank them warmly, show you understood exactly what they said (mention it), and say ${kind === "content_request" ? "we'll make a reel on that topic soon" : kind === "correction" ? "the team will check it and fix it" : kind === "complaint" ? "the team will look into it personally" : "the team has noted it and will work on it"}. Reply in the same language style they used (English, Manglish or Malayalam script). Do NOT ask about their business, do NOT ask for their number, do NOT promote any service, never mention price. Never say you are a bot, AI or human. Output only the reply.` },
       { role: "user", content: String(text).slice(0, 500) }], max_tokens: 90 });
     const t = cleanReply(r.response); return t || fixed;
   } catch (e) { return fixed; }
@@ -939,6 +939,7 @@ async function handleWebhook(env, body) {
   for (const entry of body.entry || []) {
     for (const ev of entry.messaging || []) {
       const mid = ev.message?.mid || ev.postback?.mid; if (mid && !(await claimOnce(env, `dup:${mid}`))) continue;
+      if (ev.message?.text && ev.sender?.id) { let h = 0; for (const ch of ev.message.text.trim().toLowerCase()) h = (h * 31 + ch.codePointAt(0)) | 0; if (!(await claimOnce(env, `dtx:${ev.sender.id}:${h}`, 600))) { await log(env, `same DM from ${ev.sender.id} seen twice: answered once`); continue; } }
       if (ev.postback && !ev.message) ev.message = { text: ev.postback.title || ev.postback.payload || "" };   // button taps of other kinds
       if (ev.message && !ev.message.is_echo && (ev.message.attachments || []).some(a => a?.type === "story_mention")) { await storyMention(env, ev.sender.id); continue; }   // not a lead message
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
@@ -1002,6 +1003,7 @@ async function handleWebhook(env, body) {
           meta.feedback = [...(meta.feedback || []), { kind: fk, t: Date.now() }].slice(-5); await kvPut(env, `m:${uid}`, meta);
           thread.push({ role: "assistant", content: fr }); await kvPut(env, key, thread); await sendDM(env, uid, fr);
           await nudgeApply(env, { [uid]: null });
+          if (fk === "content_request") { const cr = await kv(env, "content_requests", []); cr.push({ u: meta.username || uid, text: ev.message.text.slice(0, 300), t: IST().toISOString().slice(0, 16) }); await kvPut(env, "content_requests", cr.slice(-100)); }
           await discord(env, `💡 **${fk.toUpperCase()} by DM** from @${meta.username || uid}:\n> ${ev.message.text.slice(0, 600)}\nBot replied: ${fr}\nTell Claude if you want to act on it (and a thank-you reel).`, true);
           await log(env, `${fk} DM from @${meta.username || uid}: answered and sent to owner`); continue;
         }
@@ -1399,6 +1401,7 @@ export default {
 <h2>Data deletion</h2><p>To delete your data, send the word <b>DELETE</b> as a direct message to @rejectionlist.kerala on Instagram, or ask us in any message. We remove your conversation and details within 7 days and confirm when done.</p>
 <h2>Terms</h2><p>Information shared in replies is general guidance about company registration, not legal advice.</p>
 <p>Contact: send a direct message to @rejectionlist.kerala on Instagram.</p></body>`, { headers: { "content-type": "text/html; charset=utf-8" } });
+    if (u.pathname === "/public/content_requests") return json((await kv(env, "content_requests", [])).map(c => ({ text: c.text, t: c.t })));   // topics followers asked for (no names), for the script writers
     if (u.pathname === "/public/shoutqueue") return json((await kv(env, "shout_queue", [])).map(q => ({ id: q.id, kind: q.kind, month: q.month || null, names: q.names })));   // only people who said yes
     if (u.pathname === "/public/insights") {   // performance per post for the script writer: no names, numbers or messages
       const posted = await kv(env, "posted", {}); const leads = Object.values(await kv(env, "leads", {})); const posts = []; const judged = await kv(env, "judged", {});
