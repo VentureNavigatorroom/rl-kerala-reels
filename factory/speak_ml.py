@@ -86,6 +86,9 @@ REVIEWED_OK = {
     # audit 20 Nov: recogniser joins sandhi (പ്രൊജക്ഷനും ആണ് -> പ്രൊജക്ഷനുമാണ്, ആസ്തി രണ്ട് -> ആസ്ഥിരണ്ട്, സമാന ഇടപാടുകൾ -> സമാനടപാടുകൾ,
     # കണക്ക് ഇറങ്ങണം -> കണക്കിറങ്ങണം, അംഗീകൃത രീതി -> അംഗീകൃതരീതി); heard right in the other lines: the voice said these right.
     "ആണ്", "ആസ്തി", "സമാന", "അംഗീകൃത", "കണക്ക്",
+    # audit 25 Nov: recogniser runs spelled letters together (ആർ ബി ഐ -> ആർബിഐ, ഇ എസ് ഓ പി -> ഇഎസ് ഓപി) and spells the
+    # loanword റിപാട്രിയേഷൻ its own way (റിപ്പാർഡിരിയേഷൻ, heard right in 1 of 3): the voice said these right.
+    "ബി", "എസ്", "ഇ", "റിപാട്രിയേഷൻ",
 }
 def decided(word):
     """True when a word has already been fixed (RESPELL / SAY) or judged fine: the audit skips it."""
