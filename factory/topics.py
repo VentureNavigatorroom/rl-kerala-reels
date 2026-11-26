@@ -198,15 +198,15 @@ licence copy attached, renewed every year; professional tax (revised 1 Oct 2024)
 by the employer, maximum Rs 2,500 a year. GST / FSSAI do not replace these. Home-business rules were being changed in 2025:
 never state a home-business rule or a penalty."""
 FACTS_NRI = """Pravasi founder (checked 27 Nov 2026): NORKA NDPREM gives bank loans of Rs 1 lakh to Rs 30 lakh to Keralites who
-worked abroad at least 2 years, 15% capital subsidy (max Rs 3 lakh, credited after 3 years of continuous running) and 3%
-interest subsidy for 4 years, via partner banks; Mudra Tarun Plus (Rs 20 lakh) only after repaying a Tarun loan; PMEGP
+returned for good after at least 2 years abroad, 15% capital subsidy (max Rs 3 lakh) and 3% interest subsidy for the first
+4 years for those who repay on time, via partner banks (never state when the subsidy is released); Mudra Tarun Plus (Rs 20 lakh) only after repaying a Tarun loan; PMEGP
 loans are decided by banks; FEMA: FC-GPR within 30 days of issuing shares to a non-resident, FC-TRS within 60 days of a
 transfer, FLA return by 15 July. The bank decides: never promise a loan or subsidy, never state our fee."""
 FACTS_PAY = """Payroll (checked 27 Nov 2026): the four Labour Codes in force from 21 Nov 2025; ESIC for establishments with 10+
 employees (wage ceiling Rs 21,000 a month); EPF for 20+ employees, wage ceiling Rs 25,000 a month from 17 Sep 2026
 (was Rs 15,000); allowances above 50% of pay are added back to wages; appointment letters required; PM-VBRY (from
 1 Aug 2025): EPFO-registered employers can get up to Rs 3,000 a month per additional employee for 2 years, subject to
-conditions. Never promise an incentive or state our fee; disputes / inspections go to a labour-law professional."""
+conditions (amount depends on the wage slab; employee kept 6+ months; minimum new hires). Never promise an incentive or state our fee; disputes / inspections go to a labour-law professional."""
 FACTS_PG = """Payment gateway (checked 27 Nov 2026 against Razorpay's public KYC docs, Master KYC from 1 Jan 2026): every online
 payment gateway in India runs KYC on the business before live payments (RBI / PMLA rules); documents depend on the business
 type: proprietor = identity + address proof, a business proof and bank details; private limited company = company PAN,
