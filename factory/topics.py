@@ -11,16 +11,16 @@ STORIES FROM REAL ENQUIRIES: bank/STORY_THEMES.md holds anonymised situations di
 companies, places, numbers or anything that could identify a person). Build scripts on those situations, always with
 invented names and changed details. Never put CRM details in the repo."""
 
-NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val", "pg", "web"]   # pg + web added 27 Nov   # added 19 Nov evening (val = company valuation, 19:14)
+NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val", "pg", "web", "acc", "kl", "nri", "pay"]   # acc kl nri pay added 27 Nov night   # pg + web added 27 Nov   # added 19 Nov evening (val = company valuation, 19:14)
 DIRS = {"co": "bank", "gst": "bank/gst", "inv": "bank/inv", "sui": "bank/sui", "sk": "bank/sk", "ud": "bank/ud", **{t: f"bank/{t}" for t in NEW7}}
 # share of each stock target (reels, carousels, stories, posters) kept for each topic; together <= 1 keeps the
 # GitHub Pages site under its 1 GB limit. Company registration posts the most reels a day, so it keeps the biggest backup.
-SHARE = {"co": 0.11, "gst": 0.068, "inv": 0.05, "sui": 0.058, "sk": 0.058, "ud": 0.06, "tm": 0.068, "roc": 0.058, "fssai": 0.068, "iec": 0.068, "nda": 0.058, "cfa": 0.058, "fp": 0.05, "val": 0.068, "pg": 0.05, "web": 0.05}   # same as the worker's REEL_SHARE (27 Nov: 16 topics)   # same as the worker's REEL_SHARE (26 Nov review)
+SHARE = {"co": 0.1, "gst": 0.055, "inv": 0.045, "sui": 0.05, "sk": 0.05, "ud": 0.045, "tm": 0.055, "roc": 0.05, "fssai": 0.055, "iec": 0.05, "nda": 0.045, "cfa": 0.045, "fp": 0.04, "val": 0.045, "pg": 0.045, "web": 0.045, "acc": 0.055, "kl": 0.045, "nri": 0.045, "pay": 0.035}   # same as the worker's REEL_SHARE (27 Nov: 16 topics)   # same as the worker's REEL_SHARE (26 Nov review)
 
 # general keywords (the worker's KW_TOPIC). Each post also gets its own unique keyword from build.KW_POOL.
 BASES = {"co": ["START", "NAME", "AFTER", "CHECKLIST"], "gst": ["GST", "LIMIT", "PENALTY"], "inv": ["INVEST", "TERMSHEET", "FUNDING"],
          "sui": ["DPIIT", "BENEFITS"], "sk": ["KSUM", "GRANT"], "ud": ["UDYAM", "MSME"],
-         "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"], "val": ["VALUATION", "WORTH"], "pg": ["GATEWAY", "PAYMENT"], "web": ["WEBSITE", "WEBPLAN"]}
+         "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"], "val": ["VALUATION", "WORTH"], "acc": ["ITR", "ACCOUNTS"], "kl": ["SHOPS", "KSMART"], "nri": ["PRAVASI", "NORKA"], "pay": ["ESIC", "PAYROLL"], "pg": ["GATEWAY", "PAYMENT"], "web": ["WEBSITE", "WEBPLAN"]}
 ALL_BASES = {k for v in BASES.values() for k in v}
 
 # CTAs: (pill text, promise). The first word of the pill is the keyword.
@@ -47,7 +47,11 @@ CTA_PROJECTION, CTA_FORECAST = _c("PROJECTION", "ഇൻവെസ്റ്റർ 
 CTA_VALUATION, CTA_WORTH = _c("VALUATION", "എപ്പോൾ, ഏത് രീതി എന്ന\nഗൈഡ് അയച്ചുതരാം"), _c("WORTH", "കമ്പനിയുടെ മൂല്യം എങ്ങനെ\nകണക്കാക്കുന്നു എന്ന് അയച്ചുതരാം")
 CTA_GATEWAY, CTA_PAYMENT = _c("GATEWAY", "റിജക്ട് ആകാതിരിക്കാനുള്ള\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("PAYMENT", "ഓൺലൈൻ പേയ്മെന്റിന് മുമ്പ്\nവേണ്ടത് അയച്ചുതരാം")
 CTA_WEBSITE, CTA_WEBPLAN = _c("WEBSITE", "നല്ല വെബ്സൈറ്റിന്റെ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("WEBPLAN", "മാസ തവണയായി വെബ്സൈറ്റ്:\nഎങ്ങനെ എന്ന് അയച്ചുതരാം")
-CTAS = {"pg": [CTA_GATEWAY, CTA_PAYMENT], "web": [CTA_WEBSITE, CTA_WEBPLAN], "val": [CTA_VALUATION, CTA_WORTH], "tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
+CTA_ITR, CTA_ACCOUNTS = _c("ITR", "GST, ITR ഫയലിംഗ് മുടങ്ങാതിരിക്കാൻ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("ACCOUNTS", "മാസക്കണക്കിൽ വേണ്ടത്\nഅയച്ചുതരാം")
+CTA_SHOPS, CTA_KSMART = _c("SHOPS", "കടയ്ക്ക് വേണ്ട ലൈസൻസുകളുടെ\nലിസ്റ്റ് അയച്ചുതരാം"), _c("KSMART", "K-SMART ലൈസൻസ്\nഗൈഡ് അയച്ചുതരാം")
+CTA_PRAVASI, CTA_NORKA = _c("PRAVASI", "പ്രവാസി ബിസിനസ് ലോൺ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("NORKA", "ബാങ്ക് നോക്കുന്ന പ്രോജക്റ്റ്\nറിപ്പോർട്ട് ഗൈഡ് അയച്ചുതരാം")
+CTA_ESIC, CTA_PAYROLL = _c("ESIC", "PF, ESI എപ്പോൾ വേണം എന്ന\nലിസ്റ്റ് അയച്ചുതരാം"), _c("PAYROLL", "മാസ ശമ്പള ചെക്ക്ലിസ്റ്റ്\nഅയച്ചുതരാം")
+CTAS = {"acc": [CTA_ITR, CTA_ACCOUNTS], "kl": [CTA_SHOPS, CTA_KSMART], "nri": [CTA_PRAVASI, CTA_NORKA], "pay": [CTA_ESIC, CTA_PAYROLL], "pg": [CTA_GATEWAY, CTA_PAYMENT], "web": [CTA_WEBSITE, CTA_WEBPLAN], "val": [CTA_VALUATION, CTA_WORTH], "tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
         "nda": [CTA_NDA, CTA_SECRET], "cfa": [CTA_COFOUNDER, CTA_VESTING], "fp": [CTA_PROJECTION, CTA_FORECAST], "ud": [CTA_UDYAM, CTA_MSME], "gst": [CTA_GST, CTA_LIMIT, CTA_PENALTY], "inv": [CTA_INVEST, CTA_TERMSHEET, CTA_FUNDING], "sui": [CTA_DPIIT, CTA_BENEFITS], "sk": [CTA_KSUM, CTA_GRANT]}
 
 SEGMENTS = {
@@ -91,6 +95,10 @@ SEGMENTS = {
     "val": ["raising_round", "esop_plan", "partner_exit", "nri_share_issue", "share_transfer"],
     "pg": ["online_seller_pg", "service_pro_pg", "proprietor_pg", "new_company_pg", "app_founder_pg"],
     "web": ["no_website", "insta_only", "old_website", "service_business", "online_shop"],
+    "acc": ["nil_filer", "freelancer_itr", "small_trader_acc", "new_company_acc", "notice_holder"],
+    "kl": ["new_shop", "home_office", "no_staff_shop", "salaried_staff_kl", "town_business"],
+    "nri": ["gulf_returnee", "nri_investing", "returnee_loan", "family_business_nri", "mudra_repeat"],
+    "pay": ["first_hire", "ten_staff", "twenty_staff", "salary_split", "new_hires_incentive"],
     "fp": ["investor_pitch", "bank_loan", "grant_application", "early_revenue", "pre_revenue"],
 }
 
@@ -177,6 +185,28 @@ someone with an older licence that they can skip renewal; tell them to check its
 now falls in a lower category can surrender its licence for registration. 14-digit FSSAI number printed on packaged
 food; selling without it: penalty up to Rs 5 lakh and up to 6 months' imprisonment; delivery apps ask for the number.
 NEVER quote the old Rs 12 lakh / Rs 20 crore limits or a renewal date."""
+FACTS_ACC = """Monthly compliance (checked 27 Nov 2026): GST returns are due even with no sales (nil returns); since the July 2025
+tax period the portal blocks a return once 3 years have passed from its due date; from July 2025 GSTR-3B sales figures come
+locked from GSTR-1 (fix in GSTR-1A before 3B); GST rates reset on 22 Sep 2025 (5% / 18%, 40% for a few goods); the
+Income-tax Act, 2025 replaced the 1961 Act from 1 Apr 2026 ("Tax Year", new section numbers); late ITR fee Rs 1,000
+(income up to Rs 5 lakh) or Rs 5,000; presumptive taxation for professionals exists under conditions. Never state a due
+date as fixed (tell them to check with the team), a tax amount for them, or our fee."""
+FACTS_KL = """Kerala licences (checked 27 Nov 2026): a business place needs a local-body licence (panchayat / municipality /
+corporation; towns use K-SMART); every shop and commercial establishment registers under the Kerala Shops and Commercial
+Establishments Act whatever the number of workers (even none), online, within 60 days of starting, with the local-body
+licence copy attached, renewed every year; professional tax (revised 1 Oct 2024) is collected by the local body, deducted
+by the employer, maximum Rs 2,500 a year. GST / FSSAI do not replace these. Home-business rules were being changed in 2025:
+never state a home-business rule or a penalty."""
+FACTS_NRI = """Pravasi founder (checked 27 Nov 2026): NORKA NDPREM gives bank loans of Rs 1 lakh to Rs 30 lakh to Keralites who
+worked abroad at least 2 years, 15% capital subsidy (max Rs 3 lakh, credited after 3 years of continuous running) and 3%
+interest subsidy for 4 years, via partner banks; Mudra Tarun Plus (Rs 20 lakh) only after repaying a Tarun loan; PMEGP
+loans are decided by banks; FEMA: FC-GPR within 30 days of issuing shares to a non-resident, FC-TRS within 60 days of a
+transfer, FLA return by 15 July. The bank decides: never promise a loan or subsidy, never state our fee."""
+FACTS_PAY = """Payroll (checked 27 Nov 2026): the four Labour Codes in force from 21 Nov 2025; ESIC for establishments with 10+
+employees (wage ceiling Rs 21,000 a month); EPF for 20+ employees, wage ceiling Rs 25,000 a month from 17 Sep 2026
+(was Rs 15,000); allowances above 50% of pay are added back to wages; appointment letters required; PM-VBRY (from
+1 Aug 2025): EPFO-registered employers can get up to Rs 3,000 a month per additional employee for 2 years, subject to
+conditions. Never promise an incentive or state our fee; disputes / inspections go to a labour-law professional."""
 FACTS_PG = """Payment gateway (checked 27 Nov 2026 against Razorpay's public KYC docs, Master KYC from 1 Jan 2026): every online
 payment gateway in India runs KYC on the business before live payments (RBI / PMLA rules); documents depend on the business
 type: proprietor = identity + address proof, a business proof and bank details; private limited company = company PAN,

@@ -104,3 +104,13 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - Folders bank/pg (ids "pg...") and bank/web (ids "wb..."); keywords GATEWAY / PAYMENT and WEBSITE / WEBPLAN; share 5% each (others trimmed, total 1.0). Facts only from topics.FACTS_PG / FACTS_WEB; websites are OUR service: never a price, instalment amount or delivery date; never recommend or price a gateway.
 - Seed: cartoon series ep 1-6 each (Fahad's online shop; Riya's boutique). Refill both to 7+ days like every topic; mix toon, duo3d and list reels, faq / crm / new themes as usual.
 - DM bot: both topics in TOPIC_WORDS and the "Hi" menu; every prompt now starts with "understand first" (what they want, no assuming their business from a word, ask when unclear).
+
+## Four more topics (owner, 27 Nov night): acc, kl, nri, pay
+- acc = monthly compliance (GST returns, accounts, ITR/TDS). Ids "ac", keywords ITR / ACCOUNTS, bank/acc.
+- kl = Kerala licences (local-body / K-SMART trade licence, Shops Act within 60 days even with no staff, professional tax). Ids "lc", keywords SHOPS / KSMART, bank/kl.
+- nri = pravasi founder (NORKA NDPREM loans + subsidy, Mudra, PMEGP, FEMA FC-GPR/FC-TRS/FLA). Ids "pv", keywords PRAVASI / NORKA, bank/nri.
+- pay = payroll & PF/ESI (Labour Codes from 21 Nov 2025, ESIC 10+, EPF 20+, EPF ceiling Rs 25,000 from 17 Sep 2026, PM-VBRY). Ids "py", keywords ESIC / PAYROLL, bank/pay.
+- Facts ONLY from topics.FACTS_ACC / FACTS_KL / FACTS_NRI / FACTS_PAY. Never promise a loan, subsidy or incentive; never state a due date as fixed; never a penalty we haven't verified; never our fee.
+- 4 seed toon episodes each (ep 1-4). Refill continues at ep 5+. Statutory amounts allowed by check_bank: 2,500 / 3,000 / 15,000 / 21,000 / 25,000.
+- 20 topics now; REEL_SHARE (worker) and SHARE (topics.py) must stay identical and sum to 1.0.
+- Read HANDOVER_2026-11-27.md if you are a session that did not make these changes.
