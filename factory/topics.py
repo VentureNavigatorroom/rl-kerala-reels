@@ -15,7 +15,7 @@ NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val"]   # added 19 Nov
 DIRS = {"co": "bank", "gst": "bank/gst", "inv": "bank/inv", "sui": "bank/sui", "sk": "bank/sk", "ud": "bank/ud", **{t: f"bank/{t}" for t in NEW7}}
 # share of each stock target (reels, carousels, stories, posters) kept for each topic; together <= 1 keeps the
 # GitHub Pages site under its 1 GB limit. Company registration posts the most reels a day, so it keeps the biggest backup.
-SHARE = {"co": 0.11, **{t: 0.068 for t in ["gst", "inv", "sui", "sk", "ud"] + NEW7}}   # same as the worker's REEL_SHARE
+SHARE = {"co": 0.11, **{t: 0.068 for t in ["gst", "inv", "sui", "sk", "ud"] + NEW7}, "inv": 0.05, "fp": 0.05, "iec": 0.086, "val": 0.086}   # same as the worker's REEL_SHARE (26 Nov review)
 
 # general keywords (the worker's KW_TOPIC). Each post also gets its own unique keyword from build.KW_POOL.
 BASES = {"co": ["START", "NAME", "AFTER", "CHECKLIST"], "gst": ["GST", "LIMIT", "PENALTY"], "inv": ["INVEST", "TERMSHEET", "FUNDING"],

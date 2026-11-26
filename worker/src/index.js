@@ -123,7 +123,12 @@ const todayIST = () => IST().toISOString().slice(0, 10);
 const live_ = i => !i.expires || i.expires >= todayIST();   // a news item is never posted after its "as of" deadline
 // owner, 19 Nov: company-registration reels were starting to feel repetitive, so co drops to 25% and Udyam joins at 15%
 // owner, 19 Nov evening: 13 topics, same goal each; company registration keeps a little more as the original topic
-const REEL_SHARE = { co: 0.11, gst: 0.068, inv: 0.068, sui: 0.068, sk: 0.068, ud: 0.068, tm: 0.068, roc: 0.068, fssai: 0.068, iec: 0.068, nda: 0.068, cfa: 0.068, fp: 0.068, val: 0.068 };   // 14 topics
+// 26 Nov review (GROWTH_PLAN rule 4): inv and fp cut to 5% (0 leads, 0 keyword comments, lowest reach per reel);
+// their 3.6 points go to val (the only real lead with a phone, qv032) and iec (best keyword comments per 1,000 reach + high reach).
+const REEL_SHARE = { co: 0.11, gst: 0.068, inv: 0.05, sui: 0.068, sk: 0.068, ud: 0.068, tm: 0.068, roc: 0.068, fssai: 0.068, iec: 0.086, nda: 0.068, cfa: 0.068, fp: 0.05, val: 0.086 };   // 14 topics
+// 26 Nov review: tip reels (list format) reached ~98 people each vs ~330 for story reels, 0 breakouts in 84, 3.5 s watch.
+// Tips now post every TIP_EVERY days per topic (topics alternate, so ~7 a day); the freed slots go to normal reels.
+const TIP_EVERY = 2;
 async function reelMaxPlan(env, day) {
   const ck = `plan2:${day}`; const cached = await kv(env, ck, null); if (cached) return cached;   // frozen once a day so slot times never move
   let total = 0; for (const [d, n] of REEL_RAMP) if (day >= d) total = n;
@@ -132,12 +137,14 @@ async function reelMaxPlan(env, day) {
   const avail = {}; for (const t of Object.keys(TOPICS)) avail[t] = 0;
   for (const i of m.items || []) if (!i.posted && !posted[i.id] && !SPECIAL.includes(i.theme)) avail[topicOf(i)]++;
   const live = Object.keys(TOPICS).filter(t => day >= TOPICS[t].stages[0].from);
-  const plan = {}; for (const t of live) plan[t] = { reel: 0, carousel: 0, story: 0, poster: 0, tip: 1 };
+  const dn = Math.floor(Date.parse(day + "T00:00:00Z") / 86400e3);
+  const plan = {}; live.forEach((t, k) => { plan[t] = { reel: 0, carousel: 0, story: 0, poster: 0, tip: (dn + k) % TIP_EVERY === 0 ? 1 : 0 }; });
+  total += live.filter(t => !plan[t].tip).length;   // a topic's skipped tip slot becomes a normal reel (same daily post count)
   let left = total;   // pass 1: each topic its share, limited by stock; pass 2: hand leftovers to topics with stock, co first
   for (const t of live) { const n = Math.min(Math.floor(total * (REEL_SHARE[t] || 0)), avail[t]); plan[t].reel = n; left -= n; }
   const order = ["co", ...live.filter(x => x !== "co")]; let moved = true;   // leftovers one at a time, round-robin over topics that still have stock
   while (left > 0 && moved) { moved = false; for (const t of order) if (plan[t] && left > 0 && plan[t].reel < avail[t]) { plan[t].reel++; left--; moved = true; } }
-  const P = { cap: total, mode: "reel-max", stages: {}, plan, news: NEWS_SLOTS, total: total - left, tips: live.length, stock: avail };
+  const P = { cap: total, mode: "reel-max", stages: {}, plan, news: NEWS_SLOTS, total: total - left, tips: live.filter(t => plan[t].tip).length, stock: avail };
   await kvPut(env, ck, P); return P;
 }
 async function planDay(env, day) {

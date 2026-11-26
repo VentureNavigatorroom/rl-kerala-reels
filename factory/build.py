@@ -45,8 +45,8 @@ def with_kw(s, man):
         cands = ([want] if want.isalpha() and len(want) >= 4 else []) + KW_POOL + [f"{w}{n}" for n in range(2, 50) for w in KW_POOL]
         kw = next(k for k in cands if k not in reg and k not in topics.ALL_BASES)
         reg[kw] = dict(item=s["id"], base=base)
-    s["cta_caption"] = f"{base} അല്ലെങ്കിൽ {kw} എന്ന് കമന്റ് ചെയ്യൂ"
-    s["cta"] = (f"{base} / {kw}", "എന്ന് കമന്റ് ചെയ്യൂ\n" + s["cta"][1]); s["kw"] = kw; s["base"] = base
+    s["cta_caption"] = f"{base} എന്ന് കമന്റ് ചെയ്യൂ"   # 26 Nov review (rule 3): one keyword on screen; the unique kw stays registered
+    s["cta"] = (base, "എന്ന് കമന്റ് ചെയ്യൂ\n" + s["cta"][1]); s["kw"] = kw; s["base"] = base
     return s
 
 def build_carousels(man, target):

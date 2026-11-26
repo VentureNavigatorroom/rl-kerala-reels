@@ -175,9 +175,28 @@ SEGMENT = {   # who it is for, using the phrases each group searches
     "early_revenue": dict(ml="ആദ്യ വരുമാനം വന്നു തുടങ്ങിയ സ്റ്റാർട്ടപ്പുകൾക്ക്.", en="For startups that have started earning their first revenue.", mg="First revenue vannu thudangiya startups-nu."),
     "pre_revenue": dict(ml="ഇതുവരെ വരുമാനം ഇല്ലാത്ത സ്റ്റാർട്ടപ്പുകൾക്ക്.", en="For pre-revenue startups with no sales yet.", mg="Ithuvare revenue illaatha startups-nu."),
 }
-CTA = dict(ml="{base} അല്ലെങ്കിൽ {kw} എന്ന് കമന്റ് ചെയ്യൂ, DM-ൽ അയച്ചുതരാം 👇",
-           en="Comment {base} or {kw} and we'll send it to your DM 👇",
-           mg="{base} allenkil {kw} ennu comment cheyyu, DM-il ayachu tharaam 👇")
+# 26 Nov review (GROWTH_PLAN rule 3: 134k reach, ~6 keyword comments): ONE keyword per caption and the concrete thing
+# they get. The post's own unique keyword still works in the worker (kwmap) but is no longer shown.
+CTA = dict(ml="{base} എന്ന് കമന്റ് ചെയ്യൂ 👇 {promise_ml} DM-ൽ അയച്ചുതരാം",
+           en="Comment {base} 👇 and we'll DM you {promise_en}",
+           mg="{base} ennu comment cheyyu 👇 {promise_mg} DM-il ayachu tharaam")
+PROMISE_EN = {"START": "which structure fits you: Pvt Ltd, LLP or OPC", "NAME": "the company-name checklist", "AFTER": "the after-registration compliance list",
+              "CHECKLIST": "the registration documents checklist", "DOCS": "the registration documents checklist",
+              "GST": "the guide on when you need GST", "LIMIT": "the GST turnover limits list", "PENALTY": "the list of GST penalties to avoid",
+              "INVEST": "the agreements to sign before investor money comes in", "TERMSHEET": "what is binding in a term sheet", "FUNDING": "the next steps after an investor says yes",
+              "DPIIT": "the DPIIT eligibility checklist", "BENEFITS": "the benefits of DPIIT recognition", "KSUM": "the KSUM Unique ID guide", "GRANT": "the checklist before a KSUM grant",
+              "UDYAM": "the benefits of Udyam registration", "MSME": "the micro / small / medium check", "TRADEMARK": "the guide to protecting your brand",
+              "BRAND": "the checklist to stop name copying", "ROC": "the yearly ROC filing calendar", "FILING": "the filings due even with no business",
+              "FSSAI": "the guide to which FSSAI you need", "FOOD": "the checklist to sell food legally", "IEC": "the IEC guide", "EXPORT": "the checklist before your first export",
+              "NDA": "what a strong NDA must have", "SECRET": "the checklist before sharing your idea", "COFOUNDER": "the co-founder agreement checklist",
+              "VESTING": "how vesting protects co-founders", "PROJECTION": "what investors check in projections", "FORECAST": "how to build a 3-year forecast",
+              "VALUATION": "when you need a valuation and which method fits", "WORTH": "how a company's worth is worked out"}
+
+def _promise_ml(s):
+    sub = (s.get("cta") or ("", ""))[1] or ""
+    sub = sub.replace("എന്ന് കമന്റ് ചെയ്യൂ", "").replace("\n", " ").strip()
+    for tail in ("അയച്ചുതരാം",): sub = sub.removesuffix(tail).strip()
+    return sub or "ഗൈഡ്"
 # hashtags: 1 core + 1 local + 1 topic + 1 segment + 1 rotating (5 total, Instagram's cap)
 H_LOCAL = ["#kerala", "#kochi", "#keralabusiness", "#malayali", "#startupkerala"]
 H_TOPIC = {"START": ["#privatelimitedcompany", "#pvtltd", "#llp", "#opc"], "NAME": ["#companyname", "#trademark", "#businessname"],
@@ -231,7 +250,7 @@ def caption(s, head):
             para = own or t[lang]
             if g and (with_seg or not own):   # topic text always had the segment; custom text gets it on its own line
                 para += ("\n" if own else " ") + g[lang]
-            parts.append(para + "\n" + CTA[lang].format(base=base, kw=kw))
+            parts.append(para + "\n" + CTA[lang].format(base=base, promise_ml=_promise_ml(s), promise_en=PROMISE_EN.get(base, "our free guide"), promise_mg=PROMISE_EN.get(base, "free guide").removeprefix("the ")))
         return "\n\n".join(parts + [tags])
     out = build(True)
     if len(out) > 2200: out = build(False)   # too long: drop the segment line from custom captions, never the CTA / hashtags
