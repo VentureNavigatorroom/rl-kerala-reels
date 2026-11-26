@@ -89,6 +89,11 @@ REVIEWED_OK = {
     # audit 25 Nov: recogniser runs spelled letters together (ആർ ബി ഐ -> ആർബിഐ, ഇ എസ് ഓ പി -> ഇഎസ് ഓപി) and spells the
     # loanword റിപാട്രിയേഷൻ its own way (റിപ്പാർഡിരിയേഷൻ, heard right in 1 of 3): the voice said these right.
     "ബി", "എസ്", "ഇ", "റിപാട്രിയേഷൻ",
+    # audit 26 Nov (new topics pg/web/acc/kl/nri/pay): recogniser joins sandhi (മാസ ശമ്പളം -> മാസശമ്പളം, സ്റ്റാഫിനെ എടുത്തു ->
+    # സ്റ്റാഫിനെടുത്തു, സ്റ്റാഫ് ആയി -> സ്റ്റാഫായി, സഹായം ഉണ്ടോ -> സഹായമുണ്ടോ, രണ്ട് വർഷം -> രണ്ടുവർഷം) and drops the last
+    # sentence after a pause (energy check: the audio is there; രേഖകൾ / വേണ്ടല്ലോ / രജിസ്ട്രേഷൻ / ടി "missed" only that way);
+    # the name ഫഹദേ is said fast as "ഫാദേ" and written ഭാദേ, as names often are: the voice said these right.
+    "മാസ", "എടുത്തു", "ആയി", "രണ്ട്", "ഉണ്ടോ", "ഉണ്ട്", "രേഖകൾ", "വേണ്ടല്ലോ", "രജിസ്ട്രേഷൻ", "ടി", "ഫഹദേ",
 }
 def decided(word):
     """True when a word has already been fixed (RESPELL / SAY) or judged fine: the audit skips it."""
