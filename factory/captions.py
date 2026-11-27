@@ -232,7 +232,13 @@ PROMISE_EN = {"START": "which structure fits you: Pvt Ltd, LLP or OPC", "NAME": 
               "FSSAI": "the guide to which FSSAI you need", "FOOD": "the checklist to sell food legally", "IEC": "the IEC guide", "EXPORT": "the checklist before your first export",
               "NDA": "what a strong NDA must have", "SECRET": "the checklist before sharing your idea", "COFOUNDER": "the co-founder agreement checklist",
               "VESTING": "how vesting protects co-founders", "PROJECTION": "what investors check in projections", "FORECAST": "how to build a 3-year forecast",
-              "VALUATION": "when you need a valuation and which method fits", "WORTH": "how a company's worth is worked out"}
+              "VALUATION": "when you need a valuation and which method fits", "WORTH": "how a company's worth is worked out",
+              "GATEWAY": "the checklist to avoid gateway rejection", "PAYMENT": "what you need before taking online payments",
+              "WEBSITE": "the checklist for a good website", "WEBPLAN": "how a website paid in monthly parts works",
+              "ITR": "the checklist to keep GST and ITR filings on time", "ACCOUNTS": "what your monthly accounts need",
+              "SHOPS": "the list of licences your shop needs", "KSMART": "the K-SMART licence guide",
+              "PRAVASI": "the pravasi business loan checklist", "NORKA": "the guide to the project report banks look at",
+              "ESIC": "the list of when PF and ESI apply", "PAYROLL": "the monthly payroll checklist"}
 
 def _promise_ml(s):
     sub = (s.get("cta") or ("", ""))[1] or ""
