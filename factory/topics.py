@@ -15,7 +15,7 @@ NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val", "pg", "web", "ac
 DIRS = {"co": "bank", "gst": "bank/gst", "inv": "bank/inv", "sui": "bank/sui", "sk": "bank/sk", "ud": "bank/ud", **{t: f"bank/{t}" for t in NEW7}}
 # share of each stock target (reels, carousels, stories, posters) kept for each topic; together <= 1 keeps the
 # GitHub Pages site under its 1 GB limit. Company registration posts the most reels a day, so it keeps the biggest backup.
-SHARE = {"co": 0.096, "gst": 0.053, "inv": 0.043, "sui": 0.048, "sk": 0.048, "ud": 0.043, "tm": 0.053, "roc": 0.048, "fssai": 0.053, "iec": 0.048, "nda": 0.043, "cfa": 0.043, "fp": 0.038, "val": 0.043, "pg": 0.043, "web": 0.043, "acc": 0.053, "kl": 0.043, "nri": 0.043, "pay": 0.034, "dr": 0.041}   # 27 Nov night: data room added, everyone scaled by 0.96; = REEL_SHARE in the worker   # same as the worker's REEL_SHARE (27 Nov: 16 topics)   # same as the worker's REEL_SHARE (26 Nov review)
+SHARE = {"co": 0.096, "gst": 0.05, "inv": 0.043, "sui": 0.048, "sk": 0.048, "ud": 0.043, "tm": 0.05, "roc": 0.048, "fssai": 0.053, "iec": 0.048, "nda": 0.043, "cfa": 0.046, "fp": 0.038, "val": 0.046, "pg": 0.043, "web": 0.043, "acc": 0.053, "kl": 0.043, "nri": 0.043, "pay": 0.034, "dr": 0.041}   # 27 Nov weekly review: gst, tm -0.3 pt; val, cfa +0.3 pt. 27 Nov night: data room added, everyone scaled by 0.96; = REEL_SHARE in the worker   # same as the worker's REEL_SHARE (27 Nov: 16 topics)   # same as the worker's REEL_SHARE (26 Nov review)
 
 # general keywords (the worker's KW_TOPIC). Each post also gets its own unique keyword from build.KW_POOL.
 BASES = {"co": ["START", "NAME", "AFTER", "CHECKLIST"], "gst": ["GST", "LIMIT", "PENALTY"], "inv": ["INVEST", "TERMSHEET", "FUNDING"],

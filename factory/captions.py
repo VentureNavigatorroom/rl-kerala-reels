@@ -233,6 +233,8 @@ SEGMENT = {   # who it is for, using the phrases each group searches
 CTA = dict(ml="{base} എന്ന് കമന്റ് ചെയ്യൂ 👇 {promise_ml} DM-ൽ അയച്ചുതരാം",
            en="Comment {base} 👇 and we'll DM you {promise_en}",
            mg="{base} ennu comment cheyyu 👇 {promise_mg} DM-il ayachu tharaam")
+EARLY = "💬 Comment {base} 👇"
+SEND_ML = "ഇത് ആവശ്യമുള്ള ഒരു കൂട്ടുകാരന് അയച്ചുകൊടുക്കൂ 📤"
 PROMISE_EN = {"START": "which structure fits you: Pvt Ltd, LLP or OPC", "NAME": "the company-name checklist", "AFTER": "the after-registration compliance list",
               "CHECKLIST": "the registration documents checklist", "DOCS": "the registration documents checklist",
               "GST": "the guide on when you need GST", "LIMIT": "the GST turnover limits list", "PENALTY": "the list of GST penalties to avoid",
@@ -304,12 +306,15 @@ def caption(s, head):
     t, g = TOPIC.get(base, TOPIC["START"]), SEGMENT.get(seg, {})
     tags = hashtags(s["id"], base, seg, s.get("topic") or "co")
     def build(with_seg):
-        parts = [head.strip()]
+        # 27 Nov weekly review: reels show only the first caption line or two, and viewers leave at ~6 s, before the end card.
+        # So the one keyword sits right under the hook, and a send-to-a-friend ask (sends drive non-follower reach) follows the ml text.
+        parts = [head.strip() + "\n" + EARLY.format(base=base)]
         for lang in ("ml", "en", "mg"):
             own = s.get("cap_" + lang)
             para = own or t[lang]
             if g and (with_seg or not own):   # topic text always had the segment; custom text gets it on its own line
                 para += ("\n" if own else " ") + g[lang]
+            if lang == "ml": para += "\n" + SEND_ML
             parts.append(para + "\n" + CTA[lang].format(base=base, promise_ml=_promise_ml(s), promise_en=PROMISE_EN.get(base, "our free guide"), promise_mg=PROMISE_EN.get(base, "free guide").removeprefix("the ")))
         return "\n\n".join(parts + [tags])
     out = build(True)

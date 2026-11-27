@@ -6,6 +6,45 @@ with 13 the same total volume is spread thinner, so per-topic numbers are lower 
 
 These rules run whether the owner is present or not. The monitor (every 3 h) and the script writer (every 4 h) read this file on every run. Two review tasks run on 22 Nov and 25 Nov.
 
+## Projection 28 Nov - 11 Dec (set at the 27 Nov weekly review from real 21-27 Nov numbers; replaces the tables below for judging)
+
+Basis (21-27 Nov, live): 638 posts, 200.7k reach, 223k views, 106 breakouts, 6.1 s watch; story reels 417-501 reach a day since
+23 Nov; best reels cap at ~1,500 views (first test pool); ~21 keyword comments (0.10 per 1,000 reach); 5 real leads (3 with phone);
+followers 320. Volume: ~84 story reels a day over 21 topics (the 7 new topics start posting, so each old topic gets fewer reels)
++ ~7 tips + up to 4 news. Shares as of 27 Nov review: co 9.6%, fssai / acc 5.3%, gst / tm 5.0%, sui / sk / roc / iec 4.8%,
+val / cfa 4.6%, inv / ud / nda / pg / web / kl / nri 4.3%, dr 4.1%, fp 3.8%, pay 3.4%.
+
+### Whole account, 28 Nov - 11 Dec (14 days)
+| | Low | Middle (best guess) | High (with owner's push) |
+|---|---|---|---|
+| Views | 400k | 550-650k | 900k+ (needs sends to break the ~1,500 cap) |
+| Breakout reels (1,000+ views) | 180 | 250-300 | 350+ |
+| New followers | +400 | +600-900 | +1,500 |
+| Keyword comments / DMs | 40 | 60-100 | 150+ |
+| Real leads | 8 | 12-20 | 30+ |
+| Meetings | 2 | 4-8 | 12+ |
+| Clients | 0-1 | 2-4 | 6+ |
+
+### Per topic, 28 Nov - 11 Dec (middle case; reels = 84/day x share x 14; reach = reels x 21-27 Nov reach per reel)
+| Topic | Reels | Reach | Keyword comments | Leads | Note |
+|---|---|---|---|---|---|
+| co | ~113 | ~40k | 8-12 | 2-3 | most keyword comments |
+| val | ~54 | ~15k | 2-4 | 1-3 | best leads per 1,000 reach (both with phone); share raised |
+| cfa | ~54 | ~12k | 3-5 | 0-2 | best keyword comments per 1,000 reach; share raised |
+| iec | ~56 | ~22k | 3-5 | 0-2 | |
+| fssai | ~62 | ~25k | 2-4 | 0-2 | highest reach per reel |
+| gst | ~59 | ~23k | 2-4 | 0-2 | cut to 5% |
+| tm | ~59 | ~23k | 1-3 | 0-1 | cut to 5%; reach high, keyword comments low |
+| roc / sk / sui | ~56 each | 15-17k each | 1-3 each | 0-1 each | |
+| ud / nda / inv | ~51 each | 11-19k each | 0-2 each | 0-1 each | 0 keyword comments this week |
+| fp | ~45 | ~8k | 0-1 | 0-1 | weakest; at the floor |
+| pg / web / kl / nri / acc / pay / dr | 40-62 each | unknown | - | - | first posts; judge after 5 days. dr and web: count meetings and clients, not only leads |
+
+2-week targets (judge at the next weekly review): keyword comments >= 0.2 per 1,000 reach (now 0.10); 1+ lead a day; the owner
+records an outcome for every lead so meetings and clients per topic can be counted; 3D vs toon judged once toon has 7 days.
+Goal unchanged: 10 clients a month per topic. At the middle case the best topics (co, val) reach ~1-2 clients a month by mid-December;
+getting to 10 needs the funnel (keyword comments x3-5) and sends (to pass the ~1,500-view cap), not more volume.
+
 ## Projection 27 Nov - 10 Dec (set at the 26 Nov review from real 20-25 Nov numbers; replaces the tables below for judging)
 
 Basis: story reels posted 23-25 Nov averaged ~420 reach each (142 on 20-22 Nov) and 1 in 4 passed 1,000 views; tip reels ~100.

@@ -275,3 +275,63 @@ Tested: plan simulation (87 reels + 7 tips + 4 news = 98 a day, tips alternate b
 - Not verified, so not used: FSSAI Food Safety Supervisor rule and FSSAI annual return (official pages did not load / did not
   state it); myscheme PMEGP page errored. FACTS_KL "renewed every year": the Amendment Bill text gives no validity period, so
   the yearly figure is unconfirmed; new scripts avoid it, older kl scripts still say it.
+
+## 27 Nov 2026 weekly growth review (21-27 Nov vs 14-20 Nov). ACTION
+Data: live Instagram insights for all 799 posts of 14-27 Nov (pulled 27 Nov ~23:00 IST through /ops/graph; 25-27 Nov posts are 0-2.5 days old and still growing), /public/insights (judged rows, leads, outcomes), /ops/leads (monitor view, no personal data), comment texts on the 30 commented posts (counted, not stored), followers from the Graph API. /ops/insights still fails (Cloudflare 1101), so keyword comments for 25-27 Nov were counted from the live comments.
+
+**Week on week**
+| | 14-20 Nov | 21-27 Nov |
+|---|---|---|
+| Posts | 161 | 638 (543 story reels, 91 tips, 4 news / correction) |
+| Reach / views | 16.9k / 18.4k | **200.7k / 223.0k** |
+| Reach per post (story reels) | 105 | 315 (350); 23-27 Nov story reels 417-501 a day |
+| Avg watch | 5.1 s | 6.1 s (story 6.4 s) |
+| Breakouts (1,000+ views) | 3 | **106** (18-25 a day since 23 Nov) |
+| Followers | ~1 on 20 Nov | **320** on 27 Nov (255 on 26 Nov) |
+| Keyword comments | 0 | **~21** (11 on 25-27 Nov) + 19 DMs logged on 21-24 Nov posts |
+| Real leads | 0 | **5** (3 with phone): qv032 + qv007 (val reels), d720 (co, no phone), 2 direct DMs (1 with phone). d401's 2 are owner tests. |
+| Meetings / clients | - | **unknown**: every lead is still "new"; no outcome recorded yet (update links went live 27 Nov) |
+
+Against the 27 Nov-10 Dec projection (per day, judged on the 25-27 Nov run rate): views ~40-47k a day = middle-to-high (middle 32-43k); breakouts ~21 a day = high end of middle; followers ~+65 in the last day = middle (36-64); keyword comments ~4 a day = low-to-middle (middle 4-9); leads ~0.7 a day = **low** (middle 1-2); clients unknown. Reach is fine; the funnel is still the gap.
+
+**Ceiling:** the best reels all stop at 1,200-1,500 views (max 1,511; 73 story reels at 1,000-1,250, 31 at 1,250-1,500, 1 above). That looks like Instagram's first non-follower test pool. Shares (sends) are ~1.6 per 1,000 reach; sends per reach is the signal Instagram says decides wider reach, so the next step up needs sends, not more volume.
+
+**Per topic, 21-27 Nov (old 14; the 7 new topics have not posted yet, <5 days, not ranked)**
+| Topic | Reels | Reach/reel | Watch s | 1k+ | sv+sh/1k | KW | Leads | KW/1k | Leads/1k |
+|---|---|---|---|---|---|---|---|---|---|
+| val | 42 | 266 | 5.9 | 6 | 3.9 | 1 (question) | 2 (both phone) | 0.09 | **0.18** |
+| co | 69 | 358 | 7.3 | 15 | 3.8 | 5 | 1 | 0.20 | 0.04 |
+| cfa | 40 | 222 | 6.4 | 3 | 3.7 | 3 | 0 | **0.34** | 0 |
+| iec | 42 | 395 | 5.8 | 10 | 3.7 | 3 | 0 | 0.18 | 0 |
+| sk | 45 | 262 | 4.9 | 5 | 4.2 | 2 | 0 | 0.17 | 0 |
+| roc | 41 | 299 | 5.6 | 6 | 4.5 | 2 | 0 | 0.16 | 0 |
+| fssai | 45 | 406 | 6.9 | 12 | 6.1 | 2 | 0 | 0.11 | 0 |
+| gst | 47 | 387 | 6.4 | 12 | 5.5 | 2 | 0 | 0.11 | 0 |
+| tm | 47 | 397 | 6.6 | 12 | 3.3 | 1 | 0 | 0.05 | 0 |
+| ud | 47 | 373 | 6.0 | 11 | 3.3 | 0 | 0 | 0 | 0 |
+| sui | 46 | 305 | 4.7 | 6 | 2.8 | 0 | 0 | 0 | 0 |
+| nda | 41 | 269 | 6.4 | 5 | 4.6 | 0 | 0 | 0 | 0 |
+| inv | 46 | 221 | 5.5 | 2 | 4.5 | 0 | 0 | 0 | 0 |
+| fp | 40 | 187 | 5.6 | 1 | 2.4 | 0 | 0 | 0 | 0 |
+Clients per 1,000 reach: 0 for every topic (no outcomes recorded). Direct-DM leads (2) are not counted per topic.
+
+**Per content type (21-27 Nov)**
+- 3D duo vs toon (A/B): duo3d 407 reels, 383 reach/reel, 6.9 s, 90 breakouts, sv+sh 3.5/1k; toon 86, 341, 6.0 s, 15 breakouts, sv+sh **6.6/1k**. Same days only (23-25 Nov): duo3d 452 vs toon 343. Toon has only 5 days (from 23 Nov), so the 7-day / 20-post rule is not met: no winner yet. Interim: 3D wins reach and watch time, toon wins saves + shares (~2x). Judge at the next review.
+- Tips vs story reels: tips 91 (all list format), 102 reach, 3.6 s, 0 breakouts, sv+sh 5.6/1k vs 4.0 for story reels (1.4x, under the 2x target). No tip written as a scene has posted yet; keep writing tips as duo3d / toon scenes.
+- Chat: 40 reels, 124 reach, 3.8 s, 1 breakout: still the weakest; keep at 10% max.
+- News / corrections: 4 posts, 360 reach/post (fsfix02 441); no news item this week.
+- Per theme (story reels): new 104 reels, 389 reach, 6.5 s, 24 breakouts; crm 143, 352, 6.7 s, 28 (both val leads); faq 228, 323, 5.9 s, 37. Theme mix stays 40/40/20 until 4 Dec (14 days of theme data); "new" and "crm" lead.
+- Best reels: ndd035 (nda, 1,511 views, 20 shares), fs014, yx01 (toon, 13.1 s watch), yd039, qv032 (lead), fsx06 (toon), d1607, ied020, gd043, tm012, gd026, ied025.
+
+**Lead follow-up:** 0 leads marked "no answer", so no follow-up results yet. All 8 leads are still "new" in outcomes_by_topic.
+
+**Fix (reporting, not bot behaviour):** /public/insights filed every lead under its chat topic, defaulting to co, so both val leads showed as co. leads_by_topic / outcomes_by_topic now use the topic of the reel the lead came from; direct DMs keep the chat topic.
+
+**Rules**
+- Rule 1 (watch time): not fired (6.1-6.4 s). Rule 2 (reach drop / spam): not fired; one "posting limit nearly used" skip on 27 Nov is the known 21-topic cap, already fixed.
+- Rule 3 (funnel): keyword comments rose from 0.04 to ~0.10 per 1,000 reach after the one-keyword CTA; still far under target. Judge day stays 3 Dec. Added now (cause in our control): average watch is ~6 s, so most viewers never reach the end-card keyword, and the caption CTA sat 3 paragraphs down, hidden behind "more". New captions put "💬 Comment KEYWORD 👇" on the line right under the hook and add a Malayalam "send this to a friend who needs it 📤" line (sends drive non-follower reach). The 3 Dec judgement covers both changes together. If still under 0.1, rule 3's next step: on-screen keyword in the first 3 seconds.
+- Rule 4 (topic shares): the 14 old topics have 8+ days. Ranked by clients (none), then leads, then keyword comments per 1,000 reach: val, co, cfa, iec, sk, roc, fssai/gst, tm, then ud, sui, nda, inv, fp at zero. Every zero topic is already at or below 5% (the 21-topic rescale put them at 3.8-4.8%), so none can be cut under the 5% floor. The weakest topics above 5% were cut instead: **gst 5.3% -> 5.0%, tm 5.3% -> 5.0%** (lowest kw/1k above the floor; gst ties fssai but has fewer saves+shares); **val 4.3% -> 4.6%** (best leads/1k, both with phone) and **cfa 4.3% -> 4.6%** (best kw/1k). Small steps: 5 leads is a thin signal. REEL_SHARE = SHARE, sum 1.0. Note for the owner: with 21 topics a 5% floor for all is impossible (21 x 5% = 105%).
+- Rule 5 (other causes): Instagram's 2025-26 guidance: sends per reach is the top signal for reaching non-followers, watch time and likes per reach next; comment-to-DM guides say the keyword must be visible early (caption first line / first seconds), not only at the end. Both acted on above. Originality / AI-label: unchanged from 26 Nov, no action.
+- dr / web / pg / acc / kl / nri / pay: no posts yet; first judged at the review after 5 posting days.
+
+Tested: check_bank (bank OK), node --check on the worker as an ES module, shares equal and sum 1.0, caption output checked.

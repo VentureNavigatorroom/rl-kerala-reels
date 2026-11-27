@@ -176,7 +176,7 @@ const live_ = i => !i.expires || i.expires >= todayIST();   // a news item is ne
 // owner, 19 Nov evening: 13 topics, same goal each; company registration keeps a little more as the original topic
 // 26 Nov review (GROWTH_PLAN rule 4): inv and fp cut to 5% (0 leads, 0 keyword comments, lowest reach per reel);
 // their 3.6 points go to val (the only real lead with a phone, qv032) and iec (best keyword comments per 1,000 reach + high reach).
-const REEL_SHARE = { co: 0.096, gst: 0.053, inv: 0.043, sui: 0.048, sk: 0.048, ud: 0.043, tm: 0.053, roc: 0.048, fssai: 0.053, iec: 0.048, nda: 0.043, cfa: 0.043, fp: 0.038, val: 0.043, pg: 0.043, web: 0.043, acc: 0.053, kl: 0.043, nri: 0.043, pay: 0.034, dr: 0.041 };   // 20 topics (27 Nov: acc, kl, nri, pay added); topics without stock pass their slots on
+const REEL_SHARE = { co: 0.096, gst: 0.05, inv: 0.043, sui: 0.048, sk: 0.048, ud: 0.043, tm: 0.05, roc: 0.048, fssai: 0.053, iec: 0.048, nda: 0.043, cfa: 0.046, fp: 0.038, val: 0.046, pg: 0.043, web: 0.043, acc: 0.053, kl: 0.043, nri: 0.043, pay: 0.034, dr: 0.041 };   // 27 Nov weekly review: gst, tm -0.3 pt; val, cfa +0.3 pt. 20 topics (27 Nov: acc, kl, nri, pay added); topics without stock pass their slots on
 // 26 Nov review: tip reels (list format) reached ~98 people each vs ~330 for story reels, 0 breakouts in 84, 3.5 s watch.
 // Tips now post every TIP_EVERY days per topic (topics alternate, so ~7 a day); the freed slots go to normal reels.
 const TIP_EVERY = 2;
@@ -1653,6 +1653,8 @@ export default {
     if (u.pathname === "/public/shoutqueue") return json((await kv(env, "shout_queue", [])).map(q => ({ id: q.id, kind: q.kind, month: q.month || null, names: q.names })));   // only people who said yes
     if (u.pathname === "/public/insights") {   // performance per post for the script writer: no names, numbers or messages
       const posted = await kv(env, "posted", {}); const leads = Object.values(await kv(env, "leads", {})); const posts = []; const judged = await kv(env, "judged", {});
+      // 27 Nov weekly review: a lead counts for the topic of the reel it came from (val reels' leads were filed under co); direct DMs keep the chat topic
+      const leadTopic = l => posted[l.source_item] ? topicOf(posted[l.source_item]) : (l.topic || "co");
       for (const [id, p] of Object.entries(posted)) {
         if (p.kind === "story") continue;
         const r = judged[id] || {};
@@ -1663,7 +1665,7 @@ export default {
       }
       const nx = await kv(env, "nudge", {});
       return json({ updated: IST().toISOString().slice(0, 16), weights: await kv(env, "weights", null), slot_report: await kv(env, "slot_report", null),
-        leads_total: leads.length, outcomes_by_topic: leads.reduce((a, l) => { const k = l.topic || "co", st = l.status || "new"; (a[k] = a[k] || {})[st] = (a[k][st] || 0) + 1; return a; }, {}), leads_by_topic: leads.reduce((a, l) => { const k = l.topic || "co"; a[k] = (a[k] || 0) + 1; return a; }, {}), leads_by_segment_of_post: leads.reduce((a, l) => { const p = posted[l.source_item]; const k = p?.segment || "direct"; a[k] = (a[k] || 0) + 1; return a; }, {}),
+        leads_total: leads.length, outcomes_by_topic: leads.reduce((a, l) => { const k = leadTopic(l), st = l.status || "new"; (a[k] = a[k] || {})[st] = (a[k][st] || 0) + 1; return a; }, {}), leads_by_topic: leads.reduce((a, l) => { const k = leadTopic(l); a[k] = (a[k] || 0) + 1; return a; }, {}), leads_by_segment_of_post: leads.reduce((a, l) => { const p = posted[l.source_item]; const k = p?.segment || "direct"; a[k] = (a[k] || 0) + 1; return a; }, {}),
         checkins_today: nx._s || null, posts });
     }
     if (u.pathname.startsWith("/wa/")) {   // short WhatsApp link from Discord -> wa.me with the message ready
