@@ -900,6 +900,17 @@ async function backfillLeadAlerts(env, max = 2) {   // one-time catch-up: stored
   return send.length;
 }
 
+// did someone on the team already send this guide in the chat (pasted by hand from the Instagram app)?
+async function sentByHand(env, uid, guide) {
+  const probe = guide.replace(/^Here you go!\s*/, "").slice(0, 40).toLowerCase();
+  try {
+    const j = await graph(env, `${env.IG_USER_ID}/conversations`, { platform: "instagram", user_id: uid, fields: "messages.limit(8){message,from}" }, "GET");
+    for (const c of j.data || []) for (const m of c.messages?.data || [])
+      if (m.from?.id !== uid && (m.message || "").toLowerCase().includes(probe)) return m.message;
+  } catch (e) { await log(env, `sentByHand check failed: ${e}`); }
+  return null;
+}
+
 async function pollInbox(env) {
   const since = Date.now() - 15 * 60e3;   // look-back window; dup: keys stop double handling
   let j;   // the publisher app's token can read the inbox
@@ -1079,6 +1090,14 @@ async function handleWebhook(env, body) {
       }
       const topic = TOPICS[meta.topic] ? meta.topic : "co";
       let reply, buttons = [];
+      if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {   // the team may already have pasted this guide by hand: don't send it twice
+        const byHand = await sentByHand(env, uid, KEYWORD_REPLY[meta.pending_kw]);
+        if (byHand) {
+          thread.splice(thread.length - 1, 0, { role: "assistant", content: byHand });
+          meta.served_kw = { ...(meta.served_kw || {}), [meta.pending_kw]: Date.now() }; delete meta.pending_kw; meta.follow_asks = 0; meta.served = true;
+          await log(env, `guide already sent by hand to @${meta.username || uid}: bot continues the chat`);
+        }
+      }
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {
         // soft follow gate: ask to follow, re-check when they say they did, and after two tries send it anyway (never block a lead)
         if (prof.follows === false && (meta.follow_asks || 0) < 2 && !meta.served) {
