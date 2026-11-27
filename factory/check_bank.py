@@ -205,6 +205,30 @@ for x in banks["reels"]:
         if x.get("expires") and not _re.fullmatch(r"20\d\d-\d\d-\d\d", str(x["expires"])): err(f"{x['id']}: expires must be YYYY-MM-DD")
         if th == "correction" and not x.get("corrects"): err(f"{x['id']}: correction needs corrects='<id of the wrong reel>'")
 
+# 6. FSSAI old limits (24 Nov correction; 27 Nov a stale captions.py line put them back into posted captions): no script text
+#    and no generated caption may pair FSSAI with the old Rs 12 lakh / Rs 20 crore limits. Only theme "correction" may quote
+#    them ("it was Rs 12 lakh"). The captions are built the way build.recaption builds them.
+FSSAI_RE = re.compile(r"fssai|എഫ്\.?\s*എസ്\.?\s*എസ്\.?\s*എ\.?\s*ഐ|foscos", re.I)
+OLD_FSSAI = re.compile(r"(?<![\d.,])(?:12\s*(?:lakhs?|lacs?|lakks?|laksham|lks?\b|l\b|ലക്ഷ|ലക്ഷം)|20\s*(?:crores?|cr\b|kodi|കോടി))"
+                       r"|12,00,000|പന്ത്രണ്ട്\s*ലക്ഷ|ഇരുപത്\s*കോടി|(?<![a-z])(?:twelve\s+lakh|twenty\s+crore|panthrandu\s+lakh|irupathu\s+(?:crore|kodi))", re.I)
+def old_fssai(txt): return bool(FSSAI_RE.search(txt) and OLD_FSSAI.search(txt))
+for k, v in captions.TOPIC.items():
+    for l, txt in v.items():
+        if (k in ("FSSAI", "FOOD") or FSSAI_RE.search(txt)) and OLD_FSSAI.search(txt): err(f"captions.TOPIC[{k}][{l}] quotes the old FSSAI limits (Rs 12 lakh / Rs 20 crore); since 1 Apr 2026 they are Rs 1.5 crore / Rs 50 crore")
+for name, xs in banks.items():
+    for x in xs:
+        if x.get("theme") == "correction": continue
+        t = "\n".join(texts(x))
+        if x.get("topic") == "fssai" and OLD_FSSAI.search(t) or old_fssai(t):
+            err(f"{x['id']}: quotes the old FSSAI limits (Rs 12 lakh / Rs 20 crore); since 1 Apr 2026: Rs 1.5 crore / Rs 50 crore"); continue
+        if name == "stories" or not x.get("cta"): continue   # stories get no caption from captions.caption
+        try:
+            sc = dict(x, kw="CHECK", base=x["cta"][0].split()[0])
+            cap = captions.caption(sc, sc["caption"].split("\n")[0] if name == "posters" else sc["hook"].replace("\n", " "))
+        except Exception as e: err(f"{x['id']}: caption failed: {e!r}"); continue
+        if old_fssai(cap) or x.get("topic") == "fssai" and OLD_FSSAI.search(cap):
+            err(f"{x['id']}: its caption quotes the old FSSAI limits (Rs 12 lakh / Rs 20 crore); fix captions.py TOPIC / SEGMENT or the cap_* text")
+
 print(f"reels {len(banks['reels'])}, carousels {len(banks['carousels'])}, posters {len(banks['posters'])}, stories {len(banks['stories'])}")
 if errs:
     print(f"{len(errs)} problem(s):"); [print(" -", e) for e in errs]; sys.exit(1)

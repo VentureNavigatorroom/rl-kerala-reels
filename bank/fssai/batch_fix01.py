@@ -36,3 +36,21 @@ toon("fsfix03", "cafe_owner", "B", {"A": "സുമ", "B": "അമ്മൂമ�
  cap_en="@rishad_pkr asked: does an FSSAI licence still need renewal? FSSAI's FAQ says licences and registrations issued on or after 1 April 2026 have perpetual validity, so no renewal. For older licences the FAQ isn't explicit, so check the expiry date on FoSCoS and renew on time. In every case the yearly payment to FSSAI continues, and you can pay several years at once. Thanks Rishad!",
  cap_ml="@rishad_pkr ചോദിച്ചു: FSSAI ലൈസൻസ് പുതുക്കണോ? 2026 ഏപ്രിൽ 1 മുതൽ കിട്ടിയ ലൈസൻസിന് സ്ഥിരം സാധുത, പുതുക്കൽ വേണ്ട. പഴയ ലൈസൻസ് ആണെങ്കിൽ FoSCoS-ൽ കാലാവധി നോക്കി സമയത്ത് പുതുക്കുക. FSSAI-ക്കുള്ള വാർഷിക അടവ് എല്ലാവർക്കും തുടരും, വർഷങ്ങൾ ഒരുമിച്ച് അടയ്ക്കാം. നന്ദി റിഷാദ്!",
  cap_mg="@rishad_pkr chodichu: FSSAI licence renew cheyyano? 2026 April 1 muthal kittiya licence-inu perpetual validity, renew venda. Pazhaya licence aanel FoSCoS-il expiry nokki samayathu renew cheyyuka. FSSAI-kkulla annual payment ellavarkkum thudarum, varshangal orumichu adakkam. Nanni Rishad!")
+
+# Apology (27 Nov): after the 24 Nov correction, a stale caption line (factory/captions.py, fixed in 9e645dd) still put the
+# old limits into the captions of later FSSAI reels (fsy04, fsy01; correction comments posted on both). Owner: "create a
+# real sorry, apologise, and say the real fact." The old numbers are never shown or spoken here. No collab: rishad_pkr
+# already has his thank-you (fsfix02 / fsfix03).
+toon("fsfix04", "cafe_owner", "B", {"A": "സുമ", "B": "അമ്മൂമ്മ"}, "ക്ഷമിക്കണം.\nFSSAI ക്യാപ്ഷനിൽ\nഞങ്ങൾക്ക് തെറ്റി", [
+ ("A", "അമ്മൂമ്മേ, FSSAI ലിമിറ്റ് തിരുത്തി എന്ന് നമ്മൾ പറഞ്ഞിരുന്നു. പക്ഷേ ചില റീലുകളുടെ ക്യാപ്ഷനിൽ പഴയ ലിമിറ്റ് തന്നെ വന്നു."),
+ ("B", "അത് നമ്മുടെ തെറ്റാണ് മോളേ. കണ്ട എല്ലാവരോടും ഞങ്ങൾ ആത്മാർത്ഥമായി ക്ഷമ ചോദിക്കുന്നു."),
+ ("A", "എങ്കിൽ ശരിയായ കാര്യം ഒന്നുകൂടി വ്യക്തമായി പറയാം."),
+ ("B", "2026 ഏപ്രിൽ 1 മുതൽ 1.5 കോടി വരെ ടേൺഓവറിന് രജിസ്ട്രേഷൻ. 1.5 മുതൽ 50 കോടി വരെ സ്റ്റേറ്റ്, അതിന് മുകളിൽ സെൻട്രൽ.")],
+ dict(title="ശരിയായ FSSAI ലിമിറ്റ്\n(2026 ഏപ്രിൽ 1 മുതൽ)", rows=[("1.5 കോടി വരെ", "രജിസ്ട്രേഷൻ"), ("1.5 - 50 കോടി", "സ്റ്റേറ്റ് ലൈസൻസ്"), ("50 കോടിക്ക് മുകളിൽ", "സെൻട്രൽ ലൈസൻസ്")], total=("ഇംപോർട്ടർമാർക്ക്", "എപ്പോഴും സെൻട്രൽ")),
+ ["തെറ്റ് കണ്ടാൽ കമന്റ് ചെയ്യൂ, ഞങ്ങൾ തിരുത്തും.", "ഇംപോർട്ട് ചെയ്യുന്നവർക്ക് എപ്പോഴും സെൻട്രൽ ലൈസൻസ്."],
+ "തെറ്റിന് ക്ഷമിക്കണം.\nഇതാണ് ശരി.", topics.CTA_FSSAI, mentor="B", series="സുമയുടെ ഹോം ബേക്കറി", scene="shop",
+ theme="correction", corrects="fsy04",
+ source="https://www.fssai.gov.in/upload/advisories/2026/03/69c6a23234827order_27032026.pdf", as_of="2026-03-13", expires="2027-03-31",
+ cap_en="We're sorry. On 24 Nov we corrected our FSSAI limits and said it was fixed, but the captions of some of our later FSSAI reels still showed the old limits. That was our mistake, and we apologise to everyone who saw them. The correct rule since 1 April 2026 (FSSAI order, 13 Mar 2026): FSSAI registration up to Rs 1.5 crore turnover, a state licence above Rs 1.5 crore up to Rs 50 crore, and a central licence above Rs 50 crore. Importers always need a central licence. We have fixed our captions. Spot a mistake? Comment and we'll correct it.",
+ cap_ml="ക്ഷമിക്കണം. 24 നവംബറിൽ FSSAI ലിമിറ്റ് തിരുത്തി എന്ന് ഞങ്ങൾ പറഞ്ഞിരുന്നു, പക്ഷേ അതിന് ശേഷം വന്ന ചില FSSAI റീലുകളുടെ ക്യാപ്ഷനിൽ പഴയ ലിമിറ്റ് തന്നെ വന്നു. അത് ഞങ്ങളുടെ തെറ്റാണ്; കണ്ട എല്ലാവരോടും ക്ഷമ ചോദിക്കുന്നു. ശരിയായ കാര്യം (FSSAI ഉത്തരവ്, 13 മാർച്ച് 2026): 2026 ഏപ്രിൽ 1 മുതൽ 1.5 കോടി വരെ ടേൺഓവറിന് FSSAI രജിസ്ട്രേഷൻ, 1.5 കോടിക്ക് മുകളിൽ 50 കോടി വരെ സ്റ്റേറ്റ് ലൈസൻസ്, 50 കോടിക്ക് മുകളിൽ സെൻട്രൽ ലൈസൻസ്. ഇംപോർട്ട് ചെയ്യുന്നവർക്ക് എപ്പോഴും സെൻട്രൽ. ക്യാപ്ഷനുകൾ ഞങ്ങൾ തിരുത്തി. തെറ്റ് കണ്ടാൽ കമന്റ് ചെയ്യൂ, ഞങ്ങൾ തിരുത്തും.",
+ cap_mg="Kshamikkanam. 24 November-il FSSAI limit thiruthi ennu njangal paranjirunnu, pakshe athinu shesham vanna chila FSSAI reels-inte caption-il pazhaya limit thanne vannu. Athu njangalude thettaanu; kanda ellavarodum kshama chodikkunnu. Shariyaaya kaaryam (FSSAI order, 13 March 2026): 2026 April 1 muthal 1.5 crore vare turnover-inu FSSAI registration, 1.5 crore-nu mukalil 50 crore vare State licence, 50 crore-nu mukalil Central licence. Import cheyyunnavarkku eppozhum Central. Captions njangal thiruthi. Thettu kandaal comment cheyyu, njangal thiruthum.")
