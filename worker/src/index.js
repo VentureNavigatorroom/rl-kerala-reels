@@ -854,6 +854,11 @@ async function processNudges(env, force = null) {
       const L = (await getLeads())[id];
       if (L?.phone && L?.language) { ops[id] = null; continue; }                   // flow complete
       const thread = await kv(env, `t:${id}`, []);
+      if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {                  // guide pasted by hand by the team? then check in on THAT, not "your guide is ready"
+        const byHand = await sentByHand(env, id, KEYWORD_REPLY[meta.pending_kw]);
+        if (byHand) { thread.push({ role: "assistant", content: byHand }); await kvPut(env, `t:${id}`, thread);
+          meta.served_kw = { ...(meta.served_kw || {}), [meta.pending_kw]: Date.now() }; delete meta.pending_kw; meta.served = true; await kvPut(env, `m:${id}`, meta); }
+      }
       if (!thread.length || thread[thread.length - 1].role !== "assistant") continue;
       const nt = nudgeText(thread, meta, e.n); if (!nt) { ops[id] = null; continue; }
       try { await sendDM(env, id, nt.text, nt.buttons); }
