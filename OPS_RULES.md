@@ -119,3 +119,8 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - Comment replies must fit what the person said and the reel they commented on. Thanks / praise gets a warm reply with no keyword CTA; on a thank-you or correction reel, or one that names them, a personal thank-you. Never "comment START" under a non-company reel or under thanks (worker pickCommentReply / postKw).
 - After a correction, only the corrected fact may appear anywhere: scripts, end cards, captions (captions.py TOPIC lines too) and DM texts. check_bank fails on the old FSSAI limits outside theme "correction".
 - A correction reel is a real apology: say sorry plainly, say what was wrong (without repeating the wrong numbers on screen), give the correct fact with its official source and date. fsfix04 is the model.
+
+## Language, voice messages, legal help (owner, 27 Nov)
+- DMs: reply in the language the person writes in (Malayalam script -> Malayalam; Manglish -> Manglish; English -> English). Voice messages are transcribed and answered as text in their language; unclear ones go to Discord for the team to listen.
+- Legal trouble (partner dispute, court / arbitration order, police, assets taken, lawyer not helping): empathy first, offer to connect them with our lawyers, ask the phone number with the reason; never sales intake questions, never legal advice or outcome promises. Alert: "[Legal help / partner dispute]".
+- Content: partner-dispute reels (cfa, STORY_THEMES F23-F30) only with FACTS_CFA facts, invented people and mixed situations; never a real person's details.
