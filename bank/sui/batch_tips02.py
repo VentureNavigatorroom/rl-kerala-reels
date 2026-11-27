@@ -39,9 +39,3 @@ lst('ut009', 'student_founder', "B", 'പ്രോട്ടോടൈപ്പ്
  cap_ml='പ്രോട്ടോടൈപ്പ് മാത്രമുള്ള വിദ്യാർത്ഥി ഫൗണ്ടർമാർക്ക്: ആദ്യം പ്രൈവറ്റ് ലിമിറ്റഡ് അല്ലെങ്കിൽ LLP, പിന്നെ ഇന്നൊവേഷൻ വ്യക്തമായി എഴുതി DPIIT അപേക്ഷ. അംഗീകാരം ഉറപ്പല്ല. നിങ്ങൾ ഏത് പടിയിലാണ്?',
  cap_en='Student founders with just a prototype: register a private limited company or LLP first, write down the innovation clearly, then apply for DPIIT recognition. Approval is never guaranteed. Which step are you on?',
  cap_mg='Prototype maathram ulla student founders-nu: aadyam Pvt Ltd allenkil LLP, pinne innovation vyakthamaayi ezhuthi DPIIT apeksha. Recognition urappalla. Ningal ethu padiyilaanu?')
-
-lst('ut010', 'tech_founder', "B", 'പേറ്റന്റ് ഫയൽ\nചെയ്യാൻ പോകുന്നോ?\nആദ്യം ഇത് നോക്കൂ', [('ആദ്യം', 'DPIIT അംഗീകാരത്തിന് അപേക്ഷിക്കൂ.'), ('പിന്നെ', 'അംഗീകാരമുള്ള സ്റ്റാർട്ടപ്പിന്റെ ഇളവോടെ ഫയൽ ചെയ്യൂ.'), ('ഓർക്കൂ', 'ട്രേഡ്മാർക്ക് ഫയലിംഗിനും ഇതേ ക്രമം.')],
- 'ക്രമം മാറിയാൽ\nഇളവ് പോകും', CTA_BENEFITS, theme="tip",
- cap_ml='DPIIT അംഗീകാരമുള്ള സ്റ്റാർട്ടപ്പുകൾക്ക് പേറ്റന്റ് ഫയലിംഗിൽ 80% ഇളവും ട്രേഡ്മാർക്കിൽ 50% ഇളവും ഉണ്ട്. അതുകൊണ്ട് ഫയൽ ചെയ്യും മുമ്പ് അംഗീകാരം നോക്കൂ. നിങ്ങൾ ആദ്യം ഫയൽ ചെയ്യുന്നത് പേറ്റന്റോ ട്രേഡ്മാർക്കോ?',
- cap_en='DPIIT-recognised startups get an 80% rebate on patent filing and 50% on trademark filing, so look at recognition before you file. Patent or trademark first?',
- cap_mg='DPIIT recognition ulla startup-kalkku patent filing-il 80% ilavum trademark-il 50% ilavum undu. Athukondu file cheyyum mumpu recognition nokku. Ningal aadyam file cheyyunnathu patent-o trademark-o?')

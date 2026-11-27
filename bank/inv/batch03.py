@@ -29,18 +29,6 @@ duo("vd010", "founder_raising", "A", "office", "LLP ആണ്.\nഇൻവെസ�
  cap_en="Only a private limited company can take equity investment; an LLP cannot issue shares. Which structure is your business in right now?",
  cap_mg="Equity investment-nu private limited company venam. LLP-kku shares illa. Ningalude business etha structure?")
 
-duo("vd011", "founder_raising", "B", "hotellobby", "\"ടേം ഷീറ്റ്\nnon-binding\"\nഎന്ന് എഴുതിയിരുന്നു", [
- ("A","wide","ജെയ്സാ, ടേം ഷീറ്റ് ബൈൻഡിംഗ് അല്ലെന്ന് വക്കീൽ പറഞ്ഞു. അപ്പോ ഒന്നും ബാധകമല്ലേ?"),
- ("V","V","നീതൂ, അങ്ങനെ പറയല്ലേ. കോൺഫിഡൻഷ്യാലിറ്റിയും എക്സ്ക്ലൂസിവിറ്റിയും ഒപ്പിട്ടപ്പോഴേ ബാധകം."),
- ("A","A","അതെ. ചെലവും ഗവേണിംഗ് നിയമവും ഉൾപ്പെടെ ചിലത് ഒപ്പിടുമ്പോഴേ ബാധകമാണ്."),
- ("V","V","അപ്പോ 'നോ-ഷോപ്പ്' ഉള്ളപ്പോൾ മറ്റൊരു ഇൻവെസ്റ്ററെ തേടാൻ പറ്റില്ലേ?"),
- ("A","wide","കുറച്ച് കാലത്തേക്ക് പറ്റില്ല. അത് ടേം ഷീറ്റിൽ തന്നെയുണ്ട്."),
- ("V","wide","ഒപ്പിടുന്നതിന് മുമ്പ് ഓരോ വാചകവും വായിക്കൂ.")],
- "ബൈൻഡിംഗ് അല്ലെങ്കിലും\nചില ഭാഗം ഉടനെ ബാധകം", CTA_TERMSHEET, theme="faq",
- cap_ml="ടേം ഷീറ്റ് സാധാരണയായി ബൈൻഡിംഗ് അല്ല, പക്ഷേ കോൺഫിഡൻഷ്യാലിറ്റി, എക്സ്ക്ലൂസിവിറ്റി, ചെലവ്, ഗവേണിംഗ് നിയമം എന്നിവ ഒപ്പിടുമ്പോഴേ ബാധകമാകും. ടേം ഷീറ്റ് ഒപ്പിട്ടിട്ടുണ്ടോ?",
- cap_en="A term sheet is usually non-binding, but confidentiality, no-shop, costs and governing law usually bind from signing. Have you read the binding clauses before signing one?",
- cap_mg="Term sheet mostly non-binding aanu. Pakshe confidentiality, no-shop, cost, governing law sign cheyyumbol thanne baadhakam. Term sheet oppitoo?")
-
 duo("vd012", "founder_raising", "A", "balcony", "SHA ഒപ്പിട്ടു.\nപക്ഷേ ആർട്ടിക്കിൾസിൽ\nഒന്നും ഇല്ല", [
  ("A","wide","വിവേകേ, SHA-യിൽ റൈറ്റ് ഓഫ് ഫസ്റ്റ് റിഫ്യൂസൽ എഴുതിയല്ലോ. കമ്പനിക്ക് ബാധകമല്ലേ?"),
  ("V","V","അമ്മൂ, SHA എല്ലാവരും ഒപ്പിട്ടതല്ലേ? അതുകൊണ്ട് ബാധകമല്ലേ?"),
