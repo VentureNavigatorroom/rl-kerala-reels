@@ -1203,7 +1203,8 @@ async function handleWebhook(env, body) {
         }
       }
       const topic = TOPICS[meta.topic] ? meta.topic : "co";
-      let reply, buttons = [];
+      let reply, buttons = [], saidSent = false;
+      if (meta.pending_kw && meta.served_kw?.[meta.pending_kw] && Date.now() - meta.served_kw[meta.pending_kw] < 7 * 864e5) { await log(env, `guide ${meta.pending_kw} already sent to @${meta.username || uid}: not resent`); meta.resend_kw = meta.pending_kw; delete meta.pending_kw; meta.follow_asks = 0; saidSent = true; }
       if (!meta.pending_kw && (saidSent || /^i'?ve followed|^followed\b|^done,? followed/i.test(ev.message.text.trim())) && Object.keys(meta.served_kw || {}).length) {
         const lastQ = ([...thread].reverse().find(m => m.role === "assistant" && /\?/.test(m.content) && !/^\[/.test(m.content))?.content || "").split("\n").reverse().find(l => l.includes("?")) || "";
         const thanks = /^i'?ve followed|^followed/i.test(ev.message.text.trim()) ? (lang === "ml" ? "Follow ചെയ്തതിന് നന്ദി! 🙌 " : "Thanks for following! 🙌 ") : "";
@@ -1212,8 +1213,6 @@ async function handleWebhook(env, body) {
         thread.push({ role: "assistant", content: out }); await kvPut(env, `m:${uid}`, meta); await kvPut(env, key, thread); await sendDM(env, uid, out, [SENT_BTN]);
         await log(env, `told @${meta.username || uid} the guide was already sent`); continue;
       }
-      let saidSent = false;
-      if (meta.pending_kw && meta.served_kw?.[meta.pending_kw] && Date.now() - meta.served_kw[meta.pending_kw] < 7 * 864e5) { await log(env, `guide ${meta.pending_kw} already sent to @${meta.username || uid}: not resent`); meta.resend_kw = meta.pending_kw; delete meta.pending_kw; meta.follow_asks = 0; saidSent = true; }
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {   // the team may already have pasted this guide by hand: don't send it twice
         const byHand = await sentByHand(env, uid, KEYWORD_REPLY[meta.pending_kw]);
         if (byHand) {
