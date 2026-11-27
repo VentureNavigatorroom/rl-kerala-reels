@@ -24,7 +24,7 @@ const RAMP = (d0, d1, d2, d3, d4) => [
 const LOW_REACH = { carousel: 2, story: 3 };
 // ---- SEVEN MORE TOPICS (owner, 19 Nov evening): same plan, goal and automation as company registration --------------
 // Each entry fills TOPICS, keywords, DM bot, fallback questions, buttons, keyword replies and lead fields below.
-const Q_END = ["Could you share a phone number so our team can call you?", "Would you prefer the call in Malayalam or English?", "Thank you! 🙏 Our team will call you shortly."];
+const Q_END = ["Could you share a phone number so our team can call you?", "Would you prefer the call in Malayalam or English, and what time suits you best? (If you live outside India, please mention the country.)", "Thank you! 🙏 Our team will call you shortly."];
 const NEWT = {
   acc: { label: "MONTHLY COMPLIANCE", noun: "GST returns, accounts and ITR", shift: 51,
     about: "files GST returns, keeps accounts and files income-tax returns and TDS for small businesses and freelancers every month",
@@ -531,7 +531,7 @@ NEVER state any price, fee, cost, discount or government fee; if asked, say the 
 Never give legal advice beyond general facts. If someone sends a proposed company name, give a first review using only these rules: not similar (even in sound) to an existing company or LLP, no clash with a registered trademark, words like Bank or Insurance need special approval, keep 2-3 backups. Say clearly that you cannot confirm availability and that final availability is confirmed when the application is filed. Then continue qualifying.
 Goal: qualify the lead by asking, one at a time:
 1) what the business does, 2) how many founders and whether any are NRIs, 3) whether the business already has income, clients or funding,
-4) how soon they want to register, 5) their phone number, 6) preferred language for the call: Malayalam or English.
+4) how soon they want to register, 5) their phone number, 6) preferred language for the call (Malayalam or English) together with the best time to call and, if they live outside India, the country (one question).
 When you have all six, thank them and say a team member will call. Output only the reply text.
 Conversation: Understand first: read the whole chat and work out what they want right now (our service, a reel on some topic, feedback about our content, or just a reply to you). Never assume what their business is from a word they used about our reels (e.g. "voiceover" in feedback is not their business). If their message is unclear, ask what they mean in one short question instead of guessing. If they asked something, first answer it in one or two plain sentences, then ask ONE question. If they ask about another service, answer that instead; the team also handles company registration, GST, trademark, FSSAI food licence, IEC import-export, NDA, co-founder agreements, company valuation, Udyam (MSME), DPIIT Startup India, KSUM grants, ROC annual filings, financial projections, investor agreements, payment gateway setup, websites (payable in monthly parts), GST returns and accounts, Kerala trade licences, pravasi business loans and payroll/PF/ESI. Ask for the phone number by the 2nd or 3rd question with a reason ("so our team can look at your exact case"); if they hesitate, say WhatsApp works too. Never repeat a question already answered.`;
 
@@ -542,7 +542,7 @@ const FALLBACK_Q = [
   "Does the business already have income, clients or funding?",
   "How soon do you want to register?",
   "Could you share a phone number so our team can call you?",
-  "Would you prefer the call in Malayalam or English?",
+  "Would you prefer the call in Malayalam or English, and what time suits you best? (If you live outside India, please mention the country.)",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
 const RULES_COMMON = `Rules: Reply in the language given in the Language line at the end (simple and friendly), short, max 3 sentences. Write like the rejectionlist.kerala team; do not introduce yourself as an assistant, AI or bot and do not mention automation. If the user directly asks whether this is a bot or a real person, do not claim to be human: say these chats give quick answers and a team member will call them personally.
@@ -552,13 +552,13 @@ const BOT_GST = `You reply to Instagram DMs for rejectionlist.kerala, a team in 
 ${RULES_COMMON}
 General facts you may use: in Kerala GST registration is needed once yearly turnover crosses Rs 40 lakh for goods or Rs 20 lakh for services; selling goods to other states needs GST from the first sale whatever the turnover; selling goods on Amazon, Flipkart or Meesho needs GST from the first sale too, except a small seller below the limit who sells only within Kerala may use a PAN-based enrolment if the marketplace allows it; anyone may register voluntarily (B2B clients often want a GSTIN); a proprietor needs PAN, Aadhaar with its linked mobile, a photo, business address proof and bank proof. Do not judge someone's exact liability; say the team will check it on the call.
 Goal: qualify the lead by asking, one at a time:
-1) what the business sells or does, and whether it is a proprietorship, partnership, LLP or company, 2) roughly how much turnover this year or expected, 3) whether they sell to other states or through online marketplaces, 4) how soon they need the GSTIN, 5) their phone number, 6) preferred language for the call: Malayalam or English.
+1) what the business sells or does, and whether it is a proprietorship, partnership, LLP or company, 2) roughly how much turnover this year or expected, 3) whether they sell to other states or through online marketplaces, 4) how soon they need the GSTIN, 5) their phone number, 6) preferred language for the call (Malayalam or English) together with the best time to call and, if they live outside India, the country (one question).
 When you have all six, thank them and say a team member will call. Output only the reply text.`;
 const BOT_INV = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that drafts investor agreements (term sheets, share subscription and shareholders' agreements) for both founders raising money and people investing (and also does company and GST registration).
 ${RULES_COMMON}
 General facts you may use: only a private limited company can take equity investment; a term sheet is mostly non-binding except clauses like confidentiality and exclusivity; the shareholders' agreement sets rights such as board seats, share transfer limits and exits, and the company's articles must be updated for those rights to bind the company; shares must be allotted within 60 days of receiving the money; foreign or NRI investment on repatriation basis must be reported to RBI within 30 days of allotment. Never say whether a specific deal is fair or safe; the team will review it on the call.
 Goal: qualify the lead by asking, one at a time:
-1) are they a founder raising money or an investor putting money in, 2) is the company already a private limited company (and what does it do), 3) who is investing: friends and family, angel, NRI or foreign investor, or a fund, 4) how soon the deal needs to close, 5) their phone number, 6) preferred language for the call: Malayalam or English.
+1) are they a founder raising money or an investor putting money in, 2) is the company already a private limited company (and what does it do), 3) who is investing: friends and family, angel, NRI or foreign investor, or a fund, 4) how soon the deal needs to close, 5) their phone number, 6) preferred language for the call (Malayalam or English) together with the best time to call and, if they live outside India, the country (one question).
 When you have all six, thank them and say a team member will call. Output only the reply text.`;
 const FALLBACK_GST = [
   "What does your business sell or do? Is it a proprietorship, partnership, LLP or company?",
@@ -566,7 +566,7 @@ const FALLBACK_GST = [
   "Do you sell to other states, or through Amazon, Flipkart, Meesho or similar?",
   "How soon do you need the GST number?",
   "Could you share a phone number so our team can call you?",
-  "Would you prefer the call in Malayalam or English?",
+  "Would you prefer the call in Malayalam or English, and what time suits you best? (If you live outside India, please mention the country.)",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
 const FALLBACK_INV = [
@@ -575,20 +575,20 @@ const FALLBACK_INV = [
   "Who is investing: friends and family, an angel, an NRI or foreign investor, or a fund?",
   "How soon does the deal need to close?",
   "Could you share a phone number so our team can call you?",
-  "Would you prefer the call in Malayalam or English?",
+  "Would you prefer the call in Malayalam or English, and what time suits you best? (If you live outside India, please mention the country.)",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
 const BOT_SUI = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that helps startups get Startup India (DPIIT) recognition (and also company registration, GST and investor agreements).
 ${RULES_COMMON}
 General facts you may use: DPIIT recognition is for a private limited company, LLP, registered partnership or cooperative that is under 10 years old, has never crossed Rs 200 crore turnover in a year, and works on innovation or a scalable business model; a proprietorship cannot apply, so it must register an entity first; recognition opens doors to benefits such as patent and trademark fee rebates and self-certification under some labour and environment laws; the 3-year income tax holiday (section 80-IAC) is a separate application approved by a government board, not automatic. Never promise approval or any benefit; the team checks eligibility on the call.
 Goal: qualify the lead by asking, one at a time:
-1) what the startup does and what is new about it, 2) is it registered yet: Pvt Ltd, LLP, partnership, or not yet, 3) when it was registered and roughly its stage (idea, prototype, revenue), 4) how soon they want the recognition (for a grant, investor, tender, tax?), 5) their phone number, 6) preferred language for the call: Malayalam or English.
+1) what the startup does and what is new about it, 2) is it registered yet: Pvt Ltd, LLP, partnership, or not yet, 3) when it was registered and roughly its stage (idea, prototype, revenue), 4) how soon they want the recognition (for a grant, investor, tender, tax?), 5) their phone number, 6) preferred language for the call (Malayalam or English) together with the best time to call and, if they live outside India, the country (one question).
 When you have all six, thank them and say a team member will call. Output only the reply text.`;
 const BOT_SK = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that helps startups register with Kerala Startup Mission (KSUM) and get the KSUM Unique ID (and also company registration, DPIIT, GST and investor agreements).
 ${RULES_COMMON}
 General facts you may use: KSUM's schemes, grants, incubation and events are for startups registered in Kerala that hold a KSUM Unique ID; most KSUM grants and the seed fund also need DPIIT recognition and a private limited company or LLP; for the idea grant you may apply before incorporating, but the company and Unique ID are needed before money is released. Never promise a grant, an amount or approval; the team checks eligibility on the call.
 Goal: qualify the lead by asking, one at a time:
-1) what the startup does, 2) is it registered yet, and in Kerala: Pvt Ltd, LLP, or not yet, 3) does it already have DPIIT recognition, 4) what they want from KSUM (grant, incubation space, funding, events) and how soon, 5) their phone number, 6) preferred language for the call: Malayalam or English.
+1) what the startup does, 2) is it registered yet, and in Kerala: Pvt Ltd, LLP, or not yet, 3) does it already have DPIIT recognition, 4) what they want from KSUM (grant, incubation space, funding, events) and how soon, 5) their phone number, 6) preferred language for the call (Malayalam or English) together with the best time to call and, if they live outside India, the country (one question).
 When you have all six, thank them and say a team member will call. Output only the reply text.`;
 const FALLBACK_SUI = [
   "What does your startup do, and what is new about it?",
@@ -596,7 +596,7 @@ const FALLBACK_SUI = [
   "When was it registered, and what stage is it at: idea, prototype or earning revenue?",
   "How soon do you need the recognition, and what for: a grant, an investor, a tender or tax?",
   "Could you share a phone number so our team can call you?",
-  "Would you prefer the call in Malayalam or English?",
+  "Would you prefer the call in Malayalam or English, and what time suits you best? (If you live outside India, please mention the country.)",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
 const FALLBACK_SK = [
@@ -605,14 +605,14 @@ const FALLBACK_SK = [
   "Does it already have Startup India (DPIIT) recognition?",
   "What do you want from KSUM: a grant, incubation space, funding or events? How soon?",
   "Could you share a phone number so our team can call you?",
-  "Would you prefer the call in Malayalam or English?",
+  "Would you prefer the call in Malayalam or English, and what time suits you best? (If you live outside India, please mention the country.)",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
 const BOT_UD = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that helps businesses get Udyam (MSME) registration (and also company registration, GST, Startup India, KSUM and investor agreements).
 ${RULES_COMMON}
 General facts you may use: Udyam is the government's MSME registration, Aadhaar-based with PAN (and GSTIN where the business has one) and self-declared; it does not need renewal but details should be kept updated. Since 1 April 2025 a micro enterprise has investment up to Rs 2.5 crore and turnover up to Rs 10 crore (small: Rs 25 crore and Rs 100 crore; medium: Rs 125 crore and Rs 500 crore), and BOTH limits must be met. For manufacturing and service micro and small units, buyers must pay within 45 days (or the agreed time up to 45 days) or owe compound interest at three times the RBI bank rate, a delayed payment can be taken to the MSME Samadhaan portal, and a buyer who pays late loses the income tax deduction until payment (section 43B(h)). Retail and wholesale traders can register but only for priority sector lending, not the 45-day protection. Registration also helps with priority lending, collateral-free loan schemes and government tender preferences. Never promise a loan, subsidy or recovery; the team checks the case on the call.
 Goal: qualify the lead by asking, one at a time:
-1) what the business does (manufacturing, service or trading), 2) is it a proprietorship, partnership, LLP or company, and does it have GST, 3) roughly its turnover, 4) why they want Udyam now (a buyer asked, a loan, a tender, delayed payments) and how soon, 5) their phone number, 6) preferred language for the call: Malayalam or English.
+1) what the business does (manufacturing, service or trading), 2) is it a proprietorship, partnership, LLP or company, and does it have GST, 3) roughly its turnover, 4) why they want Udyam now (a buyer asked, a loan, a tender, delayed payments) and how soon, 5) their phone number, 6) preferred language for the call (Malayalam or English) together with the best time to call and, if they live outside India, the country (one question).
 When you have all six, thank them and say a team member will call. Output only the reply text.`;
 const FALLBACK_UD = [
   "What does your business do: manufacturing, a service or trading?",
@@ -620,14 +620,14 @@ const FALLBACK_UD = [
   "Roughly how much turnover does it have in a year?",
   "Why do you want Udyam now: a buyer asked, a loan, a tender or a delayed payment? How soon?",
   "Could you share a phone number so our team can call you?",
-  "Would you prefer the call in Malayalam or English?",
+  "Would you prefer the call in Malayalam or English, and what time suits you best? (If you live outside India, please mention the country.)",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
 const botFor = c => `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that ${c.about} (and also company registration, GST and other business registrations and agreements).
 ${RULES_COMMON}
 General facts you may use: ${c.facts}
 Goal: qualify the lead by asking, one at a time:
-${c.qs.map((q, i) => `${i + 1}) ${q}`).join(" ")} 5) their phone number, 6) preferred language for the call: Malayalam or English.
+${c.qs.map((q, i) => `${i + 1}) ${q}`).join(" ")} 5) their phone number, 6) preferred language for the call (Malayalam or English) together with the best time to call and, if they live outside India, the country (one question).
 When you have all six, thank them and say a team member will call. Output only the reply text.`;
 const BOT = { ...Object.fromEntries(Object.entries(NEWT).map(([t, c]) => [t, () => ({ sys: botFor(c), fq: [...c.qs, ...Q_END] })])), ud: () => ({ sys: BOT_UD, fq: FALLBACK_UD }), co: () => ({ sys: BOT_SYSTEM, fq: FALLBACK_Q }), gst: () => ({ sys: BOT_GST, fq: FALLBACK_GST }), inv: () => ({ sys: BOT_INV, fq: FALLBACK_INV }), sui: () => ({ sys: BOT_SUI, fq: FALLBACK_SUI }), sk: () => ({ sys: BOT_SK, fq: FALLBACK_SK }),
   legal: () => ({ sys: BOT_LEGAL, fq: ["Sorry to hear what you're going through 🙏 Our team works with lawyers and can connect you with one to look at your case. Could you share a phone number so our team or the lawyer can call you?", Q_END[1], Q_END[2]] }) };
@@ -709,14 +709,14 @@ function regexLead(thread, topic = "co") {   // no AI: read each answer that fol
     phone, language: /english|ഇംഗ്ലീഷ്/i.test(all) ? "English" : /malayalam|മലയാളം/i.test(all) ? "Malayalam" : "", intent: !phone ? "low" : strong && soon ? "high" : "medium", can_afford_30k: strong ? "likely" : "unclear", reason: "Summary made without AI; open the chat for details" };
 }
 const LEAD_SCHEMA = {
-  co: `{"business":"","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
-  gst: `{"business":"what they sell and the business type","founders":"","nri":false,"traction":"turnover this year or expected","interstate":"sells to other states / online marketplaces?","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
-  ...Object.fromEntries(Object.keys(NEWT).map(t => [t, `{"business":"what the business does and what they need","founders":"","nri":false,"traction":"entity type, stage and any numbers they gave","timeline":"what it is for and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`])),
-  ud: `{"business":"what the business does and whether manufacturing, service or trading","founders":"","nri":false,"traction":"entity type, GST status, turnover","timeline":"why Udyam now and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
-  sui: `{"business":"what the startup does and what is new","founders":"","nri":false,"traction":"entity type, registration date and stage","timeline":"how soon and what for","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
-  sk: `{"business":"what the startup does","founders":"","nri":false,"traction":"entity type, Kerala registration, DPIIT status","timeline":"what they want from KSUM and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
-  legal: `{"business":"2 short lines in English: what happened to them and what help they want","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
-  inv: `{"role":"founder raising | investor investing","business":"company and what it does, Pvt Ltd or not","founders":"","nri":false,"traction":"who is investing (friends/family, angel, NRI/foreign, fund)","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  co: `{"business":"","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","best_time":"when they said to call, as they wrote it","location":"Kerala town or the country they live in, if they said","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  gst: `{"business":"what they sell and the business type","founders":"","nri":false,"traction":"turnover this year or expected","interstate":"sells to other states / online marketplaces?","timeline":"","phone":"","language":"","best_time":"when they said to call, as they wrote it","location":"Kerala town or the country they live in, if they said","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  ...Object.fromEntries(Object.keys(NEWT).map(t => [t, `{"business":"what the business does and what they need","founders":"","nri":false,"traction":"entity type, stage and any numbers they gave","timeline":"what it is for and how soon","phone":"","language":"","best_time":"when they said to call, as they wrote it","location":"Kerala town or the country they live in, if they said","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`])),
+  ud: `{"business":"what the business does and whether manufacturing, service or trading","founders":"","nri":false,"traction":"entity type, GST status, turnover","timeline":"why Udyam now and how soon","phone":"","language":"","best_time":"when they said to call, as they wrote it","location":"Kerala town or the country they live in, if they said","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  sui: `{"business":"what the startup does and what is new","founders":"","nri":false,"traction":"entity type, registration date and stage","timeline":"how soon and what for","phone":"","language":"","best_time":"when they said to call, as they wrote it","location":"Kerala town or the country they live in, if they said","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  sk: `{"business":"what the startup does","founders":"","nri":false,"traction":"entity type, Kerala registration, DPIIT status","timeline":"what they want from KSUM and how soon","phone":"","language":"","best_time":"when they said to call, as they wrote it","location":"Kerala town or the country they live in, if they said","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  legal: `{"business":"2 short lines in English: what happened to them and what help they want","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","best_time":"when they said to call, as they wrote it","location":"Kerala town or the country they live in, if they said","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  inv: `{"role":"founder raising | investor investing","business":"company and what it does, Pvt Ltd or not","founders":"","nri":false,"traction":"who is investing (friends/family, angel, NRI/foreign, fund)","timeline":"","phone":"","language":"","best_time":"when they said to call, as they wrote it","location":"Kerala town or the country they live in, if they said","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
 };
 async function extractLead(env, thread, topic = "co") {
   let r;
@@ -929,7 +929,7 @@ async function processNudges(env, force = null) {
       await log(env, `check-in ${e.n + 1} sent to @${meta.username || id}`);
       if (L?.phone && !L.alerted) {                                                // gave a number but stopped: still worth a call (any intent)
         const all = await kv(env, "leads", {}); if (all[id]) { all[id].alerted = true; await kvPut(env, "leads", all); leads = all; }
-        await discord(env, `🔔 **[${TOPICS[L.topic]?.label || TOPICS.co.label}] Lead stopped midway, but left a number** (${L.intent} intent)\n📞 ${L.phone}  ·  🗣 ${L.language || "not answered"}\n🏢 ${L.business || "?"}\n📍 Came from: ${L.source_item || "?"}\nThey went quiet about ${Math.round(age / 3600e3)} h ago; a check-in message has been sent.\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
+        await discord(env, `🔔 **[${TOPICS[L.topic]?.label || TOPICS.co.label}] Lead stopped midway, but left a number** (${L.intent} intent)\n📞 ${L.phone}  ·  🗣 ${L.language || "not answered"}\n🏢 ${L.business || "?"}\n📍 Came from: ${L.source_item || "?"}\nThey went quiet about ${Math.round(age / 3600e3)} h ago; a check-in message has been sent.\nLead ID: ${id}\n✅ After your call, tap to record what happened: ${await leadUrl(env, id)}`, true);
       }
     } catch (err) { await log(env, `ERROR check-in ${id}: ${String(err.message).slice(0, 90)}`); ops[id] = null; }
   }
@@ -960,7 +960,7 @@ async function backfillLeadAlerts(env, max = 2) {   // one-time catch-up: stored
   await kvPut(env, "leads", fresh);                          // mark first: never alert the same lead twice
   for (const id of send) {
     const L = fresh[id];
-    await discord(env, `🔔 **[${TOPICS[L.topic]?.label || TOPICS.co.label}] New ${String(L.intent || "?").toUpperCase()}-intent lead (missed earlier, not alerted at the time)** (budget fit: ${L.can_afford_30k ?? "?"})\n📞 ${L.phone}  ·  🗣 ${L.language}${L.role ? "\n🧭 " + L.role : ""}\n🏢 ${L.business || "?"}\n📍 Came from: ${L.source_item || "?"}${L.source_keyword ? " (" + L.source_keyword + ")" : ""}\n⏱ ${L.timeline || "?"}\nWhy: ${L.reason || "?"}\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
+    await discord(env, `🔔 **[${TOPICS[L.topic]?.label || TOPICS.co.label}] New ${String(L.intent || "?").toUpperCase()}-intent lead (missed earlier, not alerted at the time)** (budget fit: ${L.can_afford_30k ?? "?"})\n📞 ${L.phone}  ·  🗣 ${L.language}${L.role ? "\n🧭 " + L.role : ""}\n🏢 ${L.business || "?"}\n📍 Came from: ${L.source_item || "?"}${L.source_keyword ? " (" + L.source_keyword + ")" : ""}\n⏱ ${L.timeline || "?"}\nWhy: ${L.reason || "?"}\nLead ID: ${id}\n✅ After your call, tap to record what happened: ${await leadUrl(env, id)}`, true);
   }
   await log(env, `backfill: alerted ${send.length} earlier lead(s): ${send.join(", ")}`);   // ids only, never the phone
   return send.length;
@@ -1115,6 +1115,7 @@ async function handleWebhook(env, body) {
       { const tx0 = ev.message.text.trim().toLowerCase(); if (meta.last_txt === tx0 && Date.now() - (meta.last_in || 0) < 120e3) { await log(env, `duplicate DM ignored from ${uid}`); continue; } meta.last_txt = tx0; }
       const prevIn = meta.last_in || 0;
       meta.last_in = Date.now();                                     // 24h window starts from their last message
+      try { await leadReplied(env, uid, ev.message.text); } catch (eR) { await log(env, `lead reply check: ${String(eR.message).slice(0, 60)}`); }
       if (OPT_OUT.test(ev.message.text.replace(/^🎤\s*/u, ""))) {                           // asked us to stop: no check-ins for this person, and no further questions now
         meta.no_nudge = true; await kvPut(env, `m:${uid}`, meta); await nudgeApply(env, { [uid]: null });
         const bye = "No problem 🙏 We won't send you any more reminders. If you need us later, just message here.";
@@ -1239,8 +1240,8 @@ async function handleWebhook(env, body) {
           if (!prev) await bumpPost(env, fromItem, "leads");
           if (ready && !prev?.alerted) {                                // every lead with a phone gets one alert; the text shows the intent
             leads[uid].alerted = true; await kvPut(env, "leads", leads);
-            if (meta.legal) await discord(env, `⚖️ **[Legal help / partner dispute]** @${meta.username || uid} wants to talk to a lawyer\n📝 ${String(lead.business || "see chat").slice(0, 300)}\n📞 ${lead.phone}  ·  🗣 ${lead.language || (lang === "ml" ? "Malayalam (writes in Malayalam; not asked yet)" : "not answered yet")}\n💬 https://ig.me/m/${meta.username || ""}\nNo fee or outcome was promised. Lead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`, true);
-            else await discord(env, `🔔 **[${TOPICS[topic].label}] New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}${lead.role ? "\n🧭 " + lead.role : ""}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders || "-"}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}${lead.interstate ? "\n🚚 " + lead.interstate : ""}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`, true);
+            if (meta.legal) await discord(env, `⚖️ **[Legal help / partner dispute]** @${meta.username || uid} wants to talk to a lawyer\n📝 ${String(lead.business || "see chat").slice(0, 300)}\n📞 ${lead.phone}  ·  🗣 ${lead.language || (lang === "ml" ? "Malayalam (writes in Malayalam; not asked yet)" : "not answered yet")}\n💬 https://ig.me/m/${meta.username || ""}\nNo fee or outcome was promised. Lead ID: ${uid}\n✅ After your call, tap to record what happened: ${await leadUrl(env, uid)}`, true);
+            else await discord(env, `🔔 **[${TOPICS[topic].label}] New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}${lead.location ? "  ·  📍 " + lead.location : ""}${lead.best_time ? "\n🕑 Best time to call: " + lead.best_time : ""}${lead.role ? "\n🧭 " + lead.role : ""}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders || "-"}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}${lead.interstate ? "\n🚚 " + lead.interstate : ""}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\n✅ After your call, tap to record what happened: ${await leadUrl(env, uid)}`, true);
           }
         }
       }
@@ -1453,7 +1454,7 @@ async function talkSubmit(env, f) {
     source_item: item, source_keyword: kw, source_via: "form", status: "new", updated: IST().toISOString().slice(0, 16) };
   const leads = await kv(env, "leads", {}); leads[id] = lead; await kvPut(env, "leads", leads); await bumpPost(env, item, "leads");
   await log(env, `form lead ${id}: ${intent}/${fit} from ${item}`);
-  await discord(env, `🔔 **New ${intent.toUpperCase()}-intent lead** (budget fit: ${fit})\n👤 ${lead.name}\n📞 ${phone}  ·  🗣 ${lead.language}\n🏢 ${lead.business}\n📈 ${lead.traction}\n👥 ${lead.founders} · ${lead.where}\n⏱ ${lead.timeline}\n📍 Came from: ${item}${kw ? " (" + kw + ")" : ""}\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
+  await discord(env, `🔔 **New ${intent.toUpperCase()}-intent lead** (budget fit: ${fit})\n👤 ${lead.name}\n📞 ${phone}  ·  🗣 ${lead.language}\n🏢 ${lead.business}\n📈 ${lead.traction}\n👥 ${lead.founders} · ${lead.where}\n⏱ ${lead.timeline}\n📍 Came from: ${item}${kw ? " (" + kw + ")" : ""}\nLead ID: ${id}\n✅ After your call, tap to record what happened: ${await leadUrl(env, id)}`, true);
 }
 const KEYWORD_OPENER_ML = "ഹായ്! 👋 കമന്റിന് നന്ദി. നിങ്ങൾ ചോദിച്ച free guide ഇവിടെ അയച്ചു തരട്ടെ? താഴെയുള്ള button tap ചെയ്യൂ.";
 const KEYWORD_OPENER = {
@@ -1514,6 +1515,8 @@ export default {
     // the 03:xx snapshot chunks use most of the 50-subrequest budget, so skip the backup inbox poll while they run
     const snapRun = h === 3 && mi >= 1 && !(await env.STATE.get(`snapdone:${day}`));
     if (IST().getUTCDay() === 0 && h === 9 && mi === 41 && !(await env.STATE.get(`shoutplan:${day}`))) { await env.STATE.put(`shoutplan:${day}`, "1", { expirationTtl: 172800 }); ctx.waitUntil(shoutPlan(env).catch(e => log(env, `shout plan: ${e.message}`))); }
+    if (mi % 10 === 4) ctx.waitUntil(leadReminders(env).catch(e => log(env, `ERROR lead reminders: ${String(e.message).slice(0, 90)}`)));
+    if (h === 10 && mi === 7 && !(await env.STATE.get(`leadstale:${day}`))) { await env.STATE.put(`leadstale:${day}`, "1", { expirationTtl: 172800 }); ctx.waitUntil(leadStaleDigest(env).catch(e => log(env, `ERROR stale leads: ${String(e.message).slice(0, 90)}`))); }
     if (h === 12 && mi === 47 && !(await env.STATE.get(`shoutpost:${day}`))) { await env.STATE.put(`shoutpost:${day}`, "1", { expirationTtl: 172800 }); ctx.waitUntil(shoutPost(env).catch(e => log(env, `shout post: ${e.message}`))); }
     if (!snapRun && await env.STATE.get("poll_inbox")) ctx.waitUntil((async () => {   // backup route, off while Meta delivers DMs by webhook                                    // check the inbox every 10 s so replies feel instant
       const t0 = Date.now();
@@ -1628,8 +1631,25 @@ export default {
       }
       const nx = await kv(env, "nudge", {});
       return json({ updated: IST().toISOString().slice(0, 16), weights: await kv(env, "weights", null), slot_report: await kv(env, "slot_report", null),
-        leads_total: leads.length, leads_by_topic: leads.reduce((a, l) => { const k = l.topic || "co"; a[k] = (a[k] || 0) + 1; return a; }, {}), leads_by_segment_of_post: leads.reduce((a, l) => { const p = posted[l.source_item]; const k = p?.segment || "direct"; a[k] = (a[k] || 0) + 1; return a; }, {}),
+        leads_total: leads.length, outcomes_by_topic: leads.reduce((a, l) => { const k = l.topic || "co", st = l.status || "new"; (a[k] = a[k] || {})[st] = (a[k][st] || 0) + 1; return a; }, {}), leads_by_topic: leads.reduce((a, l) => { const k = l.topic || "co"; a[k] = (a[k] || 0) + 1; return a; }, {}), leads_by_segment_of_post: leads.reduce((a, l) => { const p = posted[l.source_item]; const k = p?.segment || "direct"; a[k] = (a[k] || 0) + 1; return a; }, {}),
         checkins_today: nx._s || null, posts });
+    }
+    if (u.pathname.startsWith("/wa/")) {   // short WhatsApp link from Discord -> wa.me with the message ready
+      const [, , rid, what] = u.pathname.split("/"); const id = decodeURIComponent(rid || "");
+      if ((u.searchParams.get("k") || "") !== await leadToken(env, id)) return new Response("Link not valid.", { status: 403 });
+      const L = (await kv(env, "leads", {}))[id]; if (!L) return new Response("Lead not found.", { status: 404 });
+      const fu = (await kv(env, "lead_fu", {}))[id]; const at = fu?.at || Date.parse((L.meeting || "") + ":00+05:30");
+      const text = /^\d$/.test(what) ? fuMsg(+what, L) : what === "mtoday" ? meetTxt(L, at, false) : what === "msoon" ? meetTxt(L, at, true) : "";
+      const to = waLink(L.phone, text); return to ? Response.redirect(to, 302) : new Response("No WhatsApp number for this lead.", { status: 404 });
+    }
+    if (u.pathname.startsWith("/lead/") || u.pathname === "/leads/board") {   // owner's private lead links (from Discord alerts)
+      const isBoard = u.pathname === "/leads/board"; const id = isBoard ? "board" : decodeURIComponent(u.pathname.slice(6));
+      let k = u.searchParams.get("k") || ""; let form = {};
+      if (req.method === "POST") { const fd = await req.formData(); form = Object.fromEntries(fd); k = form.k || k; }
+      if (!k || k !== await leadToken(env, id)) return new Response("Link not valid.", { status: 403 });
+      if (isBoard) return leadBoard(env, k);
+      if (req.method === "POST") { const r = await leadAction(env, id, form); return leadPage(env, id, k, `<div class="card ${r.ok ? "ok" : "bad"}">${r.msg}</div>`); }
+      return leadPage(env, id, k);
     }
     if (u.pathname === "/public/posted") return json([...Object.keys(await kv(env, "posted", {})), ...Object.keys(await kv(env, "stories", {}))]); // builder reads this to know stock (reels, carousels, stories)
     if (u.searchParams.get("key") !== env.ADMIN_KEY) return new Response("rl-kerala autopilot", { status: 200 });
@@ -1650,3 +1670,170 @@ export default {
     return new Response("not found", { status: 404 });
   },
 };
+
+// ======================= LEAD FOLLOW-UP (owner, 27 Nov) =======================
+// The owner taps a private link in each Discord lead alert -> a small page with outcome buttons (no Claude needed).
+// "No answer" starts a reminder sequence in Discord (day 0, 2, 4, 7, 12, 42) with ready WhatsApp messages (wa.me links,
+// the owner sends them by hand) and, if the person messaged us in the last 24 h, one Instagram nudge from the bot
+// (owner approved, 27 Nov). A reply from the person on Instagram pauses the sequence and pings the owner.
+const LEADFU_DAYS = [0, 2, 4, 7, 12, 42];
+async function leadToken(env, id) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(String(env.ADMIN_KEY || env.VERIFY_TOKEN || "rl")), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const s = await crypto.subtle.sign("HMAC", k, new TextEncoder().encode("lead:" + id));
+  return [...new Uint8Array(s)].slice(0, 12).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+async function waShort(env, id, what) { return `${BASE}/wa/${encodeURIComponent(id)}/${what}?k=${await leadToken(env, id)}`; }
+function meetTxt(L, at, soon) { const hm = new Date(at + 5.5 * 3600e3).toISOString().slice(11, 16); return isML(L) ? (soon ? `ഹായ്, ${hm}-ന് വിളിക്കാം 🙏` : `ഹായ്, ഇന്ന് ${hm}-ന് വിളിക്കാം. ഓർമ്മിപ്പിക്കാൻ മാത്രം 🙏`) : (soon ? `Hi, calling you at ${hm} 🙏` : `Hi, just a reminder of our call today at ${hm}. Talk soon 🙏`); }
+async function leadUrl(env, id) { return `${BASE}/lead/${encodeURIComponent(id)}?k=${await leadToken(env, id)}`; }
+function waNum(p) { let d = String(p || "").replace(/\D/g, ""); if (d.length === 10) d = "91" + d; if (d.length === 11 && d[0] === "0") d = "91" + d.slice(1); return d; }
+function waLink(p, text) { const d = waNum(p); return d.length >= 11 ? `https://wa.me/${d}?text=${encodeURIComponent(text)}` : null; }
+const nounOf = L => TOPICS[L?.topic]?.noun || TOPICS.co.noun || "your registration";
+const isML = L => /malayalam|മലയാളം/i.test(L?.language || "");
+// messages the OWNER sends on WhatsApp (never automatic); Malayalam if they chose Malayalam for the call
+function fuMsg(step, L) {
+  const n = nounOf(L);
+  const en = [
+    `Hi, this is the Rejection List team. We tried calling you about ${n}. When is a good time for a quick call: this evening or tomorrow morning?`,
+    `Hi! Sending a quick note about ${n}. Whenever you're free, reply with a time and we'll call you. A voice note works too.`,
+    `Hi, sharing this so you have it ready: we can send you the checklist for ${n} for your case. No need to reply now, just say "send" when you want it.`,
+    `Hi, are you still planning ${n}, or shall I check back with you next month? Either is fine, just let me know.`,
+    `Hi, I'll close your file for now so I don't disturb you. Whenever you're ready, just reply "START" and we'll continue from where we stopped. All the best!`,
+    `Hi, it's been a few weeks. Just checking if ${n} is still on your mind. Reply "START" anytime and we'll help.`,
+  ];
+  const ml = [
+    `ഹായ്, Rejection List ടീമിൽ നിന്നാണ്. ${n} കാര്യത്തിന് വിളിക്കാൻ ശ്രമിച്ചിരുന്നു. എപ്പോഴാണ് സൗകര്യം: ഇന്ന് വൈകുന്നേരമോ നാളെ രാവിലെയോ?`,
+    `ഹായ്! ${n} കാര്യത്തിൽ ഒരു ചെറിയ മെസ്സേജ്. ഫ്രീ ആകുമ്പോൾ ഒരു സമയം പറഞ്ഞാൽ ഞങ്ങൾ വിളിക്കാം. വോയ്സ് നോട്ട് അയച്ചാലും മതി.`,
+    `ഹായ്, നിങ്ങളുടെ കാര്യത്തിനുള്ള ${n} ചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം. ഇപ്പോൾ മറുപടി വേണ്ട, വേണമെങ്കിൽ "send" എന്ന് മാത്രം അയച്ചാൽ മതി.`,
+    `ഹായ്, ${n} ഇപ്പോഴും പ്ലാനിൽ ഉണ്ടോ, അതോ അടുത്ത മാസം വീണ്ടും ചോദിക്കണോ? ഏതായാലും കുഴപ്പമില്ല, ഒന്ന് പറഞ്ഞാൽ മതി.`,
+    `ഹായ്, ശല്യപ്പെടുത്താതിരിക്കാൻ തൽക്കാലം നിങ്ങളുടെ ഫയൽ ക്ലോസ് ചെയ്യുന്നു. റെഡിയാകുമ്പോൾ "START" എന്ന് അയച്ചാൽ മതി, നിർത്തിയിടത്തു നിന്ന് തുടരാം. ഓൾ ദ ബെസ്റ്റ്!`,
+    `ഹായ്, കുറച്ച് ആഴ്ചകളായി. ${n} ഇപ്പോഴും മനസ്സിലുണ്ടോ എന്ന് ചോദിക്കാൻ മാത്രം. എപ്പോൾ വേണമെങ്കിലും "START" അയക്കൂ.`,
+  ];
+  return isML(L) ? ml[step] : en[step];
+}
+const FU_TIPS = [
+  "Call once more at a different time (evening, or Gulf evening if they are abroad), then send this on WhatsApp:",
+  "Record a 20-second WhatsApp voice note in their language (voice gets opened far more than text). Say the same as this text:",
+  "Value, no pressure. Send this; if they reply, send the checklist for their case:",
+  "Call at a new time (weekend or evening), then send this easy yes/no question:",
+  "Last message of the sequence (often gets the most replies). Send this:",
+  "One month later: one last gentle check, then stop.",
+];
+async function leadLine(env, id, L) {
+  const meta = await kv(env, `m:${id}`, {}); const u = meta.username || L.username || "";
+  return `**[${TOPICS[L.topic]?.label || "LEAD"}]** ${u ? "@" + u : id} · 📞 ${L.phone || "?"}${L.location ? " · 📍 " + L.location : ""}${L.best_time ? " · 🕑 " + L.best_time : ""}`;
+}
+async function leadFuMessage(env, id, L, step) {
+  const msg = fuMsg(step, L), wa = waLink(L.phone, msg) ? await waShort(env, id, step) : null, meta = await kv(env, `m:${id}`, {}); const u = meta.username || "";
+  const igOk = meta.last_in && Date.now() - meta.last_in < 7 * 86400e3;
+  return `⏰ **Follow-up ${step + 1}/${LEADFU_DAYS.length}** (day ${LEADFU_DAYS[step]}) ${await leadLine(env, id, L)}\n${FU_TIPS[step]}\n> ${msg}\n${wa ? "📲 WhatsApp (message ready, just press send): " + wa + "\n" : ""}${u && igOk ? "💬 Instagram (you can still reply by hand there): https://ig.me/m/" + u + "\n" : ""}✅ Update: ${await leadUrl(env, id)}`;
+}
+// option 3: one Instagram DM from the bot, only inside Instagram's 24 h window
+async function leadIgNudge(env, id, L) {
+  const meta = await kv(env, `m:${id}`, {});
+  if (!meta.last_in || Date.now() - meta.last_in > 23.5 * 3600e3) return "outside Instagram's 24 h window";
+  if (meta.no_nudge) return "they opted out of messages";
+  const ml = isML(L);
+  const text = ml ? "ഹായ് 🙏 ഞങ്ങൾ നിങ്ങളെ വിളിക്കാൻ ശ്രമിച്ചു, കിട്ടിയില്ല. എപ്പോഴാണ് വിളിക്കാൻ സൗകര്യം?" : "Hi 🙏 We tried calling you but couldn't reach you. When is a good time to call?";
+  const btn = ml ? ["ഇന്ന് വൈകുന്നേരം", "നാളെ രാവിലെ", "WhatsApp മതി"] : ["This evening", "Tomorrow morning", "WhatsApp me"];
+  try { await sendDM(env, id, text, btn); } catch (e) { return "Instagram refused: " + String(e.message).slice(0, 80); }
+  const th = await kv(env, `t:${id}`, []); th.push({ role: "assistant", content: text + " [sent after a missed call; whatever they answer, thank them, confirm the team will call or WhatsApp them at that time, and ask nothing else]" }); await kvPut(env, `t:${id}`, th);
+  return "sent";
+}
+const STATUS_TXT = { meeting: "📅 Meeting set", noanswer: "📵 No answer (follow-ups started)", later: "💬 Follow up later", closed: "🤝 Closed, client", lost: "❌ Not interested", replied: "🔁 Replied on Instagram", talked: "☎️ Talked" };
+async function leadAction(env, id, f) {
+  const all = await kv(env, "leads", {}); const L = all[id]; if (!L) return { ok: false, msg: "Lead not found." };
+  const a = f.a, now = Date.now(), at = IST().toISOString().slice(0, 16);
+  const fu = await kv(env, "lead_fu", {}); delete fu[id];
+  let msg = "";
+  if (a === "meeting") {
+    const t = Date.parse((f.when || "") + ":00+05:30"); if (!t || t < now - 3600e3) return { ok: false, msg: "Please pick the meeting date and time." };
+    fu[id] = { kind: "meeting", at: t, sent: {} }; L.meeting = f.when; msg = `Meeting saved for ${f.when.replace("T", " ")} IST. You'll get a reminder that morning and 30 minutes before, with the confirmation message ready.`;
+    const conf = isML(L) ? `ഹായ്, ${f.when.slice(8, 10)}/${f.when.slice(5, 7)} ${f.when.slice(11)}-ന് ഞങ്ങൾ വിളിക്കാം (${nounOf(L)}). ഈ നമ്പറിൽ തന്നെ വിളിക്കട്ടെ?` : `Hi, confirming our call on ${f.when.slice(8, 10)}/${f.when.slice(5, 7)} at ${f.when.slice(11)} about ${nounOf(L)}. Shall I call you on this number?`;
+    const wa = waLink(L.phone, conf); if (wa) msg += `<br><br>Send the confirmation now: <a href="${wa}">open WhatsApp with the message ready</a>`;
+  } else if (a === "noanswer") {
+    fu[id] = { kind: "ghost", start: now, step: 0, sent: {} };
+    const ig = await leadIgNudge(env, id, L);
+    msg = `Follow-ups started (day 0, 2, 4, 7, 12 and 42). Instagram nudge: ${ig === "sent" ? "sent ✅ (their answer will come to Discord)" : "not sent (" + ig + ")"}.`;
+    const wa = waLink(L.phone, fuMsg(0, L)); if (wa) msg += `<br><br>Step 1 now: <a href="${wa}">send this WhatsApp message</a><br><i>${fuMsg(0, L)}</i>`;
+  } else if (a === "later") {
+    const t = Date.parse((f.when || "") + "T10:00:00+05:30"); if (!t) return { ok: false, msg: "Please pick a date." };
+    fu[id] = { kind: "later", at: t, sent: {} }; msg = `You'll get a reminder on ${f.when} at 10:00.`;
+  } else if (a === "talked") { msg = "Saved. Pick 'Meeting set' or 'Follow up later' if there is a next step."; }
+  else if (a === "closed") msg = "Great! 🎉 Saved as a client. Reminders stopped.";
+  else if (a === "lost") msg = "Saved. Reminders stopped.";
+  else return { ok: false, msg: "Unknown action." };
+  await kvPut(env, "lead_fu", fu);
+  L.status = a; L.outcome_at = at; L.notes = [...(L.notes || []), { t: at, note: STATUS_TXT[a] + (f.note ? ": " + String(f.note).slice(0, 300) : "") }].slice(-20);
+  const fresh = await kv(env, "leads", {}); fresh[id] = { ...fresh[id], ...L }; await kvPut(env, "leads", fresh);
+  await log(env, `lead ${id}: ${a} (owner, via link)`);
+  return { ok: true, msg };
+}
+const escH = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function pageHtml(title, body) {
+  return new Response(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${escH(title)}</title>
+<style>body{font:16px/1.45 system-ui,sans-serif;max-width:560px;margin:0 auto;padding:16px;color:#1d1d1f;background:#fafafa}h1{font-size:20px;margin:4px 0 12px}.card{background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:14px;margin:10px 0}
+button{display:block;width:100%;padding:14px;margin:8px 0;font-size:16px;border-radius:10px;border:1px solid #d4d4d8;background:#fff;cursor:pointer;text-align:left}button.p{background:#0f766e;color:#fff;border-color:#0f766e}
+input,textarea{width:100%;box-sizing:border-box;padding:10px;font-size:16px;border:1px solid #d4d4d8;border-radius:8px;margin:4px 0}small{color:#52525b}.ok{background:#ecfdf5;border-color:#a7f3d0}.bad{background:#fef2f2;border-color:#fecaca}a{color:#0f766e}</style></head><body>${body}</body></html>`, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex" } });
+}
+async function leadPage(env, id, k, note = "") {
+  const L = (await kv(env, "leads", {}))[id]; if (!L) return pageHtml("Lead", `<h1>Lead not found</h1>`);
+  const meta = await kv(env, `m:${id}`, {}); const u = meta.username || "";
+  const notes = (L.notes || []).slice(-5).reverse().map(n => `<div><small>${escH(n.t)}</small> ${escH(n.note)}</div>`).join("");
+  const f = (a, label, extra = "", cls = "") => `<form method="post"><input type="hidden" name="k" value="${escH(k)}"><input type="hidden" name="a" value="${a}">${extra}<button class="${cls}">${label}</button></form>`;
+  const today = IST().toISOString().slice(0, 10);
+  return pageHtml("Update lead", `${note}<h1>${escH(TOPICS[L.topic]?.label || "Lead")}</h1>
+<div class="card">${u ? `<b>@${escH(u)}</b> · <a href="https://ig.me/m/${escH(u)}">Instagram chat</a><br>` : ""}📞 <a href="tel:+${waNum(L.phone)}">${escH(L.phone)}</a>${waLink(L.phone, "Hi") ? ` · <a href="${waLink(L.phone, "")}">WhatsApp</a>` : ""}<br>🗣 ${escH(L.language || "?")}${L.location ? " · 📍 " + escH(L.location) : ""}${L.best_time ? "<br>🕑 Best time: " + escH(L.best_time) : ""}<br>🏢 ${escH(L.business || "?")}<br><small>Status: ${escH(STATUS_TXT[L.status] || L.status || "new")}${L.meeting ? " · meeting " + escH(L.meeting.replace("T", " ")) : ""}</small>${notes ? `<hr>${notes}` : ""}</div>
+<div class="card"><b>What happened?</b>
+${f("meeting", "📅 Talked, meeting set", `<small>Meeting date and time (IST)</small><input type="datetime-local" name="when" required>`, "p")}
+${f("noanswer", "📵 No answer / phone off / not replying")}
+${f("later", "💬 Talked, follow up later", `<small>Remind me on</small><input type="date" name="when" min="${today}" required>`)}
+${f("closed", "🤝 Closed, became a client")}
+${f("lost", "❌ Not interested")}
+${f("talked", "☎️ Talked (note only)", `<textarea name="note" rows="2" placeholder="Optional note"></textarea>`)}
+</div><small>Private link: anyone with it can update this lead, so don't share it.</small>`);
+}
+async function leadBoard(env, k) {
+  const all = await kv(env, "leads", {}); const fu = await kv(env, "lead_fu", {});
+  const open = Object.entries(all).filter(([, L]) => L.phone && !["closed", "lost"].includes(L.status)).sort((a, b) => String(b[1].updated || "").localeCompare(String(a[1].updated || "")));
+  const rows = await Promise.all(open.slice(0, 60).map(async ([id, L]) => `<div class="card"><b>${escH(TOPICS[L.topic]?.label || "Lead")}</b> · ${escH(STATUS_TXT[L.status] || "🆕 New, not updated")}<br>📞 ${escH(L.phone)} · 🗣 ${escH(L.language || "?")}${fu[id]?.kind === "ghost" ? ` · follow-up ${(fu[id].step || 0) + 1}/${LEADFU_DAYS.length}` : ""}<br><small>${escH(L.updated || "")}</small> · <a href="${await leadUrl(env, id)}">update</a></div>`));
+  const closed = Object.values(all).filter(L => L.status === "closed").length;
+  return pageHtml("Open leads", `<h1>Open leads (${open.length})</h1><small>Clients so far: ${closed}</small>${rows.join("") || "<p>No open leads.</p>"}`);
+}
+// every 10 minutes: due reminders (meeting, follow-up steps, later); one daily list of leads not updated for 24 h
+async function leadReminders(env) {
+  const fu = await kv(env, "lead_fu", {}); const ids = Object.keys(fu); if (!ids.length) return 0;
+  const all = await kv(env, "leads", {}); const now = Date.now(); let changed = false, sent = 0;
+  for (const id of ids) {
+    const e = fu[id], L = all[id]; if (!L || ["closed", "lost"].includes(L.status)) { delete fu[id]; changed = true; continue; }
+    if (sent >= 4) break;   // keep within the subrequest budget; the rest go 10 min later
+    if (e.kind === "ghost") {
+      const step = e.step || 0; if (step >= LEADFU_DAYS.length) { delete fu[id]; changed = true; continue; }
+      if (step === 0) { e.step = 1; changed = true; continue; }   // step 1 was shown on the update page right away
+      if (now >= e.start + LEADFU_DAYS[step] * 86400e3) { await discord(env, await leadFuMessage(env, id, L, step), true); e.step = step + 1; changed = true; sent++; }
+    } else if (e.kind === "meeting") {
+      const morn = Date.parse(new Date(e.at + 5.5 * 3600e3).toISOString().slice(0, 10) + "T09:00:00+05:30");
+      const confTxt = meetTxt(L, e.at, false); const wa = waLink(L.phone, confTxt) ? await waShort(env, id, "mtoday") : null; const wa2 = wa ? await waShort(env, id, "msoon") : null;
+      if (!e.sent.morn && now >= morn && now < e.at - 30 * 60e3) { e.sent.morn = 1; changed = true; sent++; await discord(env, `📅 **Meeting today** ${await leadLine(env, id, L)} at ${L.meeting?.slice(11) || ""} IST\nSend a reminder now:\n> ${confTxt}\n${wa ? "📲 " + wa + "\n" : ""}✅ Update: ${await leadUrl(env, id)}`, true); }
+      else if (!e.sent.soon && now >= e.at - 30 * 60e3 && now < e.at + 15 * 60e3) { e.sent.soon = 1; changed = true; sent++; await discord(env, `⏳ **Meeting in 30 min** ${await leadLine(env, id, L)}\n${wa2 ? "📲 Quick reminder: " + wa2 + "\n" : ""}✅ Update: ${await leadUrl(env, id)}`, true); }
+      else if (!e.sent.after && now >= e.at + 2 * 3600e3) { e.sent.after = 1; changed = true; sent++; await discord(env, `❓ **How did the meeting go?** ${await leadLine(env, id, L)}\nIf they didn't pick up, tap "No answer" and the follow-ups start.\n✅ Update: ${await leadUrl(env, id)}`, true); delete fu[id]; }
+    } else if (e.kind === "later" && now >= e.at) { await discord(env, `💬 **Follow up today** ${await leadLine(env, id, L)}\n✅ Update: ${await leadUrl(env, id)}`, true); delete fu[id]; changed = true; sent++; }
+  }
+  if (changed) await kvPut(env, "lead_fu", fu);
+  return sent;
+}
+async function leadStaleDigest(env) {
+  const all = await kv(env, "leads", {}); const fu = await kv(env, "lead_fu", {}); const cut = IST(new Date(Date.now() - 24 * 3600e3)).toISOString().slice(0, 16);
+  const stale = Object.entries(all).filter(([id, L]) => L.alerted && L.phone && (!L.status || L.status === "new" || L.status === "talked") && !fu[id] && String(L.updated || "") < cut).slice(0, 10);
+  if (!stale.length) return 0;
+  const lines = await Promise.all(stale.map(async ([id, L]) => `• ${await leadLine(env, id, L)} → ${await leadUrl(env, id)}`));
+  await discord(env, `📋 **Leads with no update for 24 h (${stale.length})**: tap to record what happened, so follow-ups can start.\n${lines.join("\n")}\n🗂 All open leads: ${BASE}/leads/board?k=${await leadToken(env, "board")}`, true);
+  return stale.length;
+}
+// the person wrote again on Instagram while we were following up: pause the sequence and tell the owner
+async function leadReplied(env, id, text) {
+  const fu = await kv(env, "lead_fu", {}); if (fu[id]?.kind !== "ghost") return;
+  delete fu[id]; await kvPut(env, "lead_fu", fu);
+  const all = await kv(env, "leads", {}); const L = all[id]; if (!L) return;
+  L.status = "replied"; L.notes = [...(L.notes || []), { t: IST().toISOString().slice(0, 16), note: "Replied on Instagram: " + String(text).slice(0, 200) }].slice(-20); await kvPut(env, "leads", all);
+  await discord(env, `🔁 **They replied!** ${await leadLine(env, id, L)}\n💬 "${String(text).slice(0, 300)}"\nFollow-ups paused. Call or WhatsApp them now.\n✅ Update: ${await leadUrl(env, id)}`, true);
+}
