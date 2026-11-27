@@ -127,7 +127,7 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 
 ## Lead follow-up (owner, 27 Nov) — live in the worker, don't remove
 - Every Discord lead alert ends with a private update link (/lead/<id>?k=…, HMAC of ADMIN_KEY). The owner taps it after each call: Meeting set / No answer / Follow up later / Closed / Not interested / Talked. No Claude needed.
-- No answer: Discord reminders on day 2, 4, 7, 12 and 42 (step 1 is shown on the page at once), each with a ready WhatsApp message (short /wa/ link -> wa.me, owner presses send) in the lead's call language. The bot also sends ONE Instagram nudge with 3 buttons if the person messaged us in the last 24 h (owner approved). A reply on Instagram pauses the sequence and pings Discord.
+- No answer: Discord reminders on day 2, 4, 7, 12 and 42 (step 1 is shown on the page at once), each with a ready WhatsApp message (short /wa/ link -> wa.me, owner presses send) in the lead's call language. Inside Instagram's 24 h window the bot sends at most 3 nudges per window with buttons (when the owner taps No answer, or at 09:00 if tapped at night; 4 h+ later; a short last note at the last daytime chance), 09:00-21:30 IST only, and any reply stops them (owner approved). A reply on Instagram pauses the sequence and pings Discord.
 - Meeting set: reminder at 09:00 that day and 30 min before (with a WhatsApp reminder ready), then "how did it go?" 2 h after.
 - 10:07 daily: list of alerted leads with no update for 24 h. Board of open leads: /leads/board link in that message. ops/run {"what":"lead_links"} re-sends links for all open leads.
 - The bot now asks the call language together with the best time to call and the country if abroad; alerts show 📍 location and 🕑 best time.

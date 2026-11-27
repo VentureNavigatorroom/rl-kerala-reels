@@ -1729,19 +1729,46 @@ async function leadFuMessage(env, id, L, step) {
   const msg = fuMsg(step, L), wa = waLink(L.phone, msg) ? await waShort(env, id, step) : null, meta = await kv(env, `m:${id}`, {}); const u = meta.username || "";
   return `⏰ **Follow-up ${step + 1}/${LEADFU_DAYS.length}** (day ${LEADFU_DAYS[step]}) ${await leadLine(env, id, L)}\n${FU_TIPS[step]}\n> ${msg}\n${wa ? "📲 WhatsApp (message ready, just press send): " + wa + "\n" : ""}${u ? "💬 Instagram: paste the same message yourself in the app: https://ig.me/m/" + u + "\n" : ""}✅ Update: ${await leadUrl(env, id)}`;
 }
-// option 3: one Instagram DM from the bot, only inside Instagram's 24 h window
-async function leadIgNudge(env, id, L) {
+// option 3 (owner, 27 Nov): inside Instagram's 24 h window the bot sends at most 3 nudges per window: one when the owner taps
+// "No answer", one 4 h+ later, one short last note before the window closes; 09:00-21:30 IST only; any reply stops them
+// (and their reply restarts the window, the bot answers as usual, the owner is pinged).
+const IGN = {
+  en: [["Hi 🙏 We tried calling you but couldn't reach you. When is a good time to call?", ["This evening", "Tomorrow morning", "WhatsApp me"]],
+       ["Hi, just checking in 😊 Shall we call you this evening, or would you prefer WhatsApp?", ["Call this evening", "WhatsApp me", "Later this week"]],
+       ["We'll stop messaging here for now so we don't disturb you. Whenever you're ready, just reply and we'll call you. 🙏", ["Call me", "Later"]]],
+  ml: [["ഹായ് 🙏 ഞങ്ങൾ നിങ്ങളെ വിളിക്കാൻ ശ്രമിച്ചു, കിട്ടിയില്ല. എപ്പോഴാണ് വിളിക്കാൻ സൗകര്യം?", ["ഇന്ന് വൈകുന്നേരം", "നാളെ രാവിലെ", "WhatsApp മതി"]],
+       ["ഹായ് 😊 ഇന്ന് വൈകുന്നേരം വിളിക്കട്ടെ, അതോ WhatsApp ആണോ സൗകര്യം?", ["വൈകുന്നേരം വിളിക്കൂ", "WhatsApp മതി", "ഈ ആഴ്ച പിന്നീട്"]],
+       ["ശല്യപ്പെടുത്താതിരിക്കാൻ ഇവിടെ തൽക്കാലം നിർത്തുന്നു. റെഡിയാകുമ്പോൾ ഒരു മറുപടി അയച്ചാൽ മതി, ഞങ്ങൾ വിളിക്കാം. 🙏", ["വിളിക്കൂ", "പിന്നീട്"]]],
+};
+async function leadIgNudge(env, id, L, n = 0) {
   const meta = await kv(env, `m:${id}`, {});
   if (!meta.last_in || Date.now() - meta.last_in > 23.5 * 3600e3) return "outside Instagram's 24 h window";
   if (meta.no_nudge) return "they opted out of messages";
-  if (L.ig_nudged) return "already sent once on " + L.ig_nudged + "; the bot never sends it twice";
-  const ml = isML(L);
-  const text = ml ? "ഹായ് 🙏 ഞങ്ങൾ നിങ്ങളെ വിളിക്കാൻ ശ്രമിച്ചു, കിട്ടിയില്ല. എപ്പോഴാണ് വിളിക്കാൻ സൗകര്യം?" : "Hi 🙏 We tried calling you but couldn't reach you. When is a good time to call?";
-  const btn = ml ? ["ഇന്ന് വൈകുന്നേരം", "നാളെ രാവിലെ", "WhatsApp മതി"] : ["This evening", "Tomorrow morning", "WhatsApp me"];
+  const hm = IST().getUTCHours() * 60 + IST().getUTCMinutes(); if (hm < 9 * 60 || hm > 21 * 60 + 30) return "night time (09:00-21:30 IST only)";
+  const all = await kv(env, "leads", {}); const cur = all[id] || L; const ig = cur.ig || {};
+  const sent = ig.win === meta.last_in ? (ig.sent || []) : [];
+  if (sent.length >= 3 || n !== sent.length) return sent.length >= 3 ? "3 messages already sent in this window" : "not due";
+  const [text, btn] = IGN[isML(L) ? "ml" : "en"][n];
   try { await sendDM(env, id, text, btn); } catch (e) { return "Instagram refused: " + String(e.message).slice(0, 80); }
   const th = await kv(env, `t:${id}`, []); th.push({ role: "assistant", content: text + " [sent after a missed call; whatever they answer, thank them, confirm the team will call or WhatsApp them at that time, and ask nothing else]" }); await kvPut(env, `t:${id}`, th);
-  const all = await kv(env, "leads", {}); if (all[id]) { all[id].ig_nudged = IST().toISOString().slice(0, 16); await kvPut(env, "leads", all); } L.ig_nudged = IST().toISOString().slice(0, 16);
+  if (all[id]) { all[id].ig = { win: meta.last_in, sent: [...sent, Date.now()] }; await kvPut(env, "leads", all); }
+  L.ig = { win: meta.last_in, sent: [...sent, Date.now()] };
   return "sent";
+}
+async function leadIgMore(env, id, L, e) {   // called every 10 min for leads in the no-answer sequence
+  const meta = await kv(env, `m:${id}`, {}); const ig = L.ig || {};
+  if (!meta.last_in || e.start < meta.last_in) return false;            // they wrote after the owner tapped: the bot is talking, no nudges
+  const sent = ig.win === meta.last_in ? (ig.sent || []) : [];
+  if (!sent.length) return Date.now() - meta.last_in < 22 * 3600e3 && (await leadIgNudge(env, id, L, 0)) === "sent";   // tapped at night: first one at 09:00
+  if (sent.length >= 3) return false;
+  const left = meta.last_in + 24 * 3600e3 - Date.now(), since = Date.now() - sent[sent.length - 1];
+  const end = meta.last_in + 24 * 3600e3, d = IST().toISOString().slice(0, 10);
+  const t2130 = Date.parse(d + "T21:30:00+05:30"), n0900 = Date.parse(d + "T09:00:00+05:30") + (IST().getUTCHours() >= 9 ? 86400e3 : 0);
+  const lastChance = end > t2130 && end < n0900 ? t2130 : end;          // the window closes at night: the last daytime slot is tonight
+  const due = sent.length === 1 ? since >= 4 * 3600e3 && lastChance - Date.now() > 2.5 * 3600e3
+    : since >= 3 * 3600e3 && Date.now() >= lastChance - 2.5 * 3600e3 && Date.now() < lastChance - 20 * 60e3;
+  if (!due) return false;
+  return (await leadIgNudge(env, id, L, sent.length)) === "sent";
 }
 const STATUS_TXT = { meeting: "📅 Meeting set", noanswer: "📵 No answer (follow-ups started)", later: "💬 Follow up later", closed: "🤝 Closed, client", lost: "❌ Not interested", replied: "🔁 Replied on Instagram", talked: "☎️ Talked" };
 async function leadAction(env, id, f) {
@@ -1757,7 +1784,7 @@ async function leadAction(env, id, f) {
   } else if (a === "noanswer") {
     fu[id] = { kind: "ghost", start: now, step: 0, sent: {} };
     const ig = await leadIgNudge(env, id, L);
-    msg = `Follow-ups started (day 0, 2, 4, 7, 12 and 42). Instagram nudge: ${ig === "sent" ? "sent ✅ (their answer will come to Discord)" : "not sent by the bot (" + ig + "). You can still message them yourself in the Instagram app with the same text."}.`;
+    msg = `Follow-ups started (day 0, 2, 4, 7, 12 and 42). Instagram nudge: ${ig === "sent" ? "sent ✅ (up to 2 more, spaced out, inside Instagram's 24 h window; any reply stops them and comes to Discord)" : "not sent by the bot (" + ig + "). You can still message them yourself in the Instagram app with the same text."}.`;
     const wa = waLink(L.phone, fuMsg(0, L)); if (wa) msg += `<br><br>Step 1 now: <a href="${wa}">send this WhatsApp message</a><br><i>${fuMsg(0, L)}</i>`;
   } else if (a === "later") {
     const t = Date.parse((f.when || "") + "T10:00:00+05:30"); if (!t) return { ok: false, msg: "Please pick a date." };
@@ -1812,6 +1839,7 @@ async function leadReminders(env) {
     if (sent >= 4) break;   // keep within the subrequest budget; the rest go 10 min later
     if (e.kind === "ghost") {
       const step = e.step || 0; if (step >= LEADFU_DAYS.length) { delete fu[id]; changed = true; continue; }
+      if (await leadIgMore(env, id, L, e).catch(() => false)) sent++;
       if (step === 0) { e.step = 1; changed = true; continue; }   // step 1 was shown on the update page right away
       if (now >= e.start + LEADFU_DAYS[step] * 86400e3) { await discord(env, await leadFuMessage(env, id, L, step), true); e.step = step + 1; changed = true; sent++; }
     } else if (e.kind === "meeting") {
