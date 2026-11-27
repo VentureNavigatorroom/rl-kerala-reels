@@ -680,7 +680,8 @@ async function extractLead(env, thread, topic = "co") {
     { role: "user", content: thread.map(m => `${m.role}: ${m.content}`).join("\n") }], max_tokens: 300 }); }
   catch (e) { return regexLead(thread, topic); }
   try { const j = typeof r.response === "object" && r.response ? r.response : JSON.parse(String(r.response || "").match(/\{[\s\S]*\}/)[0]); const rx = regexLead(thread, topic);
-    return { ...j, topic, phone: j.phone || rx.phone, language: j.language || rx.language }; } catch { return regexLead(thread, topic); }
+    const ph = [j.phone, rx.phone].find(x => String(x || "").replace(/\D/g, "").length >= 10) || null;   // "not provided" etc. is NOT a number: no call alert without a real number
+    return { ...j, topic, phone: ph, language: j.language || rx.language }; } catch { return regexLead(thread, topic); }
 }
 async function igProfile(env, igsid) {
   try { const p = await graph(env, igsid, { fields: "username,is_user_follow_business" }, "GET"); return { username: p.username || null, follows: typeof p.is_user_follow_business === "boolean" ? p.is_user_follow_business : null }; }
