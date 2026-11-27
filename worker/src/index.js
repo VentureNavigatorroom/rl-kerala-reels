@@ -191,6 +191,8 @@ async function reelMaxPlan(env, day) {
   const dn = Math.floor(Date.parse(day + "T00:00:00Z") / 86400e3);
   const plan = {}; live.forEach((t, k) => { plan[t] = { reel: 0, carousel: 0, story: 0, poster: 0, tip: (dn + k) % TIP_EVERY === 0 ? 1 : 0 }; });
   total += live.filter(t => !plan[t].tip).length;   // a topic's skipped tip slot becomes a normal reel (same daily post count)
+  const tipsN = live.filter(t => plan[t].tip).length;   // 27 Nov night: with 21 topics this overshot Instagram's 100 posts / 24 h (a reel was skipped).
+  total = Math.min(total, 100 - 1 - NEWS_SLOTS - 1 - tipsN);   // keep reels + tips + news + the daily shout-out post + 1 spare under 100
   let left = total;   // pass 1: each topic its share, limited by stock; pass 2: hand leftovers to topics with stock, co first
   for (const t of live) { const n = Math.min(Math.floor(total * (REEL_SHARE[t] || 0)), avail[t]); plan[t].reel = n; left -= n; }
   const order = ["co", ...live.filter(x => x !== "co")]; let moved = true;   // leftovers one at a time, round-robin over topics that still have stock
