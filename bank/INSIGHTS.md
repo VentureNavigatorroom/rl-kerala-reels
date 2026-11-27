@@ -234,3 +234,19 @@ Best reels: ndd035 (nda, new, 1,511 views, 10.3 s, 20 shares), fs014, yd039, qv0
 - 100-follower switch: held on purpose (see OPS_RULES "26 Nov growth review").
 
 Tested: plan simulation (87 reels + 7 tips + 4 news = 98 a day, tips alternate by day), caption output, check_bank OK.
+
+## Run 27 Nov 2026 (writer, scheduled refill after the 20-topic handover)
+- content_requests: empty. Workflows: check-bank 114, deploy-autopilot 90, reel-factory 62 all green.
+- New topics (each: 2 toon episodes, 5 duo3d reels, 2 tips written as duo3d scenes; ~2 faq / 2 new / 1 crm, invented names):
+  pg pgx07-08 + pgd001-005 + pgt001-002; web wbx07-08 + wbd001-005 + wbt001-002; acc acx05-06 + acd001-005 + act001-002
+  (acd001 = 3-year return bar fix-it); kl lcx05-06 + lcd001-005 + lct001-002; nri pvx05-06 + pvd001-005 + pvt001-002;
+  pay pyx05-06 + pyd001-005 + pyt001-002.
+- fssai: fs048 (FoSCoS category before turnover) + toon ep 7 fsy07 (number on a new gift-box design). FACTS_FSSAI is
+  nearly used up; more fssai scripts need a new verified fact or genuinely new situations.
+- Fix-it plan items: trademark objection (tmd005), ROC late fee per day (many rc scripts) and Udyam ODR / Samadhaan
+  (yd006, yd018...) already exist. GST registration rejected / notices: FACTS_GST has no rejection or notice facts, so
+  not written; needs a verified fact first. 3-year bar done in acc (acd001).
+- Runway after (story reels incl. toon, at 87/day x share): pg / web 3.3 d, acc 2.3, kl / nri 2.8, pay 3.6, fssai 3.1,
+  gst 3.1, sk 3.4, sui 3.7, ud 4.1, tm / roc 4.4, inv 4.6, nda / cfa 4.9, fp 6.0, iec 6.2, val 7.2, co 35.
+  Old topics' toon series all posted (ep 7+ not written yet). Next run: acc, kl, nri, gst, fssai, sk, pg, web, pay, sui.
+- check_bank now takes ~45 s to several minutes: run it with a long timeout.
