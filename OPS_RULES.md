@@ -114,3 +114,8 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - 4 seed toon episodes each (ep 1-4). Refill continues at ep 5+. Statutory amounts allowed by check_bank: 2,500 / 3,000 / 15,000 / 21,000 / 25,000.
 - 20 topics now; REEL_SHARE (worker) and SHARE (topics.py) must stay identical and sum to 1.0.
 - Read HANDOVER_2026-11-27.md if you are a session that did not make these changes.
+
+## Accurate replies and real corrections (owner, 27 Nov)
+- Comment replies must fit what the person said and the reel they commented on. Thanks / praise gets a warm reply with no keyword CTA; on a thank-you or correction reel, or one that names them, a personal thank-you. Never "comment START" under a non-company reel or under thanks (worker pickCommentReply / postKw).
+- After a correction, only the corrected fact may appear anywhere: scripts, end cards, captions (captions.py TOPIC lines too) and DM texts. check_bank fails on the old FSSAI limits outside theme "correction".
+- A correction reel is a real apology: say sorry plainly, say what was wrong (without repeating the wrong numbers on screen), give the correct fact with its official source and date. fsfix04 is the model.
