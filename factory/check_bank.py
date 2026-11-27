@@ -102,7 +102,9 @@ for f in sorted(glob.glob(f"{ROOT}/bank/*.py") + glob.glob(f"{ROOT}/bank/*/*.py"
 #     A new amount fails here: if it really is penalty maths from the checked facts, add it to RUPEE_OK.
 RUPEE_OK = {"2,500", "3,000", "15,000", "21,000", "25,000", "0", "100", "1,000", "6,000", "30,000", "50,000", "2,50,000", "1 ലക്ഷം", "10 ലക്ഷം", "ഒരു", "നൂറ്", "ആയിരം", "അമ്പതിനായിരം", "ഒരു ലക്ഷം", "ഇരുപതിനായിരം",
             # GST (topics.FACTS_GST): thresholds, penalty, late fees and their caps
-            "40 ലക്ഷം", "20 ലക്ഷം", "50 ലക്ഷം", "10,000", "പതിനായിരം", "50", "20", "500", "2,000", "അമ്പത്", "ഇരുപത്", "നാല്പത് ലക്ഷം", "ഇരുപത് ലക്ഷം"}
+            "40 ലക്ഷം", "20 ലക്ഷം", "50 ലക്ഷം", "10,000", "പതിനായിരം", "50", "20", "500", "2,000", "അമ്പത്", "ഇരുപത്", "നാല്പത് ലക്ഷം", "ഇരുപത് ലക്ഷം",
+            # acc (topics.FACTS_ACC): late ITR fee when income is above Rs 5 lakh
+            "5,000"}
 RUPEE = re.compile(r"(\S+(?: ലക്ഷം)?) രൂപ")
 def texts(x):   # every string inside an item
     if isinstance(x, str): yield x
