@@ -1734,11 +1734,13 @@ async function leadIgNudge(env, id, L) {
   const meta = await kv(env, `m:${id}`, {});
   if (!meta.last_in || Date.now() - meta.last_in > 23.5 * 3600e3) return "outside Instagram's 24 h window";
   if (meta.no_nudge) return "they opted out of messages";
+  if (L.ig_nudged) return "already sent once on " + L.ig_nudged + "; the bot never sends it twice";
   const ml = isML(L);
   const text = ml ? "ഹായ് 🙏 ഞങ്ങൾ നിങ്ങളെ വിളിക്കാൻ ശ്രമിച്ചു, കിട്ടിയില്ല. എപ്പോഴാണ് വിളിക്കാൻ സൗകര്യം?" : "Hi 🙏 We tried calling you but couldn't reach you. When is a good time to call?";
   const btn = ml ? ["ഇന്ന് വൈകുന്നേരം", "നാളെ രാവിലെ", "WhatsApp മതി"] : ["This evening", "Tomorrow morning", "WhatsApp me"];
   try { await sendDM(env, id, text, btn); } catch (e) { return "Instagram refused: " + String(e.message).slice(0, 80); }
   const th = await kv(env, `t:${id}`, []); th.push({ role: "assistant", content: text + " [sent after a missed call; whatever they answer, thank them, confirm the team will call or WhatsApp them at that time, and ask nothing else]" }); await kvPut(env, `t:${id}`, th);
+  const all = await kv(env, "leads", {}); if (all[id]) { all[id].ig_nudged = IST().toISOString().slice(0, 16); await kvPut(env, "leads", all); } L.ig_nudged = IST().toISOString().slice(0, 16);
   return "sent";
 }
 const STATUS_TXT = { meeting: "📅 Meeting set", noanswer: "📵 No answer (follow-ups started)", later: "💬 Follow up later", closed: "🤝 Closed, client", lost: "❌ Not interested", replied: "🔁 Replied on Instagram", talked: "☎️ Talked" };
