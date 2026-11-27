@@ -192,7 +192,9 @@ for a in range(len(pa)):
 import re as _re
 OFFICIAL = ("mca.gov.in", "gst.gov.in", "cbic.gov.in", "dgft.gov.in", "dpiit.gov.in", "startupindia.gov.in", "startupmission.in",
             "fssai.gov.in", "ipindia.gov.in", "udyamregistration.gov.in", "msme.gov.in", "rbi.org.in", "incometax.gov.in",
-            "egazette.gov.in", "pib.gov.in", "icai.org", "icsi.edu")
+            "egazette.gov.in", "pib.gov.in", "icai.org", "icsi.edu",
+            "norkaroots.org", "epfindia.gov.in", "esic.gov.in", "labour.gov.in", "kerala.gov.in", "ksmart.lsgkerala.gov.in", "lsgkerala.gov.in",
+            "mudra.org.in", "kviconline.gov.in", "npci.org.in", "sebi.gov.in")   # 20-topic sources (27 Nov)
 for x in banks["reels"]:
     th = x.get("theme")
     if th not in (None, "crm", "faq", "new", "tip", "news", "opportunity", "correction", "thanks"): err(f"{x['id']}: unknown theme {th}")
