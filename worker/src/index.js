@@ -1727,8 +1727,7 @@ async function leadLine(env, id, L) {
 }
 async function leadFuMessage(env, id, L, step) {
   const msg = fuMsg(step, L), wa = waLink(L.phone, msg) ? await waShort(env, id, step) : null, meta = await kv(env, `m:${id}`, {}); const u = meta.username || "";
-  const igOk = meta.last_in && Date.now() - meta.last_in < 7 * 86400e3;
-  return `⏰ **Follow-up ${step + 1}/${LEADFU_DAYS.length}** (day ${LEADFU_DAYS[step]}) ${await leadLine(env, id, L)}\n${FU_TIPS[step]}\n> ${msg}\n${wa ? "📲 WhatsApp (message ready, just press send): " + wa + "\n" : ""}${u && igOk ? "💬 Instagram (you can still reply by hand there): https://ig.me/m/" + u + "\n" : ""}✅ Update: ${await leadUrl(env, id)}`;
+  return `⏰ **Follow-up ${step + 1}/${LEADFU_DAYS.length}** (day ${LEADFU_DAYS[step]}) ${await leadLine(env, id, L)}\n${FU_TIPS[step]}\n> ${msg}\n${wa ? "📲 WhatsApp (message ready, just press send): " + wa + "\n" : ""}${u ? "💬 Instagram: paste the same message yourself in the app: https://ig.me/m/" + u + "\n" : ""}✅ Update: ${await leadUrl(env, id)}`;
 }
 // option 3: one Instagram DM from the bot, only inside Instagram's 24 h window
 async function leadIgNudge(env, id, L) {
@@ -1756,7 +1755,7 @@ async function leadAction(env, id, f) {
   } else if (a === "noanswer") {
     fu[id] = { kind: "ghost", start: now, step: 0, sent: {} };
     const ig = await leadIgNudge(env, id, L);
-    msg = `Follow-ups started (day 0, 2, 4, 7, 12 and 42). Instagram nudge: ${ig === "sent" ? "sent ✅ (their answer will come to Discord)" : "not sent (" + ig + ")"}.`;
+    msg = `Follow-ups started (day 0, 2, 4, 7, 12 and 42). Instagram nudge: ${ig === "sent" ? "sent ✅ (their answer will come to Discord)" : "not sent by the bot (" + ig + "). You can still message them yourself in the Instagram app with the same text."}.`;
     const wa = waLink(L.phone, fuMsg(0, L)); if (wa) msg += `<br><br>Step 1 now: <a href="${wa}">send this WhatsApp message</a><br><i>${fuMsg(0, L)}</i>`;
   } else if (a === "later") {
     const t = Date.parse((f.when || "") + "T10:00:00+05:30"); if (!t) return { ok: false, msg: "Please pick a date." };
