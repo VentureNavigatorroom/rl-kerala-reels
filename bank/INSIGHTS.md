@@ -263,3 +263,15 @@ Tested: plan simulation (87 reels + 7 tips + 4 news = 98 a day, tips alternate b
   (every angle already used). Next run needs new verified facts (news watcher or a review) for these topics before volume can rise.
 - Runway after (story reels incl. toon, 87/day x share): acc 2.9 d, gst 3.1, kl / fssai 3.3, sk 3.4, nri 3.6, sui 3.9, ud 4.1, web / pay 4.3,
   inv 4.3, tm / roc 4.4, pg / nda 4.9, iec 5.7, fp 6.0, cfa 6.4, val 6.9, co 34.5.
+
+## 27 Nov night: new verified facts (owner asked to go ahead) + 13 more scripts
+- New FACTS (official text read 27 Nov): FACTS_GST CGST rule 9 query flow (REG-03 / REG-04 in 7 working days / REG-05,
+  taxinformation.cbic.gov.in); FACTS_PAY ESIC 0.75% / 3.25%, Rs 176 daily-wage exemption, deposit within 15 days of month end
+  (esic.gov.in/contribution, page reviewed Apr 2025); FACTS_NRI PMEGP salient features (Delhi KVIB government sheet, 2022 upload:
+  tell people to check the live guidelines); FACTS_KL Shops Act auto-renewal via LCAS when applied 30+ days before expiry
+  (Amendment Bill 2021 text on prsindia.org; enacted text not read). RUPEE_OK += 176.
+- Scripts: gst gd045-046 + gt101 (fix-it: GST application query); nri pvd007-009 + pvt004 (PMEGP); pay pyd008-009 + pyt003 (ESIC);
+  kl lcd007 + lct003 (Shops Act renewal).
+- Not verified, so not used: FSSAI Food Safety Supervisor rule and FSSAI annual return (official pages did not load / did not
+  state it); myscheme PMEGP page errored. FACTS_KL "renewed every year": the Amendment Bill text gives no validity period, so
+  the yearly figure is unconfirmed; new scripts avoid it, older kl scripts still say it.
