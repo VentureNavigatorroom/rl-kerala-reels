@@ -124,3 +124,12 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - DMs: reply in the language the person writes in (Malayalam script -> Malayalam; Manglish -> Manglish; English -> English). Voice messages are transcribed and answered as text in their language; unclear ones go to Discord for the team to listen.
 - Legal trouble (partner dispute, court / arbitration order, police, assets taken, lawyer not helping): empathy first, offer to connect them with our lawyers, ask the phone number with the reason; never sales intake questions, never legal advice or outcome promises. Alert: "[Legal help / partner dispute]".
 - Content: partner-dispute reels (cfa, STORY_THEMES F23-F30) only with FACTS_CFA facts, invented people and mixed situations; never a real person's details.
+
+## Lead follow-up (owner, 27 Nov) — live in the worker, don't remove
+- Every Discord lead alert ends with a private update link (/lead/<id>?k=…, HMAC of ADMIN_KEY). The owner taps it after each call: Meeting set / No answer / Follow up later / Closed / Not interested / Talked. No Claude needed.
+- No answer: Discord reminders on day 2, 4, 7, 12 and 42 (step 1 is shown on the page at once), each with a ready WhatsApp message (short /wa/ link -> wa.me, owner presses send) in the lead's call language. The bot also sends ONE Instagram nudge with 3 buttons if the person messaged us in the last 24 h (owner approved). A reply on Instagram pauses the sequence and pings Discord.
+- Meeting set: reminder at 09:00 that day and 30 min before (with a WhatsApp reminder ready), then "how did it go?" 2 h after.
+- 10:07 daily: list of alerted leads with no update for 24 h. Board of open leads: /leads/board link in that message. ops/run {"what":"lead_links"} re-sends links for all open leads.
+- The bot now asks the call language together with the best time to call and the country if abroad; alerts show 📍 location and 🕑 best time.
+- /public/insights has outcomes_by_topic (new / meeting / noanswer / later / replied / closed / lost): use it in reviews (clients per topic is the goal metric).
+- WhatsApp messages are never sent automatically (no WhatsApp API). Never message leads outside these rules.
