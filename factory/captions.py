@@ -65,7 +65,7 @@ TOPIC = {
     "ACCOUNTS": dict(ml="മാസക്കണക്ക്: ബില്ലുകൾ, ബാങ്ക് മാച്ചിംഗ്, GST, TDS, വർഷാവസാനം ITR.", en="Monthly accounts: every bill recorded, bank matched, GST and TDS from the books, ITR at year-end.", mg="Maasakkanakku: billukal, bank matching, GST, TDS, varshaavasaanam ITR."),
     "SHOPS": dict(ml="കേരളത്തിലെ ഓരോ കടയ്ക്കും ഷോപ്സ് ആക്ട് രജിസ്ട്രേഷൻ: സ്റ്റാഫ് ഇല്ലെങ്കിലും, 60 ദിവസത്തിനകം.", en="Every shop in Kerala registers under the Shops and Commercial Establishments Act within 60 days, even with no staff.", mg="Kadaykku Shops Act registration: staff illenkilum, 60 divasathinakam."),
     "KSMART": dict(ml="കടയ്ക്ക് ആദ്യം തദ്ദേശ സ്ഥാപനത്തിന്റെ ലൈസൻസ്; നഗരങ്ങളിൽ K-SMART വഴി.", en="A business place needs a local-body licence first; towns and cities use the K-SMART portal.", mg="Kadaykku aadyam local body licence; nagarangalil K-SMART vazhi."),
-    "PRAVASI": dict(ml="2 വർഷം വിദേശത്ത് ജോലി ചെയ്ത മലയാളികൾക്ക് NORKA NDPREM: 15% മൂലധന സബ്സിഡി, 3% പലിശ സബ്സിഡി.", en="NORKA NDPREM for Keralites who worked abroad 2+ years: 15% capital subsidy and 3% interest subsidy on bank loans.", mg="2 varsham videshathu joli cheytha malayaalikalkku NORKA NDPREM."),
+    "PRAVASI": dict(ml="2 വർഷമെങ്കിലും വിദേശത്ത് ജോലി ചെയ്ത് സ്ഥിരമായി തിരിച്ചെത്തിയ മലയാളികൾക്ക് NORKA NDPREM: 15% മൂലധന സബ്സിഡി (പരമാവധി 3 ലക്ഷം), തവണ കൃത്യമായി അടയ്ക്കുന്നവർക്ക് 3% പലിശ സബ്സിഡി. ലോൺ തീരുമാനിക്കുന്നത് ബാങ്ക്.", en="NORKA NDPREM for Keralites back for good after 2+ years abroad: 15% capital subsidy (max 3 lakh) and a 3% interest subsidy for those who repay on time. The bank decides the loan.", mg="2 varshamenkilum videshathu joli cheythu thirichethiya malayaalikalkku NORKA NDPREM. Loan theerumaanikkunnathu bank."),
     "NORKA": dict(ml="ലോൺ തീരുമാനിക്കുന്നത് ബാങ്ക്. നല്ല പ്രോജക്റ്റ് റിപ്പോർട്ട് ആണ് പ്രധാനം.", en="The bank decides the loan; a strong project report matters most.", mg="Loan theerumaanikkunnathu bank. Nalla project report aanu pradhaanam."),
     "ESIC": dict(ml="10 സ്റ്റാഫ് ആയാൽ ESIC, 20 ആയാൽ EPF. പുതിയ ലേബർ കോഡുകൾ 2025 നവംബർ മുതൽ.", en="ESIC from 10 employees and EPF from 20, under the Labour Codes in force since November 2025.", mg="10 staff aayaal ESIC, 20 aayaal EPF."),
     "PAYROLL": dict(ml="ശമ്പള സ്ലിപ്പ്, PF, ESI, പ്രൊഫഷണൽ ടാക്സ്: എല്ലാ മാസവും കൃത്യമായി.", en="Monthly payroll: salary slips, PF, ESI and professional tax, on time every month.", mg="Shambala slip, PF, ESI, professional tax: ella maasavum."),
@@ -243,7 +243,7 @@ PROMISE_EN = {"START": "which structure fits you: Pvt Ltd, LLP or OPC", "NAME": 
 def _promise_ml(s):
     sub = (s.get("cta") or ("", ""))[1] or ""
     sub = sub.replace("എന്ന് കമന്റ് ചെയ്യൂ", "").replace("\n", " ").strip()
-    for tail in ("അയച്ചുതരാം",): sub = sub.removesuffix(tail).strip()
+    for tail in ("അയച്ചുതരാം", "ഞങ്ങൾ പറഞ്ഞുതരാം"): sub = sub.removesuffix(tail).strip()   # START promise ends "ഞങ്ങൾ പറഞ്ഞുതരാം": avoid "... പറഞ്ഞുതരാം DM-ൽ അയച്ചുതരാം"
     return sub or "ഗൈഡ്"
 # hashtags: 1 core + 1 local + 1 topic + 1 segment + 1 rotating (5 total, Instagram's cap)
 H_LOCAL = ["#kerala", "#kochi", "#keralabusiness", "#malayali", "#startupkerala"]
