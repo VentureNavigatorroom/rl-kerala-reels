@@ -143,3 +143,9 @@ Every topic, including gst, inv, sui, sk and ud, always keeps 2-3 days of built 
 - When a rule above fires.
 - At the 22 Nov and 25 Nov reviews.
 - Otherwise, only if something breaks.
+
+
+## 27 Nov night: topic 21 (investor data room) and tech development
+- Data room starts with no history: judge it from its first 5 days like the other new topics (same goal, 10 clients a month). Expect fewer but larger leads, often carrying other services (registration, projections, valuation, agreements, filings); count those in its outcomes.
+- Web now covers websites, apps, software and MVPs for clients who can pay for a proper build in monthly parts; track meetings and closed clients, not just leads.
+- Weekly review: compare dr and web on clients per 1,000 reach before changing their share.
