@@ -250,3 +250,16 @@ Tested: plan simulation (87 reels + 7 tips + 4 news = 98 a day, tips alternate b
   gst 3.1, sk 3.4, sui 3.7, ud 4.1, tm / roc 4.4, inv 4.6, nda / cfa 4.9, fp 6.0, iec 6.2, val 7.2, co 35.
   Old topics' toon series all posted (ep 7+ not written yet). Next run: acc, kl, nri, gst, fssai, sk, pg, web, pay, sui.
 - check_bank now takes ~45 s to several minutes: run it with a long timeout.
+
+## Run 27 Nov 2026 evening (writer, scheduled refill)
+- content_requests: empty. Workflows before the run: check-bank 119, deploy-autopilot 92, reel-factory 62, render-scenes 3 all green.
+- Wrote 38 scripts (normal / toon / tips): pg 4/2/1 (pgd006-009, pgx09-10, pgt003); web 3/1/1 (wbd006-008, wbx09, wbt003);
+  acc 1/2/1 (acd006, acx07-08, act003); kl 1/1/0 (lcd006, lcx07); nri 1/2/1 (pvd006, pvx07-08, pvt003); pay 1/1/0 (pyd007, pyx07);
+  fssai 0/1/0 (fsy08); gst gx07; sk mx07; sui ux07-08; tm tmx07; roc rcx07; ud yx07; inv vx07; iec iex07; nda ndx07; fp fpx07; val qvx07.
+  Old topics had 0 unposted toon reels (A/B test starved): each now has ep 7 (sui ep 7-8).
+- check_bank RUPEE_OK += "5,000" (late ITR fee above Rs 5 lakh income, FACTS_ACC).
+- Skipped on purpose: the FACTS_ lists for acc, kl, nri, pay, web and fssai are nearly used up; more scripts would repeat a fact in
+  a near-identical situation. GST rejection / notice fix-it reels still need a verified fact in FACTS_GST. Tips not written for kl / pay
+  (every angle already used). Next run needs new verified facts (news watcher or a review) for these topics before volume can rise.
+- Runway after (story reels incl. toon, 87/day x share): acc 2.9 d, gst 3.1, kl / fssai 3.3, sk 3.4, nri 3.6, sui 3.9, ud 4.1, web / pay 4.3,
+  inv 4.3, tm / roc 4.4, pg / nda 4.9, iec 5.7, fp 6.0, cfa 6.4, val 6.9, co 34.5.
