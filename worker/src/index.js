@@ -696,7 +696,7 @@ async function botReply(env, thread, topic = "co", lang = "en") {   // topic "le
   } catch (e) { await log(env, `AI unavailable, using fallback: ${String(e.message).slice(0, 80)}`); }
   return fallbackReply(thread, topic, lang);
 }
-const BTN = /^(gst returns \/ itr|shop licence|pravasi loans|pf \/ esi|missed returns\?|freelancer itr\?|shop with no staff\?|professional tax\?|nri investing\?|when is esic needed\?|hiring incentive\?|documents needed\?|proprietor or company\?|monthly payment\?|what should it have\?|website|payment gateway|company registration|gst|trademark|fssai \/ food|funding \/ investors|something else|yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?|yes,? tag me|no thanks|can i use tm now\?|name vs trademark\?|no business, still file\?|what's the late fee\?|home bakers too\?|registration or licence\?|do i need iec\?|yearly update\?|one-way or mutual\?|will investors sign\?|what is vesting\?|if one leaves\?|what do investors check\?|for a bank loan\?|which method fits me\?|who must sign it\?)/i;
+const BTN = /^(send it again|gst returns \/ itr|shop licence|pravasi loans|pf \/ esi|missed returns\?|freelancer itr\?|shop with no staff\?|professional tax\?|nri investing\?|when is esic needed\?|hiring incentive\?|documents needed\?|proprietor or company\?|monthly payment\?|what should it have\?|website|payment gateway|company registration|gst|trademark|fssai \/ food|funding \/ investors|something else|yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?|yes,? tag me|no thanks|can i use tm now\?|name vs trademark\?|no business, still file\?|what's the late fee\?|home bakers too\?|registration or licence\?|do i need iec\?|yearly update\?|one-way or mutual\?|will investors sign\?|what is vesting\?|if one leaves\?|what do investors check\?|for a bank loan\?|which method fits me\?|who must sign it\?)/i;
 function regexLead(thread, topic = "co") {   // no AI: read each answer that follows our question
   const users = thread.filter(m => m.role === "user" && !BTN.test(m.content.trim()));
   const all = users.map(m => m.content).join(" \n ");
@@ -1147,13 +1147,17 @@ async function handleWebhook(env, body) {
         const pk = await env.STATE.get(`pk:${meta.username.toLowerCase()}`);
         if (pk) { meta.pending_kw = pk; await env.STATE.delete(`pk:${meta.username.toLowerCase()}`); }
       }
+      if (/^send it again$|^വീണ്ടും അയക്കൂ$/i.test(ev.message.text.trim()) && (meta.resend_kw || Object.keys(meta.served_kw || {}).length)) {   // they couldn't find the guide: resend it once
+        const rk = meta.resend_kw || Object.entries(meta.served_kw).sort((a, b) => b[1] - a[1])[0][0]; delete meta.resend_kw;
+        const g = KEYWORD_REPLY[rk]; if (g) { const out = g.replace(/^Here you go!/, "Here it is again!"); thread.push({ role: "assistant", content: out }); await kvPut(env, `m:${uid}`, meta); await kvPut(env, key, thread); await sendDM(env, uid, out, NEXT[KW_TOPIC[rk]] || NEXT_BUTTONS); await log(env, `guide ${rk} resent on request to @${meta.username || uid}`); continue; }
+      }
       if (!meta.pending_kw) {   // keyword typed straight into DMs or as a story reply (contact stories ask for this)
         const short = realWords(ev.message.text).length <= 2;   // answers like "home food business" must not trigger the FOOD guide mid-chat
         const dk = short ? ((await uniqueKw(env, ev.message.text))?.base || matchKeyword(ev.message.text)) : null;
         if (dk && meta.served_kw?.[dk] && Date.now() - meta.served_kw[dk] < 7 * 864e5) {   // already sent: don't send the same guide twice
-          const again = lang === "ml" ? "ഇത് മുകളിൽ അയച്ചിട്ടുണ്ട് 👆 Chat ഒന്ന് scroll ചെയ്ത് നോക്കൂ. അടുത്ത step-ന് ഞങ്ങളുടെ team സഹായിക്കണോ?" : "We've already sent this just above 👆 Scroll up in this chat to see it. Want our team to help you with the next step?";
+          const again = alreadySent(lang); meta.resend_kw = dk;
           thread.push({ role: "assistant", content: again }); await kvPut(env, `m:${uid}`, meta); await kvPut(env, key, thread);
-          await sendDM(env, uid, again, NEXT[KW_TOPIC[dk]] || NEXT_BUTTONS); await log(env, `keyword ${dk} repeated in DM by @${meta.username || uid}: not resent`); continue;
+          await sendDM(env, uid, again, [SENT_BTN]); await log(env, `keyword ${dk} repeated in DM by @${meta.username || uid}: not resent`); continue;
         }
         if (dk) { meta.pending_kw = dk; meta.follow_asks = 0; await log(env, `keyword ${dk} via DM from @${meta.username || uid}`); }
       }
@@ -1200,8 +1204,16 @@ async function handleWebhook(env, body) {
       }
       const topic = TOPICS[meta.topic] ? meta.topic : "co";
       let reply, buttons = [];
-      if (!meta.pending_kw && /^i'?ve followed|^followed\b|^done,? followed/i.test(ev.message.text.trim())) thread.splice(thread.length - 1, 0, { role: "assistant", content: "[note: they just followed us. The guide was ALREADY sent above, never send it again. Thank them for following in one short line, then ask again the last question they did not answer yet.]" });
-      if (meta.pending_kw && meta.served_kw?.[meta.pending_kw] && Date.now() - meta.served_kw[meta.pending_kw] < 7 * 864e5) { await log(env, `guide ${meta.pending_kw} already sent to @${meta.username || uid}: not resent`); delete meta.pending_kw; meta.follow_asks = 0; }
+      if (!meta.pending_kw && (saidSent || /^i'?ve followed|^followed\b|^done,? followed/i.test(ev.message.text.trim())) && Object.keys(meta.served_kw || {}).length) {
+        const lastQ = ([...thread].reverse().find(m => m.role === "assistant" && /\?/.test(m.content) && !/^\[/.test(m.content))?.content || "").split("\n").reverse().find(l => l.includes("?")) || "";
+        const thanks = /^i'?ve followed|^followed/i.test(ev.message.text.trim()) ? (lang === "ml" ? "Follow ചെയ്തതിന് നന്ദി! 🙌 " : "Thanks for following! 🙌 ") : "";
+        const out = thanks + alreadySent(lang) + (lastQ ? "\n\n" + lastQ.trim() : "");
+        meta.resend_kw = meta.resend_kw || Object.entries(meta.served_kw).sort((a, b) => b[1] - a[1])[0][0];
+        thread.push({ role: "assistant", content: out }); await kvPut(env, `m:${uid}`, meta); await kvPut(env, key, thread); await sendDM(env, uid, out, [SENT_BTN]);
+        await log(env, `told @${meta.username || uid} the guide was already sent`); continue;
+      }
+      let saidSent = false;
+      if (meta.pending_kw && meta.served_kw?.[meta.pending_kw] && Date.now() - meta.served_kw[meta.pending_kw] < 7 * 864e5) { await log(env, `guide ${meta.pending_kw} already sent to @${meta.username || uid}: not resent`); meta.resend_kw = meta.pending_kw; delete meta.pending_kw; meta.follow_asks = 0; saidSent = true; }
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {   // the team may already have pasted this guide by hand: don't send it twice
         const byHand = await sentByHand(env, uid, KEYWORD_REPLY[meta.pending_kw]);
         if (byHand) {
@@ -1678,6 +1690,12 @@ export default {
   },
 };
 
+// guide already delivered (owner, 27 Nov): say so politely, point to the chat above, offer a one-tap resend
+const SENT_BTN = "Send it again";
+function alreadySent(lang) { return lang === "ml"
+  ? "ഗൈഡ് ഇതിനകം ഈ chat-ൽ അയച്ചിട്ടുണ്ടെന്നാണ് ഞങ്ങൾ കരുതുന്നത് 😊 മുകളിലെ messages ഒന്ന് scroll ചെയ്ത് നോക്കാമോ? കിട്ടിയില്ലെങ്കിൽ താഴെയുള്ള button tap ചെയ്താൽ മതി, വീണ്ടും അയച്ചുതരാം."
+  : "We believe the guide has already been delivered in this chat 😊 Could you scroll up and check the earlier messages? If you can't find it, just tap the button below and we'll send it again."; }
+
 // ======================= LEAD FOLLOW-UP (owner, 27 Nov) =======================
 // The owner taps a private link in each Discord lead alert -> a small page with outcome buttons (no Claude needed).
 // "No answer" starts a reminder sequence in Discord (day 0, 2, 4, 7, 12, 42) with ready WhatsApp messages (wa.me links,
@@ -1790,7 +1808,7 @@ async function leadAction(env, id, f) {
   let msg = "";
   if (a === "meeting") {
     const t = Date.parse((f.when || "") + ":00+05:30"); if (!t || t < now - 3600e3) return { ok: false, msg: "Please pick the meeting date and time." };
-    fu[id] = { kind: "meeting", at: t, sent: {} }; L.meeting = f.when; msg = `Meeting saved for ${f.when.replace("T", " ")} IST. You'll get a reminder that morning and 30 minutes before, with the confirmation message ready.`;
+    fu[id] = { kind: "meeting", at: t, sent: {}, set: now }; L.meeting = f.when; msg = `Meeting saved for ${f.when.replace("T", " ")} IST. You'll get a reminder that morning and 30 minutes before, with the confirmation message ready.`;
     const conf = isML(L) ? `ഹായ്, ${f.when.slice(8, 10)}/${f.when.slice(5, 7)} ${f.when.slice(11)}-ന് ഞങ്ങൾ വിളിക്കാം (${nounOf(L)}). ഈ നമ്പറിൽ തന്നെ വിളിക്കട്ടെ?` : `Hi, confirming our call on ${f.when.slice(8, 10)}/${f.when.slice(5, 7)} at ${f.when.slice(11)} about ${nounOf(L)}. Shall I call you on this number?`;
     const wa = waLink(L.phone, conf); if (wa) msg += `<br><br>Send the confirmation now: <a href="${wa}">open WhatsApp with the message ready</a>`;
   } else if (a === "noanswer") {
@@ -1862,6 +1880,8 @@ async function leadReminders(env) {
     } else if (e.kind === "meeting") {
       const morn = Date.parse(new Date(e.at + 5.5 * 3600e3).toISOString().slice(0, 10) + "T09:00:00+05:30");
       const confTxt = meetTxt(L, e.at, false); const wa = waLink(L.phone, confTxt) ? await waShort(env, id, "mtoday") : null; const wa2 = wa ? await waShort(env, id, "msoon") : null;
+      if (!e.sent.lm && (e.set || 0) < morn && now >= morn && now < morn + 3 * 3600e3 && e.at - morn >= 2 * 3600e3) { e.sent.lm = 1; changed = true; if (await leadCallReminder(env, id, L, e.at, "morning")) sent++; }
+      if (!e.sent.ls && now >= e.at - 35 * 60e3 && now < e.at - 10 * 60e3) { e.sent.ls = 1; changed = true; if (await leadCallReminder(env, id, L, e.at, "soon")) sent++; }
       if (!e.sent.morn && now >= morn && now < e.at - 30 * 60e3) { e.sent.morn = 1; changed = true; sent++; await discord(env, `📅 **Meeting today** ${await leadLine(env, id, L)} at ${L.meeting?.slice(11) || ""} IST\nSend a reminder now:\n> ${confTxt}\n${wa ? "📲 " + wa + "\n" : ""}✅ Update: ${await leadUrl(env, id)}`, true); }
       else if (!e.sent.soon && now >= e.at - 30 * 60e3 && now < e.at + 15 * 60e3) { e.sent.soon = 1; changed = true; sent++; await discord(env, `⏳ **Meeting in 30 min** ${await leadLine(env, id, L)}\n${wa2 ? "📲 Quick reminder: " + wa2 + "\n" : ""}✅ Update: ${await leadUrl(env, id)}`, true); }
       else if (!e.sent.after && now >= e.at + 2 * 3600e3) { e.sent.after = 1; changed = true; sent++; await discord(env, `❓ **How did the meeting go?** ${await leadLine(env, id, L)}\nIf they didn't pick up, tap "No answer" and the follow-ups start.\n✅ Update: ${await leadUrl(env, id)}`, true); delete fu[id]; }
@@ -1869,6 +1889,20 @@ async function leadReminders(env) {
   }
   if (changed) await kvPut(env, "lead_fu", fu);
   return sent;
+}
+// owner, 27 Nov: when a call time is set and Instagram still lets us message them (24 h window), remind the LEAD too:
+// the morning of the call (if the call is after 11:00) and 30 min before. Never at night, never outside the window.
+async function leadCallReminder(env, id, L, at, which) {
+  const meta = await kv(env, `m:${id}`, {}); if (!meta.last_in || Date.now() - meta.last_in > 23.5 * 3600e3 || meta.no_nudge) return false;
+  const hm = new Date(at + 5.5 * 3600e3).toISOString().slice(11, 16); const ml = isML(L);
+  const abroad = L.location && !/kerala|india|kochi|ernakulam|thrissur|kozhikode|calicut|trivandrum|thiruvananthapuram|kannur|kollam|palakkad|malappuram|kottayam|alappuzha|pathanamthitta|idukki|wayanad|kasaragod/i.test(L.location);
+  const tz = abroad ? (ml ? " (ഇന്ത്യൻ സമയം)" : " India time") : "";
+  const text = which === "morning"
+    ? (ml ? `ഹായ് 😊 ഓർമ്മിപ്പിക്കാൻ: ഇന്ന് ${hm}${tz}-ന് ഞങ്ങളുടെ team നിങ്ങളെ വിളിക്കും 📞` : `Hi 😊 Just a reminder: our team will call you today at ${hm}${tz} 📞`)
+    : (ml ? `ഹായ്! 30 മിനിറ്റിനുള്ളിൽ (${hm}${tz}) ഞങ്ങൾ വിളിക്കും 📞 സമയം മാറ്റണമെങ്കിൽ ഇവിടെ reply ചെയ്യൂ.` : `Hi! We'll call you in about 30 minutes (${hm}${tz}) 📞 If that time doesn't work any more, just reply here.`);
+  try { await sendDM(env, id, text); } catch (e) { return false; }
+  const th = await kv(env, `t:${id}`, []); th.push({ role: "assistant", content: text }); await kvPut(env, `t:${id}`, th);
+  return true;
 }
 async function leadStaleDigest(env) {
   const all = await kv(env, "leads", {}); const fu = await kv(env, "lead_fu", {}); const cut = IST(new Date(Date.now() - 24 * 3600e3)).toISOString().slice(0, 16);
@@ -1896,8 +1930,8 @@ async function leadReplied(env, id, text) {
   const t = R.when_ist && /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(R.when_ist) ? Date.parse(R.when_ist + ":00+05:30") : 0;
   let extra = "";
   if (R.kind === "call_time" && t > Date.now() && t < Date.now() + 14 * 86400e3) {
-    fu[id] = { kind: "meeting", at: t, sent: {}, from: "reply" }; L.status = "meeting"; L.meeting = R.when_ist;
-    extra = `📅 Call reminder set automatically for **${R.when_ist.replace("T", " ")} IST** (you'll get the usual reminders). Wrong time? Change it on the update page.`;
+    fu[id] = { kind: "meeting", at: t, sent: {}, from: "reply", set: Date.now() }; L.status = "meeting"; L.meeting = R.when_ist;
+    extra = `📅 Call reminder set automatically for **${R.when_ist.replace("T", " ")} IST** (you'll get the usual reminders${t - Date.now() < 23 * 3600e3 ? "; the bot will also remind them on Instagram before the call" : ""}). Wrong time? Change it on the update page.`;
   } else if (R.kind === "not_interested") {
     delete fu[id]; L.status = "replied"; extra = "They seem not interested. Follow-ups stopped; tap ❌ Not interested if that's right.";
   } else {
