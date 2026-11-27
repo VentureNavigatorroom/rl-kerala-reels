@@ -526,7 +526,7 @@ async function optimise(env) {
 
 // ---------------- DM bot ----------------
 const BOT_SYSTEM = `You reply to Instagram DMs for rejectionlist.kerala, a company-registration service in Kerala, India.
-Rules: Always reply in simple, friendly English (even if the user writes in Malayalam or Manglish), short, max 3 sentences. Write like the rejectionlist.kerala team; do not introduce yourself as an assistant, AI or bot and do not mention automation. If the user directly asks whether this is a bot or a real person, do not claim to be human: say these chats give quick answers and a team member will call them personally.
+Rules: Reply in the language given in the Language line at the end (simple and friendly), short, max 3 sentences. Write like the rejectionlist.kerala team; do not introduce yourself as an assistant, AI or bot and do not mention automation. If the user directly asks whether this is a bot or a real person, do not claim to be human: say these chats give quick answers and a team member will call them personally.
 NEVER state any price, fee, cost, discount or government fee; if asked, say the team will share the exact quote on a call after understanding the business.
 Never give legal advice beyond general facts. If someone sends a proposed company name, give a first review using only these rules: not similar (even in sound) to an existing company or LLP, no clash with a registered trademark, words like Bank or Insurance need special approval, keep 2-3 backups. Say clearly that you cannot confirm availability and that final availability is confirmed when the application is filed. Then continue qualifying.
 Goal: qualify the lead by asking, one at a time:
@@ -545,7 +545,7 @@ const FALLBACK_Q = [
   "Would you prefer the call in Malayalam or English?",
   "Thank you! 🙏 Our team will call you shortly.",
 ];
-const RULES_COMMON = `Rules: Always reply in simple, friendly English (even if the user writes in Malayalam or Manglish), short, max 3 sentences. Write like the rejectionlist.kerala team; do not introduce yourself as an assistant, AI or bot and do not mention automation. If the user directly asks whether this is a bot or a real person, do not claim to be human: say these chats give quick answers and a team member will call them personally.
+const RULES_COMMON = `Rules: Reply in the language given in the Language line at the end (simple and friendly), short, max 3 sentences. Write like the rejectionlist.kerala team; do not introduce yourself as an assistant, AI or bot and do not mention automation. If the user directly asks whether this is a bot or a real person, do not claim to be human: say these chats give quick answers and a team member will call them personally.
 NEVER state any price, fee, cost, discount or our charges; if asked, say the team will share the exact quote on a call after understanding their case. Never give legal or tax advice beyond general facts.
 Conversation: Understand first: read the whole chat and work out what they want right now (our service, a reel on some topic, feedback about our content, or just a reply to you). Never assume what their business is from a word they used about our reels (e.g. "voiceover" in feedback is not their business). If their message is unclear, ask what they mean in one short question instead of guessing. If they asked something, first answer it in one or two plain sentences, then ask ONE question. If they bring up another service, answer that instead; the team also handles company registration, GST, trademark, FSSAI food licence, IEC import-export, NDA, co-founder agreements, company valuation, Udyam (MSME), DPIIT Startup India, KSUM grants, ROC annual filings, financial projections, investor agreements, payment gateway setup, websites (payable in monthly parts), GST returns and accounts, Kerala trade licences, pravasi business loans and payroll/PF/ESI. Ask for the phone number naturally by the 2nd or 3rd question, with a reason ("so our team can look at your exact case"); if they hesitate, say WhatsApp works too and don't push twice in a row. Never repeat a question already answered in the chat.`;
 const BOT_GST = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India that handles GST registration (and company registration and investor agreements).
@@ -629,12 +629,54 @@ General facts you may use: ${c.facts}
 Goal: qualify the lead by asking, one at a time:
 ${c.qs.map((q, i) => `${i + 1}) ${q}`).join(" ")} 5) their phone number, 6) preferred language for the call: Malayalam or English.
 When you have all six, thank them and say a team member will call. Output only the reply text.`;
-const BOT = { ...Object.fromEntries(Object.entries(NEWT).map(([t, c]) => [t, () => ({ sys: botFor(c), fq: [...c.qs, ...Q_END] })])), ud: () => ({ sys: BOT_UD, fq: FALLBACK_UD }), co: () => ({ sys: BOT_SYSTEM, fq: FALLBACK_Q }), gst: () => ({ sys: BOT_GST, fq: FALLBACK_GST }), inv: () => ({ sys: BOT_INV, fq: FALLBACK_INV }), sui: () => ({ sys: BOT_SUI, fq: FALLBACK_SUI }), sk: () => ({ sys: BOT_SK, fq: FALLBACK_SK }) };
-function fallbackReply(thread, topic = "co") {
+const BOT = { ...Object.fromEntries(Object.entries(NEWT).map(([t, c]) => [t, () => ({ sys: botFor(c), fq: [...c.qs, ...Q_END] })])), ud: () => ({ sys: BOT_UD, fq: FALLBACK_UD }), co: () => ({ sys: BOT_SYSTEM, fq: FALLBACK_Q }), gst: () => ({ sys: BOT_GST, fq: FALLBACK_GST }), inv: () => ({ sys: BOT_INV, fq: FALLBACK_INV }), sui: () => ({ sys: BOT_SUI, fq: FALLBACK_SUI }), sk: () => ({ sys: BOT_SK, fq: FALLBACK_SK }),
+  legal: () => ({ sys: BOT_LEGAL, fq: ["Sorry to hear what you're going through 🙏 Our team works with lawyers and can connect you with one to look at your case. Could you share a phone number so our team or the lawyer can call you?", Q_END[1], Q_END[2]] }) };
+// ---- reply in the person's language (owner, 27 Nov: a Malayalam-script writer got English replies) ----
+const MANGLISH = /\b(enik+|enikk?u|venam|venda|undo|und|illa|alle|aano|ano|aanu|njan|njangal|ningal|ningalk+|entha|enthu|engane|ethra|onnu|patto|pattumo|pattum|kittum|kitti|sheri|shari|cheyyan|cheyth?u|cheyyam|cheyyamo|ariyilla|ariyan|paranju|parayamo|parayo|kodukk?an|ivide|avide|ippo|ippol|chetta|chechi|machane|saare|saar|alla|aayi|aakum|vendi)\b/i;
+function langOf(thread, prev = null) {   // "ml" (Malayalam script) | "mg" (Manglish) | "en", from the person's own messages; the latest wins when it has 4+ words, a short one ("LLP", "Please reply sir", a number) keeps the chat's language
+  const us = thread.filter(m => m.role === "user" && !BTN.test(m.content.trim())).map(m => m.content.replace(/^🎤\s*/u, ""));
+  const score = t => { const ml = (t.match(/[ഀ-ൿ]/g) || []).length, lat = (t.match(/[A-Za-z]/g) || []).length; return ml && ml >= lat * 0.6 ? "ml" : lat ? (MANGLISH.test(t) ? "mg" : "en") : null; };
+  const last = us[us.length - 1] || "";
+  if (realWords(last).length >= 4 && score(last)) return score(last);
+  return prev || score(us.slice(-3).join(" ")) || "en";
+}
+const LANG_LINE = {
+  ml: "Language: the person writes in Malayalam script, so reply ONLY in Malayalam script, in simple spoken-style Malayalam (like a friendly Kerala person on chat, not formal or literary). Common English words may stay in English (LLP, GST, company, phone number, WhatsApp, call, team, lawyer).",
+  mg: "Language: the person writes in Manglish (Malayalam in English letters). Reply in simple Manglish the same way, or in simple English if unsure. Never switch to Malayalam script.",
+  en: "Language: reply in simple, friendly English.",
+};
+const FQ_ML = {   // Malayalam versions of the fixed fallback questions (other topics' own questions are still English-only)
+  "What does your business do? Tell us in a line or two.": "എന്താണ് നിങ്ങളുടെ business? ഒന്നോ രണ്ടോ വരിയിൽ പറയാമോ?",
+  "How many founders are there? Is anyone an NRI?": "എത്ര founders ഉണ്ട്? ആരെങ്കിലും NRI ആണോ?",
+  "Does the business already have income, clients or funding?": "Business-ന് ഇപ്പോൾ income, clients അല്ലെങ്കിൽ funding ഉണ്ടോ?",
+  "How soon do you want to register?": "എത്ര പെട്ടെന്ന് register ചെയ്യണം?",
+  [Q_END[0]]: "നിങ്ങളെ വിളിക്കാൻ ഞങ്ങളുടെ team-ന് ഒരു phone number തരാമോ?",
+  [Q_END[1]]: "Call മലയാളത്തിലാണോ English-ലാണോ വേണ്ടത്?",
+  [Q_END[2]]: "നന്ദി! 🙏 ഞങ്ങളുടെ team ഉടനെ നിങ്ങളെ വിളിക്കും.",
+  "Sorry to hear what you're going through 🙏 Our team works with lawyers and can connect you with one to look at your case. Could you share a phone number so our team or the lawyer can call you?":
+    "ഇങ്ങനെ ഒരു അവസ്ഥ വന്നതിൽ ശരിക്കും വിഷമമുണ്ട് 🙏 ഞങ്ങളുടെ team lawyers-ന്റെ കൂടെ work ചെയ്യുന്നുണ്ട്, നിങ്ങളുടെ case നോക്കാൻ ഒരു lawyer-നെ connect ചെയ്തു തരാം. നിങ്ങളെ വിളിക്കാൻ ഒരു phone number തരാമോ?",
+};
+// ---- legal trouble / partner disputes (owner, 27 Nov: a partner-dispute chat got NRI / income questions in English) ----
+const LEGAL_HINT = /disput|\bcourt|(?<!\bin\s)\bcases?\b(?!\s*study)|arbitrat|police|\bfir\b|lawyer|advocate|\bcheat|fraud|betray|legal\s*(notice|action|issue|problem|trouble|case)|partner\s*(took|has taken|stole|moved|ran|cheated|is not|refus)|stay\s*order|injunction|kodathi|kodathiyil|\bkesu|vakkee?l|vakil|tharkk?am|chathi|chathichu|parathi|കോടതി|കേസ്|വക്കീൽ|വക്കീല്|അഡ്വക്കേറ്റ്|പോലീസ്|പൊലീസ്|തർക്കം|ആർബിട്രേഷൻ|മധ്യസ്ഥ|പരാതി|ചതിച്ചു|ചതി|വഞ്ചി|ഉത്തരവ്/i;
+async function legalKind(env, text) {   // true when they describe a legal dispute / trouble of their own (words first, then a small AI check)
+  if (!LEGAL_HINT.test(text)) return false;
+  try {
+    const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
+      { role: "system", content: "A person wrote to @rejectionlist.kerala, a Kerala team for company registration, GST, agreements and related services. Answer yes or no: is the person describing a legal dispute or legal trouble of their own (a partner or co-founder dispute, a court case or order, arbitration, a police complaint, being cheated, assets or money taken, problems with their own lawyer, a legal notice against them)? Asking how to register a company, about a GST notice, or for an agreement to avoid future disputes is no." },
+      { role: "user", content: String(text).slice(0, 800) }], max_tokens: 3 });
+    return /^\s*yes/i.test(String(r.response || ""));
+  } catch (e) { return true; }   // the words matched and the AI is down: a lawyer offer is safer than sales questions
+}
+const BOT_LEGAL = `You reply to Instagram DMs for rejectionlist.kerala, a team in Kerala, India (company registration, agreements and related services) that works with lawyers. This person is describing a legal dispute or trouble of their own (for example a partner or co-founder dispute, a court order, arbitration, a police complaint, being cheated, assets taken, their lawyer not helping).
+Rules: short, max 4 sentences, warm and calm. Write like the rejectionlist.kerala team; do not introduce yourself as an assistant, AI or bot and do not mention automation. If the user directly asks whether this is a bot or a real person, do not claim to be human: say these chats give quick answers and a team member will call them personally.
+1) First acknowledge exactly what they described (mention their specifics) with real empathy. 2) Say our team works with lawyers and can connect them with one to look at their case. Never give legal advice, never say what a court, the police or an arbitrator will do, never promise any outcome, never judge who is right, never criticise anyone by name. NEVER state any price, fee or cost; if asked, say the lawyer and team will explain on the call. 3) Ask for their phone number so our team or the lawyer can call them; once they gave it, ask which language they prefer for the call (Malayalam or English); once they gave both, thank them and say a team member will call them soon. One question at a time.
+Never ask about company registration, founders, NRIs, income, clients, funding or timelines. Never repeat a question already answered. A short message like "LLP" or "please reply" is a detail of their case or a request to answer: acknowledge it and continue. If they hesitate to share a number, say WhatsApp works too and don't push twice in a row. If they say they are in danger, gently tell them to call 112. Output only the reply text.`;
+function fallbackReply(thread, topic = "co", lang = "en") {
   const FALLBACK_Q = BOT[topic]().fq;
   const last = thread[thread.length - 1]?.content || "";
   const said = thread.filter(m => m.role === "assistant").map(m => m.content).join("\n");   // keyword replies already ask some of these
-  let asked = FALLBACK_Q.findIndex(q => !said.includes(q.split(/[?!]/)[0].split(" ").slice(0, 4).join(" ")));
+  const head = q => q.split(/[?!]/)[0].split(" ").slice(0, 4).join(" ");
+  let asked = FALLBACK_Q.findIndex(q => !said.includes(head(q)) && !(FQ_ML[q] && said.includes(head(FQ_ML[q]))));
   if (asked < 0) asked = FALLBACK_Q.length - 1;
   let pre = "";
   if (topic === "co" && /\b(pvt|ltd|private|limited|llp|opc)\b/i.test(last) || /പ്രൈവറ്റ്|ലിമിറ്റഡ്/.test(last)) {
@@ -642,15 +684,17 @@ function fallbackReply(thread, topic = "co") {
     pre = hits.length ? `Words like "${hits[0]}" need special approval, so this name could be rejected. ` : "No restricted words in this name. It must also not be similar to an existing company, LLP or registered trademark. ";
     pre += "Final availability is confirmed only when the application is filed.\n\n";
   }
-  if (/price|fee|cost|charge|rate|എത്ര രൂപ|ചാർജ്|ഫീസ്/i.test(last)) pre = "Our team will share the exact quote on a call once they understand your business. ";
-  return pre + FALLBACK_Q[Math.min(asked, FALLBACK_Q.length - 1)];
+  if (/price|fee|cost|charge|rate|എത്ര രൂപ|ചാർജ്|ഫീസ്/i.test(last)) pre = lang === "ml" ? "ഞങ്ങളുടെ team നിങ്ങളുടെ കാര്യം മനസ്സിലാക്കിയ ശേഷം call-ൽ കൃത്യമായ quote പറയും. " : "Our team will share the exact quote on a call once they understand your business. ";
+  if (lang === "ml" && pre && !/^ഞങ്ങളുടെ/.test(pre)) pre = "";   // the English name-review note is not mixed into a Malayalam reply
+  const q = FALLBACK_Q[Math.min(asked, FALLBACK_Q.length - 1)];
+  return pre + (lang === "ml" && FQ_ML[q] ? FQ_ML[q] : q);
 }
-async function botReply(env, thread, topic = "co") {
+async function botReply(env, thread, topic = "co", lang = "en") {   // topic "legal" = legal-help route
   try {
-    const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: BOT[topic]().sys }, ...thread.slice(-12)], max_tokens: 220 });
+    const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: BOT[topic]().sys + "\n" + LANG_LINE[lang] }, ...thread.slice(-12).map(m => ({ role: m.role, content: m.content }))], max_tokens: lang === "ml" ? 450 : 220 });   // Malayalam script needs many more tokens per sentence
     const t = (r.response || "").trim(); if (t) return t;
   } catch (e) { await log(env, `AI unavailable, using fallback: ${String(e.message).slice(0, 80)}`); }
-  return fallbackReply(thread, topic);
+  return fallbackReply(thread, topic, lang);
 }
 const BTN = /^(gst returns \/ itr|shop licence|pravasi loans|pf \/ esi|missed returns\?|freelancer itr\?|shop with no staff\?|professional tax\?|nri investing\?|when is esic needed\?|hiring incentive\?|documents needed\?|proprietor or company\?|monthly payment\?|what should it have\?|website|payment gateway|company registration|gst|trademark|fssai \/ food|funding \/ investors|something else|yes, send it|i've followed|talk to our team|which type suits me\?|documents needed|do i need gst\?|gst documents|i'm raising funds|i'm investing|am i eligible\?|what do i get\?|which grants\?|micro, small or medium\?|late payments\?|yes,? tag me|no thanks|can i use tm now\?|name vs trademark\?|no business, still file\?|what's the late fee\?|home bakers too\?|registration or licence\?|do i need iec\?|yearly update\?|one-way or mutual\?|will investors sign\?|what is vesting\?|if one leaves\?|what do investors check\?|for a bank loan\?|which method fits me\?|who must sign it\?)/i;
 function regexLead(thread, topic = "co") {   // no AI: read each answer that follows our question
@@ -671,6 +715,7 @@ const LEAD_SCHEMA = {
   ud: `{"business":"what the business does and whether manufacturing, service or trading","founders":"","nri":false,"traction":"entity type, GST status, turnover","timeline":"why Udyam now and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   sui: `{"business":"what the startup does and what is new","founders":"","nri":false,"traction":"entity type, registration date and stage","timeline":"how soon and what for","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   sk: `{"business":"what the startup does","founders":"","nri":false,"traction":"entity type, Kerala registration, DPIIT status","timeline":"what they want from KSUM and how soon","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
+  legal: `{"business":"2 short lines in English: what happened to them and what help they want","founders":"","nri":false,"traction":"","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
   inv: `{"role":"founder raising | investor investing","business":"company and what it does, Pvt Ltd or not","founders":"","nri":false,"traction":"who is investing (friends/family, angel, NRI/foreign, fund)","timeline":"","phone":"","language":"","intent":"high|medium|low","can_afford_30k":"likely|unclear|unlikely","reason":""}`,
 };
 async function extractLead(env, thread, topic = "co") {
@@ -801,17 +846,32 @@ const NUDGE_PUBLIC = [
   "quick check 🙂 we sent what you asked for by DM. If you can't see it, look in message requests, then reply there and we'll continue.",
 ];
 const OPT_OUT = /^\s*(stop|unsubscribe|not interested|no thanks|no thank you|don'?t message|leave me)\b/i;
+const NUDGE_OPEN_ML = [
+  "ഹായ്, ഒന്ന് check ചെയ്യുകയായിരുന്നു 👋 നമ്മുടെ {noun} chat പകുതിയിൽ നിന്നുപോയി.",
+  "ഹായ് 🙂 ഒരു തിരക്കുമില്ല. ഒരു ചെറിയ മറുപടി തന്നാൽ നമുക്ക് ഇത് മുന്നോട്ട് കൊണ്ടുപോകാം.",
+  "ഞങ്ങളുടെ ഭാഗത്ത് നിന്ന് last message ആണ് 🙏 ഞങ്ങളുടെ team വിളിക്കണമെങ്കിൽ ഇവിടെ reply ചെയ്താൽ മതി, നിർത്തിയിടത്തു നിന്ന് തുടരാം.",
+];
+const NUDGE_LEGAL = {   // gentle, no sales question: people in a dispute only get the lawyer offer again
+  en: ["Hi, hope you're doing okay 🙏 Whenever you're ready, share a phone number here and our team will connect you with a lawyer to look at your case.",
+    "No pressure at all 🙏 If a call is easier, just send a number here (WhatsApp works too).",
+    "One last note from our side 🙏 If you still want us to connect you with a lawyer, reply here anytime."],
+  ml: ["ഹായ്, സുഖമാണെന്ന് കരുതുന്നു 🙏 തയ്യാറാകുമ്പോൾ ഒരു phone number ഇവിടെ അയച്ചാൽ മതി, നിങ്ങളുടെ case നോക്കാൻ ഞങ്ങളുടെ team ഒരു lawyer-നെ connect ചെയ്തു തരും.",
+    "ഒരു തിരക്കുമില്ല 🙏 Call ആണ് എളുപ്പമെങ്കിൽ ഒരു number ഇവിടെ അയച്ചാൽ മതി (WhatsApp ആയാലും മതി).",
+    "ഞങ്ങളുടെ ഭാഗത്ത് നിന്ന് ഒരു last message 🙏 Lawyer-നെ connect ചെയ്യണമെങ്കിൽ എപ്പോൾ വേണമെങ്കിലും ഇവിടെ reply ചെയ്യൂ."],
+};
 function nudgeText(thread, meta, n) {   // check-in line + the exact step they stopped on, so a reply continues the normal flow
   const lastA = [...thread].reverse().find(m => m.role === "assistant")?.content || "";
-  if (/will call you/i.test(lastA)) return null;                       // flow already finished
+  if (/will call you|വിളിക്കും/i.test(lastA)) return null;                       // flow already finished
+  const ml = meta?.lang === "ml";
+  if (meta?.legal) return { text: NUDGE_LEGAL[ml ? "ml" : "en"][Math.min(n, 2)], buttons: [] };
   const topic = TOPICS[meta?.topic] ? meta.topic : "co";
-  const open = NUDGE_OPEN[Math.min(n, NUDGE_OPEN.length - 1)].replace("{noun}", TOPICS[topic].noun);
+  const open = (ml ? NUDGE_OPEN_ML : NUDGE_OPEN)[Math.min(n, NUDGE_OPEN.length - 1)].replace("{noun}", TOPICS[topic].noun);
   if (meta?.pending_kw) return { text: `${open}\n\nYour guide is ready. Follow @rejectionlist.kerala, then tap the button below and we'll send it right away.`, buttons: ["I've followed ✅"] };
   const qLine = lastA.split("\n").reverse().find(l => l.includes("?")) || "";               // the question(s) they were last asked, as written
   let q = (qLine.match(/[^.!?•✅📄🏠📝]*\?/gu) || []).map(x => x.trim()).filter(Boolean).join(" ");
   if (!q && /name you have in mind/i.test(lastA)) q = "Which company name do you have in mind? Send it here and we'll give it a first review.";
-  if (!q) q = "Shall we continue? Reply here and we'll pick up right where we stopped.";
-  const buttons = /malayalam or english/i.test(q) ? ["Malayalam", "English"] : Object.values(KEYWORD_REPLY).some(r => lastA.endsWith(r.slice(-60))) ? NEXT[topic] : [];
+  if (!q) q = ml ? "തുടരട്ടെ? ഇവിടെ reply ചെയ്താൽ നിർത്തിയിടത്തു നിന്ന് തുടരാം." : "Shall we continue? Reply here and we'll pick up right where we stopped.";
+  const buttons = /malayalam or english|മലയാളത്തിലാണോ/i.test(q) ? ["Malayalam", "English"] : Object.values(KEYWORD_REPLY).some(r => lastA.endsWith(r.slice(-60))) ? NEXT[topic] : [];
   return { text: `${open}\n\n${q}`, buttons };
 }
 function nudgeStat(nx, field) { const day = IST().toISOString().slice(0, 10); if (nx._s?.day !== day) nx._s = { day }; nx._s[field] = (nx._s[field] || 0) + 1; }
@@ -853,7 +913,7 @@ async function processNudges(env, force = null) {
       if (!meta || meta.no_nudge) { ops[id] = null; continue; }
       if (meta.last_in > e.li + 1000) { ops[id] = { ...e, li: meta.last_in, n: 0 }; continue; }   // they wrote again; restart the clock
       const L = (await getLeads())[id];
-      if (L?.phone && L?.language) { ops[id] = null; continue; }                   // flow complete
+      if (L?.phone && (L?.language || L?.kind === "legal")) { ops[id] = null; continue; }   // flow complete (legal help: the number is enough)
       const thread = await kv(env, `t:${id}`, []);
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {                  // guide pasted by hand by the team? then check in on THAT, not "your guide is ready"
         const byHand = await sentByHand(env, id, KEYWORD_REPLY[meta.pending_kw]);
@@ -999,6 +1059,22 @@ async function feedbackReply(env, text, kind) {
     const t = cleanReply(r.response); return t || fixed;
   } catch (e) { return fixed; }
 }
+// ---- voice messages (owner, 27 Nov): transcribe with Workers AI Whisper and answer the words as a normal message ----
+// Subrequests per voice message: one audio fetch + one AI call. No voice reply (no Malayalam TTS); the reply is text.
+const VOICE_MAX = 10 * 1024 * 1024, VOICE_MODEL = "@cf/openai/whisper-large-v3-turbo";
+async function transcribe(env, url, lang) {   // "" when it can't be heard; throws on fetch / model errors
+  const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
+  if (!r.ok) throw new Error(`audio fetch ${r.status}`);
+  if (+(r.headers.get("content-length") || 0) > VOICE_MAX) throw new Error("audio too large");
+  const u8 = new Uint8Array(await r.arrayBuffer()); if (u8.length > VOICE_MAX) throw new Error("audio too large"); if (!u8.length) return "";
+  const model = env.WHISPER_MODEL || VOICE_MODEL; let input;
+  if (/whisper-large-v3/.test(model)) { let bin = ""; for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); input = { audio: btoa(bin), ...(lang ? { language: lang } : {}) }; }   // v3-turbo: base64 + language hint
+  else input = { audio: [...u8] };                                                                    // @cf/openai/whisper: byte array
+  const o = await env.AI.run(model, input);
+  const t = typeof o === "string" ? o : o?.text || o?.transcription_info?.text || (o?.segments || []).map(s => s.text || "").join(" ") || (o?.words || []).map(w => w.word || "").join(" ");
+  return String(t || "").replace(/\s+/g, " ").trim();
+}
+const VOICE_FAIL = { ml: "ക്ഷമിക്കണം 🙏 ഈ voice message ഞങ്ങൾക്ക് വ്യക്തമായി കേൾക്കാൻ പറ്റിയില്ല. ഒന്ന് type ചെയ്ത് അയക്കാമോ, അല്ലെങ്കിൽ വീണ്ടും അയക്കാമോ?", en: "Sorry 🙏 we couldn't hear this voice message clearly. Could you type it here, or send it again?" };
 async function handleWebhook(env, body) {
   const n = (body.entry || []).reduce((t, e) => [t[0] + (e.messaging || []).length, t[1] + (e.changes || []).length], [0, 0]);
   await log(env, `webhook in: ${body.object || "?"} ${n[0]} message(s), ${n[1]} change(s) ${(body.entry || []).flatMap(e => (e.changes || []).map(c => c.field)).join(",")}`);
@@ -1008,6 +1084,24 @@ async function handleWebhook(env, body) {
       if (ev.message?.text && ev.sender?.id && !ev.message.quick_reply && !BTN.test(ev.message.text.trim()) && !/^yes,?\s*send it/i.test(ev.message.text.trim())) { let h = 0; for (const ch of ev.message.text.trim().toLowerCase()) h = (h * 31 + ch.codePointAt(0)) | 0; if (!(await claimOnce(env, `dtx:${ev.sender.id}:${h}`, 600))) { await log(env, `same DM from ${ev.sender.id} seen twice: answered once`); continue; } }
       if (ev.postback && !ev.message) ev.message = { text: ev.postback.title || ev.postback.payload || "" };   // button taps of other kinds
       if (ev.message && !ev.message.is_echo && (ev.message.attachments || []).some(a => a?.type === "story_mention")) { await storyMention(env, ev.sender.id); continue; }   // not a lead message
+      const audio = ev.message && !ev.message.is_echo && !ev.message.text && ev.sender?.id && (ev.message.attachments || []).find(a => a?.type === "audio" && a.payload?.url);
+      if (audio) {   // voice message: its words become their message text ("🎤 " marks it in the thread)
+        const uid = ev.sender.id; const m0 = await kv(env, `m:${uid}`, { first: Date.now(), sources: [] }); let said = "";
+        try { said = await transcribe(env, audio.payload.url, m0.lang === "en" ? "en" : m0.lang ? "ml" : null); } catch (e) { await log(env, `voice message from ${uid} failed: ${String(e.message).slice(0, 80)}`); }
+        if (realWords(said).length) { ev.message.text = "🎤 " + said.slice(0, 1500); await log(env, `voice message transcribed (${said.length} chars) from @${m0.username || uid}`); }
+        else {   // can't hear it: ask once (per 10 min) in their language and tell the owner to listen
+          const th = await kv(env, `t:${uid}`, []);
+          const ask = !m0.lang ? `${VOICE_FAIL.ml}\n${VOICE_FAIL.en}` : VOICE_FAIL[m0.lang === "ml" ? "ml" : "en"];   // language not known yet: both
+          if (!m0.voice_fail || Date.now() - m0.voice_fail > 600e3) {
+            m0.voice_fail = Date.now(); await kvPut(env, `m:${uid}`, m0);
+            th.push({ role: "user", content: "🎤 (voice message, could not be transcribed)" }, { role: "assistant", content: ask }); await kvPut(env, `t:${uid}`, th);
+            await sendDM(env, uid, ask);
+            const un = m0.username || (await igProfile(env, uid)).username;   // the owner needs the chat link
+            await discord(env, `🎤 Voice message from @${un || uid} could not be transcribed, please listen: ${un ? "https://ig.me/m/" + un : "(user id " + uid + ", open the Instagram inbox)"}`, true);
+          }
+          await log(env, `voice message from @${m0.username || uid} not transcribed: asked to type`); continue;
+        }
+      }
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
       const uid = ev.sender.id; const key = `t:${uid}`;
       if (/^\s*delete\s*$/i.test(ev.message.text)) {                  // data deletion request (see /privacy)
@@ -1021,7 +1115,7 @@ async function handleWebhook(env, body) {
       { const tx0 = ev.message.text.trim().toLowerCase(); if (meta.last_txt === tx0 && Date.now() - (meta.last_in || 0) < 120e3) { await log(env, `duplicate DM ignored from ${uid}`); continue; } meta.last_txt = tx0; }
       const prevIn = meta.last_in || 0;
       meta.last_in = Date.now();                                     // 24h window starts from their last message
-      if (OPT_OUT.test(ev.message.text)) {                           // asked us to stop: no check-ins for this person, and no further questions now
+      if (OPT_OUT.test(ev.message.text.replace(/^🎤\s*/u, ""))) {                           // asked us to stop: no check-ins for this person, and no further questions now
         meta.no_nudge = true; await kvPut(env, `m:${uid}`, meta); await nudgeApply(env, { [uid]: null });
         const bye = "No problem 🙏 We won't send you any more reminders. If you need us later, just message here.";
         thread.push({ role: "user", content: ev.message.text }, { role: "assistant", content: bye }); await kvPut(env, key, thread);
@@ -1043,6 +1137,7 @@ async function handleWebhook(env, body) {
       await kvPut(env, `m:${uid}`, meta);
       const src = meta.sources[0]; if (src.media) await bumpPost(env, await mediaToItem(env, src.media), "dms");
       thread.push({ role: "user", content: ev.message.text });
+      const lang = meta.lang = langOf(thread, meta.lang);                         // reply in the language / script they write in (saved with meta below)
       const prof = await igProfile(env, uid);                         // username + whether they follow us (null if Instagram won't say)
       if (prof.username && !meta.username) meta.username = prof.username;
       if (!meta.pending_kw && meta.username) {                        // keyword comment whose private reply Instagram refused: they DM'd us instead
@@ -1053,13 +1148,19 @@ async function handleWebhook(env, body) {
         const short = realWords(ev.message.text).length <= 2;   // answers like "home food business" must not trigger the FOOD guide mid-chat
         const dk = short ? ((await uniqueKw(env, ev.message.text))?.base || matchKeyword(ev.message.text)) : null;
         if (dk && meta.served_kw?.[dk] && Date.now() - meta.served_kw[dk] < 7 * 864e5) {   // already sent: don't send the same guide twice
-          const again = "We've already sent this just above 👆 Scroll up in this chat to see it. Want our team to help you with the next step?";
+          const again = lang === "ml" ? "ഇത് മുകളിൽ അയച്ചിട്ടുണ്ട് 👆 Chat ഒന്ന് scroll ചെയ്ത് നോക്കൂ. അടുത്ത step-ന് ഞങ്ങളുടെ team സഹായിക്കണോ?" : "We've already sent this just above 👆 Scroll up in this chat to see it. Want our team to help you with the next step?";
           thread.push({ role: "assistant", content: again }); await kvPut(env, `m:${uid}`, meta); await kvPut(env, key, thread);
           await sendDM(env, uid, again, NEXT[KW_TOPIC[dk]] || NEXT_BUTTONS); await log(env, `keyword ${dk} repeated in DM by @${meta.username || uid}: not resent`); continue;
         }
         if (dk) { meta.pending_kw = dk; meta.follow_asks = 0; await log(env, `keyword ${dk} via DM from @${meta.username || uid}`); }
       }
-      if (!meta.pending_kw && !BTN.test(ev.message.text.trim())) {
+      if (meta.legal && Date.now() - meta.legal > 14 * 864e5) delete meta.legal;   // an old dispute chat doesn't colour a new enquiry
+      if (!meta.legal && !BTN.test(ev.message.text.trim()) && (!meta.pending_kw || realWords(ev.message.text).length >= 4) && await legalKind(env, ev.message.text)) {
+        meta.legal = Date.now(); delete meta.pending_kw; delete meta.pending_more;   // a person in a dispute gets the lawyer offer, not the guide or sales questions
+        if (meta.topic && meta.topic !== "cfa") meta.topics = [...new Set([...(meta.topics || []), meta.topic])];
+        meta.topic = "cfa"; await log(env, `legal-help route for @${meta.username || uid}`);
+      }
+      if (!meta.pending_kw && !meta.legal && !BTN.test(ev.message.text.trim())) {
         const lastFb = (meta.feedback || []).slice(-1)[0];
         if (lastFb && Date.now() - lastFb.t < 15 * 60e3 && realWords(ev.message.text).length <= 3) { thread.push({ role: "user", content: ev.message.text }); await kvPut(env, key, thread); await kvPut(env, `m:${uid}`, meta); continue; }   // "Voiceover**" right after their suggestion: a typo fix, no second reply
         const lastA = [...thread].reverse().find(m => m.role === "assistant")?.content || "";
@@ -1075,7 +1176,7 @@ async function handleWebhook(env, body) {
         }
       }
       if (meta.pending_kw && KW_TOPIC[meta.pending_kw]) meta.topic = KW_TOPIC[meta.pending_kw];
-      else {
+      else if (!meta.legal) {
         const txt = ev.message.text.trim(); const isMenu = TOPIC_MENU.some(m => txt.toLowerCase().startsWith(m.toLowerCase())); const isBtn = BTN.test(txt) && !isMenu;   // menu words ('GST venam') still choose a topic
         let dt = isBtn ? null : topicFromWords(txt);
         if (/^something else$/i.test(txt)) dt = null;
@@ -1089,7 +1190,7 @@ async function handleWebhook(env, body) {
         if (!dt && meta.topic && prevIn && Date.now() - prevIn > 72 * 3600e3) { meta.topics = [...new Set([...(meta.topics || []), meta.topic])]; delete meta.topic; delete meta.menu_asked; }   // back after 3+ days with a plain hello: ask afresh
         if (!meta.topic && !meta.menu_asked) {   // a plain "hi": ask what they need instead of guessing company registration
           meta.menu_asked = true; await kvPut(env, `m:${uid}`, meta);
-          const hi = /^something else$/i.test(txt) ? "Sure! Tell us in a line what you need help with, and we'll take it from there." : "Hi! 👋 Thanks for messaging rejectionlist.kerala. What can we help you with?";
+          const hi = /^something else$/i.test(txt) ? "Sure! Tell us in a line what you need help with, and we'll take it from there." : lang === "ml" ? "ഹായ്! 👋 rejectionlist.kerala-ലേക്ക് message ചെയ്തതിന് നന്ദി. എന്താണ് ഞങ്ങൾ സഹായിക്കേണ്ടത്?" : "Hi! 👋 Thanks for messaging rejectionlist.kerala. What can we help you with?";
           thread.push({ role: "assistant", content: hi }); await kvPut(env, key, thread);
           await sendDM(env, uid, hi, /^something else$/i.test(txt) ? [] : TOPIC_MENU); continue;
         }
@@ -1120,25 +1221,26 @@ async function handleWebhook(env, body) {
           meta.served_kw = { ...(meta.served_kw || {}), [meta.pending_kw]: Date.now() }; delete meta.pending_kw; meta.follow_asks = 0; meta.served = true;
         }
         await kvPut(env, `m:${uid}`, meta);
-      } else { await kvPut(env, `m:${uid}`, meta); reply = await botReply(env, thread, topic); }
+      } else { await kvPut(env, `m:${uid}`, meta); reply = await botReply(env, thread, meta.legal ? "legal" : topic, lang); }
       thread.push({ role: "assistant", content: reply });
       await kvPut(env, key, thread); await sendDM(env, uid, reply, buttons);
       let flowDone = false;
       const uMsgs = thread.filter(m => m.role === "user"); const pIdx = uMsgs.findIndex(m => /\d{10}/.test(m.content.replace(/\D/g, "")));
       if (pIdx >= 0 || thread.length >= 12) {
-        const lead = await extractLead(env, thread, topic);
+        const lead = await extractLead(env, thread, meta.legal ? "legal" : topic);
         if (lead) {
           const leads = await kv(env, "leads", {}); const prev = leads[uid];
           const meta2 = await kv(env, `m:${uid}`, { sources: [] }); const s0 = meta2.sources[0] || {};
           const fromItem = s0.media ? await mediaToItem(env, s0.media) : "direct";
-          flowDone = !!(lead.phone && lead.language);
-          const ready = lead.phone && (lead.language || uMsgs.length - 1 - pIdx >= 2);   // wait for the call language (or two more messages) so the alert is complete
-          leads[uid] = { ...lead, topic, alerted: prev?.alerted || false, ig_user: uid, source_item: fromItem, source_keyword: s0.keyword || null, source_via: s0.via || "dm", status: prev?.status || "new", updated: IST().toISOString().slice(0, 16) };
+          flowDone = !!(lead.phone && (lead.language || meta.legal));
+          const ready = lead.phone && (lead.language || meta.legal || uMsgs.length - 1 - pIdx >= 2);   // legal help: alert as soon as the number comes   // wait for the call language (or two more messages) so the alert is complete
+          leads[uid] = { ...lead, topic, alerted: prev?.alerted || false, ig_user: uid, source_item: fromItem, source_keyword: s0.keyword || null, source_via: s0.via || "dm", status: prev?.status || "new", ...(meta.legal ? { kind: "legal" } : prev?.kind ? { kind: prev.kind } : {}), updated: IST().toISOString().slice(0, 16) };
           await kvPut(env, "leads", leads); await log(env, `lead ${uid}: ${lead.intent}/${lead.can_afford_30k} from ${fromItem}`);
           if (!prev) await bumpPost(env, fromItem, "leads");
           if (ready && !prev?.alerted) {                                // every lead with a phone gets one alert; the text shows the intent
             leads[uid].alerted = true; await kvPut(env, "leads", leads);
-            await discord(env, `🔔 **[${TOPICS[topic].label}] New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}${lead.role ? "\n🧭 " + lead.role : ""}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders || "-"}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}${lead.interstate ? "\n🚚 " + lead.interstate : ""}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`, true);
+            if (meta.legal) await discord(env, `⚖️ **[Legal help / partner dispute]** @${meta.username || uid} wants to talk to a lawyer\n📝 ${String(lead.business || "see chat").slice(0, 300)}\n📞 ${lead.phone}  ·  🗣 ${lead.language || (lang === "ml" ? "Malayalam (writes in Malayalam; not asked yet)" : "not answered yet")}\n💬 https://ig.me/m/${meta.username || ""}\nNo fee or outcome was promised. Lead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`, true);
+            else await discord(env, `🔔 **[${TOPICS[topic].label}] New ${lead.intent.toUpperCase()}-intent lead** (budget fit: ${lead.can_afford_30k})\n📞 ${lead.phone}  ·  🗣 ${lead.language || "?"}${lead.role ? "\n🧭 " + lead.role : ""}\n🏢 ${lead.business}\n📍 Came from: ${fromItem}${s0.keyword ? " (" + s0.keyword + ")" : ""}\n👥 ${lead.founders || "-"}${lead.nri ? " (NRI)" : ""}\n📈 ${lead.traction}${lead.interstate ? "\n🚚 " + lead.interstate : ""}\n⏱ ${lead.timeline}\nWhy: ${lead.reason}\nLead ID: ${uid}\nAfter your call, tell Claude: "lead ${uid}: <what happened>"`, true);
           }
         }
       }
@@ -1146,7 +1248,7 @@ async function handleWebhook(env, body) {
         const nx = await kv(env, "nudge", {}); const pe = nx[uid];
         if (pe?.n > 0) nudgeStat(nx, "back");
         for (const [k, v] of Object.entries(nx)) if (k !== uid && k !== "_s" && v.c && !v.li && ((v.u && meta.username && v.u.toLowerCase() === meta.username.toLowerCase()) || v.f === uid)) delete nx[k];
-        if (flowDone && meta.username) { const r0 = (await kv(env, "shout", {}))[meta.username.toLowerCase()]; if (!r0?.asked) { await shoutNote(env, meta.username, uid, { asked: true }); thread.push({ role: "assistant", content: SHOUT_Q }); await kvPut(env, key, thread); await sendDM(env, uid, SHOUT_Q, SHOUT_BTN); } }
+        if (flowDone && meta.username && !meta.legal) { const r0 = (await kv(env, "shout", {}))[meta.username.toLowerCase()]; if (!r0?.asked) { await shoutNote(env, meta.username, uid, { asked: true }); thread.push({ role: "assistant", content: SHOUT_Q }); await kvPut(env, key, thread); await sendDM(env, uid, SHOUT_Q, SHOUT_BTN); } }
         if (flowDone || meta.no_nudge) delete nx[uid]; else nx[uid] = { li: meta.last_in, n: 0, tot: pe?.tot || 0, ls: pe?.ls || 0, u: meta.username || pe?.u || null };
         await kvPut(env, "nudge", nx);
       } catch (e9) { await log(env, `check-in index: ${String(e9.message).slice(0, 80)}`); }
@@ -1188,11 +1290,12 @@ async function handleWebhook(env, body) {
         // Until Meta lets the app read incoming DMs (flag dm_inbound), the one private reply carries the whole resource + the callback form.
         const inbound = await env.STATE.get("dm_inbound");
         let hook = "", point = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); point = it?.point || ""; } catch (e0) {}
-        const r = inbound ? await sendMsg(env, { comment_id: ch.value.id }, KEYWORD_OPENER[kw], ["Yes, send it 👍"])
-          : await sendMsg(env, { comment_id: ch.value.id }, directReply(env, kw, item, hook, point));
-        if (!inbound && r.recipient_id) { const tk = `t:${r.recipient_id}`; const th = await kv(env, tk, []); th.push({ role: "assistant", content: directReply(env, kw, item, hook, point) }); await kvPut(env, tk, th); }   // so the AI knows what was already sent
+        const mlc = /[\u0D00-\u0D7F]/.test(ch.value.text);   // comment written in Malayalam script: Malayalam opener (the guide itself is English)
+        const r = inbound ? await sendMsg(env, { comment_id: ch.value.id }, mlc ? KEYWORD_OPENER_ML : KEYWORD_OPENER[kw], ["Yes, send it 👍"])
+          : await sendMsg(env, { comment_id: ch.value.id }, directReply(env, kw, item, hook, point, mlc));
+        if (!inbound && r.recipient_id) { const tk = `t:${r.recipient_id}`; const th = await kv(env, tk, []); th.push({ role: "assistant", content: directReply(env, kw, item, hook, point, mlc) }); await kvPut(env, tk, th); }   // so the AI knows what was already sent
         if (r.recipient_id) { const mk = `m:${r.recipient_id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
-          if (inbound && meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); if (inbound) meta.pending_kw = kw; meta.topic = KW_TOPIC[kw] || meta.topic; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
+          if (inbound && meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); if (inbound) meta.pending_kw = kw; if (mlc && !meta.lang) meta.lang = "ml"; meta.topic = KW_TOPIC[kw] || meta.topic; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
         await log(env, `private reply to ${kw} comment`);
         try { const nid = r.recipient_id || `c:${ch.value.id}`; const nx = await kv(env, "nudge", {});
           if (!nx[nid]?.li) { nx[nid] = { c: ch.value.id, t: Date.now(), u: ch.value.from?.username || null, f: ch.value.from?.id || null }; await kvPut(env, "nudge", nx); } } catch (e8) {}
@@ -1313,9 +1416,9 @@ async function itemTopic(env, item) { try { const mf = await manifest(env); cons
 // First private reply is short and asks for a reply: a reply moves the chat into their main inbox,
 // then the full resource (KEYWORD_REPLY) follows.
 const BASE = "https://rl-kerala-autopilot.venturenavigatorworkshop.workers.dev";
-function directReply(env, kw, item, hook, point) {   // one DM: the post's takeaway + the full resource, ending with the first question (details are collected in DM)
+function directReply(env, kw, item, hook, point, ml = false) {   // one DM: the post's takeaway + the full resource, ending with the first question (details are collected in DM)
   let body = KEYWORD_REPLY[kw].replace(/^Here you go!\s*/, "");
-  const head = hook ? `Hi! 👋 You commented on our post “${hook.slice(0, 70)}”. Here's what you asked for:` : "Hi! 👋 Thanks for your comment. Here's what you asked for:";
+  const head = ml ? "ഹായ്! 👋 കമന്റിന് നന്ദി. നിങ്ങൾ ചോദിച്ചത് ഇതാ:" : hook ? `Hi! 👋 You commented on our post “${hook.slice(0, 70)}”. Here's what you asked for:` : "Hi! 👋 Thanks for your comment. Here's what you asked for:";
   if (point) body = `📌 From this post: ${point.slice(0, 160)}\n\n${body}`;
   return `${head}\n\n${body}`.slice(0, 990);
 }
@@ -1352,6 +1455,7 @@ async function talkSubmit(env, f) {
   await log(env, `form lead ${id}: ${intent}/${fit} from ${item}`);
   await discord(env, `🔔 **New ${intent.toUpperCase()}-intent lead** (budget fit: ${fit})\n👤 ${lead.name}\n📞 ${phone}  ·  🗣 ${lead.language}\n🏢 ${lead.business}\n📈 ${lead.traction}\n👥 ${lead.founders} · ${lead.where}\n⏱ ${lead.timeline}\n📍 Came from: ${item}${kw ? " (" + kw + ")" : ""}\nLead ID: ${id}\nAfter your call, tell Claude: "lead ${id}: <what happened>"`, true);
 }
+const KEYWORD_OPENER_ML = "ഹായ്! 👋 കമന്റിന് നന്ദി. നിങ്ങൾ ചോദിച്ച free guide ഇവിടെ അയച്ചു തരട്ടെ? താഴെയുള്ള button tap ചെയ്യൂ.";
 const KEYWORD_OPENER = {
   START: "Hi! 👋 Thanks for your comment. Want a quick guide on which company type suits you: OPC, Private Limited or LLP? Tap the button below.",
   NAME: "Hi! 👋 Thanks for your comment. Want our tips to keep your company name from getting rejected? Tap the button below.",
