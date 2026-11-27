@@ -200,7 +200,11 @@ corporation; towns use K-SMART); every shop and commercial establishment registe
 Establishments Act whatever the number of workers (even none), online, within 60 days of starting, with the local-body
 licence copy attached, renewed every year; professional tax (revised 1 Oct 2024) is collected by the local body, deducted
 by the employer, maximum Rs 2,500 a year. GST / FSSAI do not replace these. Home-business rules were being changed in 2025:
-never state a home-business rule or a penalty."""
+never state a home-business rule or a penalty.
+Shops Act renewal (Kerala Shops and Commercial Establishments (Amendment) Bill 2021, deemed from 9 Nov 2020; Bill text read
+27 Nov 2026 on prsindia.org): registration and renewal are applied for online through the Labour Commissionerate Automation
+System (LCAS); a renewal applied for at least 30 days before the certificate expires, with the prescribed fee, is renewed
+automatically. Never state the fee amount; the validity period is not in that text (check the certificate's expiry date)."""
 FACTS_NRI = """Pravasi founder (checked 27 Nov 2026): NORKA NDPREM gives bank loans of Rs 1 lakh to Rs 30 lakh to Keralites who
 returned for good after at least 2 years abroad, 15% capital subsidy (max Rs 3 lakh) and 3% interest subsidy for the first
 4 years for those who repay on time, via partner banks (never state when the subsidy is released); Mudra Tarun Plus (Rs 20 lakh) only after repaying a Tarun loan; PMEGP
