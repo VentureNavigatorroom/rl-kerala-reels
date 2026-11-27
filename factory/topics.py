@@ -230,7 +230,39 @@ an injunction; cannot protect what is already public; many investors don't sign 
 FACTS_CFA = """co-founder agreement: equity split, vesting (a common practice is 4 years with a 1-year cliff), roles and decisions,
 all IP assigned to the company, leaver/buy-back of unvested shares, dispute resolution; post-exit non-compete is
 generally not enforceable in India but confidentiality and non-solicit can be; mirror the share rights in the SHA and
-articles. Never decide the split."""
+articles. Never decide the split.
+Partner disputes (checked 27 Nov 2026 against the primary texts; GENERAL INFORMATION ONLY):
+- LLP Act 2008 s.23(1): partners' mutual rights and duties are governed by the LLP agreement; s.23(4): on any matter the
+  agreement does not cover, the First Schedule applies. First Schedule defaults: partners share capital, profits and
+  losses equally (para 2); no new partner without the consent of all partners (para 7); decisions by a majority in number
+  of partners, one vote each, and no change in the nature of business without all partners' consent (para 8); each
+  partner must give true accounts and full information to any partner (para 10); a partner who, without consent, runs a
+  business of the same nature competing with the LLP must account for and pay over its profits (para 11), and must
+  account for any benefit from using the LLP's property, name or business connection (para 12); disputes between partners
+  arising out of the LLP agreement that cannot be resolved under it are referred to arbitration under the Arbitration
+  and Conciliation Act 1996 (para 14). These are LLP rules only: for a company or a partnership firm, never quote them.
+  Sources: LLP Act text (Govt copy) https://mumbaiport.gov.in/writereaddata/linkimages/0944308551.pdf ; s.23(1),(4) and
+  para 14 as quoted by the Karnataka High Court, Maverick Motors LLP v Rohith Murthy, CMP 34/2025, 31 Oct 2025
+  (NC 2025:KHC:43884); India Code: https://www.indiacode.nic.in/handle/123456789/2023
+- Arbitration and Conciliation Act 1996 s.9: before, during or after arbitral proceedings (before the award is enforced)
+  a party may ask a COURT for interim measures, e.g. preservation or interim custody of goods, detention / preservation /
+  inspection of property in dispute, securing the amount, an interim injunction or a receiver; once the tribunal is
+  formed the court normally leaves it to the tribunal (s.9(3)). s.17: the ARBITRAL TRIBUNAL can order the same kinds of
+  interim measures during the proceedings, and its order is deemed an order of the court and enforceable under the CPC as
+  if it were a court order (s.17(2)). Source: https://thc.nic.in/Central%20Governmental%20Acts/Arbitration%20and%20Conciliation%20Act,%201996..pdf
+- Breaking an injunction: CPC Order 39 Rule 2A: the court MAY order the property of the person who disobeyed to be
+  attached and MAY order civil prison up to 3 months (Supreme Court, Samee Khan v Bindu Khan, 1 Sep 1998, quoting the
+  rule: https://api.sci.gov.in/jonew/judis/13037.pdf); wilful disobedience of a court order is civil contempt
+  (Contempt of Courts Act 1971 s.2(b); punishment s.12: https://www.highcourtchd.gov.in/hclscc/subpages/pdf_files/6.pdf).
+  Always "may": the court decides; never say it WILL happen.
+- Changing your advocate: a party may engage another advocate; the earlier appointment ends with the court's leave by a
+  writing signed by the client or the advocate (CPC Order III Rule 4(2)); the new advocate comes on record with the former
+  advocate's consent or the court's leave (High Court rules, e.g. https://www.highcourtchd.gov.in/sub_pages/left_menu/Rules_orders/high_court_rules/Vol-V--PDF/chap6partBV5.pdf rule 11).
+- What to keep ready (general good practice): the LLP / partnership / co-founder agreement, copies of every order,
+  minutes and messages with dates, bank statements, a list (and photos) of the firm's assets and stock.
+NEVER give legal advice on a specific case and never predict an outcome: say a lawyer must look at the documents (our team
+can connect them with a lawyer). Never say the police or a court WILL do something, never criticise the police or a
+lawyer, never a fee."""
 FACTS_FP = """financial projections: investors, banks and grant panels ask for them; 3 years, month by month for year 1; revenue
 drivers (customers, price, growth), costs and hiring, P&L, cash flow, break-even, written assumptions; realistic and
 tied to traction (inflated numbers lose trust); banks may ask for a project report for loans. NEVER mention our fee."""

@@ -107,6 +107,18 @@ F20. **"Bank asked for an Udyam certificate for the loan."**
 F21. **"Big company asks: are you MSME-registered?"** Since section 43B(h), buyers ask because paying late costs them their tax deduction.
 F22. **"Registered years ago as Udyog Aadhaar."** It has to move to Udyam.
 
+### Partner disputes (cfa; researched 27 Nov on legal Q&A forums; patterns only, mark theme="faq")
+Facts only from topics.FACTS_CFA ("Partner disputes"). General information, never advice on a case; always "a lawyer must see the documents".
+Never base a script on one real person's story: mix these, change the sector, town and asset, invent the names.
+F23. **50/50 LLP, one popular product.** The other partner plans a new company of his own and wants to move that product into it, giving the first partner nothing. Everything was agreed over email.
+F24. **Partner stops working and starts a similar business** while still a partner, keeps the accounts and GST login to himself, and then sends the other partner a legal notice.
+F25. **Partner goes silent for months** and turns out to have run the business alone, with the firm's customers and records. The other partner wants out and wants the profits accounted for.
+F26. **50:50 firm, money leaving the current account.** One partner keeps withdrawing large sums without consent and won't share the statements. "How do I stop it and get the books checked?"
+F27. **Bank account frozen in the fight.** One partner asks the bank to block the other's signing authority; suppliers and workers go unpaid while the two argue.
+F28. **"I put in all the money, he put in nothing, now he wants half."** One partner promised capital and never paid it, and the agreement does not say what happens then. "Can I remove him and keep the business?"
+F29. **"Our LLP agreement says nothing about disputes. Is there any way out?"** (Fact: on matters the agreement is silent about, the LLP Act's First Schedule applies, including arbitration of disputes arising out of the agreement.)
+F30. **"There is an order to keep things as they are, and the other side is not following it."** "Injunction violated, what now?" is one of the most common questions on these forums. Keep it general: say what an order is, why to keep the order copy and the evidence, and that the court decides what happens next. Never use a real case's details: no asset type, place, travel or "influence" story taken from a real person.
+
 ## More real-enquiry situations for the topics added 19 Nov evening (from the CRM; anonymised; mark theme="crm")
 
 Same confidentiality rule as above:
