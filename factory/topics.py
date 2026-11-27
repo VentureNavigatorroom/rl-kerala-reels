@@ -253,7 +253,12 @@ fast loading; payment gateways commonly ask for website / app details during KYC
 An Instagram page alone can be lost (hacked, banned); a website or app is yours."""
 FACTS_IEC = """IEC: 10-digit Import Export Code from DGFT linked to the business PAN; needed to import or export goods (customs and
 banks ask); one per PAN; never expires but must be updated online every year between April and June or it is
-deactivated; not needed for personal-use imports; service exporters need it to claim export benefits."""
+deactivated; not needed for personal-use imports.
+Services (checked 27 Nov 2026, DGFT / FTP 2023): for exporting services an IEC is required only when the service provider takes
+benefits under the Foreign Trade Policy (or deals in specified services / technologies); under FTP 2023 the IEC must be held ON THE
+DATE the service is rendered to claim those benefits, so get it before billing foreign clients, not when claiming. The old Service
+Exports from India Scheme (SEIS, duty credit up to 7% of net foreign earnings) was discontinued under FTP 2023: never say service
+exporters get a 7% or cash incentive today. High export performers can be recognised as Status Holders (privileges) under FTP 2023."""
 FACTS_NDA = """NDA: enforceable contract in India if properly drafted and stamped per the state's stamp law; one-way or mutual;
 define confidential information, exclusions (already public, independently developed), duration and remedies such as
 an injunction; cannot protect what is already public; many investors don't sign NDAs at pitch stage."""
