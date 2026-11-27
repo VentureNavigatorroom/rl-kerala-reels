@@ -118,6 +118,10 @@ FACTS_GST = """
 - not registering when required: pay the tax, 18% interest, and a penalty of Rs 10,000 or 10% of the tax due, whichever higher
 - GSTR-3B late fee: Rs 50 a day, Rs 20 a day for a nil return (capped at Rs 500 for nil, Rs 2,000 for turnover up to Rs 1.5 crore)
 - returns are due even in months with no sales (nil returns)
+- query on an application (CGST rule 9, read on taxinformation.cbic.gov.in 27 Nov 2026): the officer can raise a notice in
+  FORM GST REG-03; the applicant answers in FORM GST REG-04 within 7 working days (clarifications, documents; PAN, State,
+  mobile and e-mail cannot be changed this way); with no reply or an unsatisfactory one the officer MAY reject, with reasons
+  in writing, in FORM GST REG-05; after a reply the officer decides within 7 working days. Never promise approval
 """
 FACTS_INV = """
 - only a private limited company can take equity investment (LLP / partnership / proprietorship cannot issue shares)
@@ -201,12 +205,21 @@ FACTS_NRI = """Pravasi founder (checked 27 Nov 2026): NORKA NDPREM gives bank lo
 returned for good after at least 2 years abroad, 15% capital subsidy (max Rs 3 lakh) and 3% interest subsidy for the first
 4 years for those who repay on time, via partner banks (never state when the subsidy is released); Mudra Tarun Plus (Rs 20 lakh) only after repaying a Tarun loan; PMEGP
 loans are decided by banks; FEMA: FC-GPR within 30 days of issuing shares to a non-resident, FC-TRS within 60 days of a
-transfer, FLA return by 15 July. The bank decides: never promise a loan or subsidy, never state our fee."""
+transfer, FLA return by 15 July. The bank decides: never promise a loan or subsidy, never state our fee.
+PMEGP (KVIC is the nodal agency; revised-guidelines salient features, Delhi KVIB govt sheet, read 27 Nov 2026; tell people to
+check the live guidelines): new units only (existing units and units that already got another central / state government
+subsidy are not eligible); age 18+; VIII pass for manufacturing projects above Rs 10 lakh or service above Rs 5 lakh; maximum
+project cost for the subsidy Rs 50 lakh manufacturing, Rs 20 lakh business / service; margin-money subsidy general category
+15% urban / 25% rural, special categories (incl. women, SC/ST/OBC, minorities, ex-servicemen) 25% urban / 35% rural; own
+contribution 10% general, 5% special; banks sanction the loan; one person per family (self + spouse)."""
 FACTS_PAY = """Payroll (checked 27 Nov 2026): the four Labour Codes in force from 21 Nov 2025; ESIC for establishments with 10+
 employees (wage ceiling Rs 21,000 a month); EPF for 20+ employees, wage ceiling Rs 25,000 a month from 17 Sep 2026
 (was Rs 15,000); allowances above 50% of pay are added back to wages; appointment letters required; PM-VBRY (from
 1 Aug 2025): EPFO-registered employers can get up to Rs 3,000 a month per additional employee for 2 years, subject to
-conditions (amount depends on the wage slab; employee kept 6+ months; minimum new hires). Never promise an incentive or state our fee; disputes / inspections go to a labour-law professional."""
+conditions (amount depends on the wage slab; employee kept 6+ months; minimum new hires). Never promise an incentive or state our fee; disputes / inspections go to a labour-law professional.
+ESIC (esic.gov.in/contribution, read 27 Nov 2026, page reviewed Apr 2025): contributions 0.75% of wages (employee) and
+3.25% (employer); employees with an average daily wage up to Rs 176 pay no employee share, the employer still pays its
+share; deposit within 15 days of the end of the calendar month; two 6-month contribution periods (Apr-Sep, Oct-Mar)."""
 FACTS_PG = """Payment gateway (checked 27 Nov 2026 against Razorpay's public KYC docs, Master KYC from 1 Jan 2026): every online
 payment gateway in India runs KYC on the business before live payments (RBI / PMLA rules); documents depend on the business
 type: proprietor = identity + address proof, a business proof and bank details; private limited company = company PAN,

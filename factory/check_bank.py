@@ -104,7 +104,9 @@ RUPEE_OK = {"2,500", "3,000", "15,000", "21,000", "25,000", "0", "100", "1,000",
             # GST (topics.FACTS_GST): thresholds, penalty, late fees and their caps
             "40 ലക്ഷം", "20 ലക്ഷം", "50 ലക്ഷം", "10,000", "പതിനായിരം", "50", "20", "500", "2,000", "അമ്പത്", "ഇരുപത്", "നാല്പത് ലക്ഷം", "ഇരുപത് ലക്ഷം",
             # acc (topics.FACTS_ACC): late ITR fee when income is above Rs 5 lakh
-            "5,000"}
+            "5,000",
+            # pay (topics.FACTS_PAY, esic.gov.in): ESIC low-wage exemption
+            "176"}
 RUPEE = re.compile(r"(\S+(?: ലക്ഷം)?) രൂപ")
 def texts(x):   # every string inside an item
     if isinstance(x, str): yield x
