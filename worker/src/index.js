@@ -988,7 +988,7 @@ async function handleWebhook(env, body) {
   for (const entry of body.entry || []) {
     for (const ev of entry.messaging || []) {
       const mid = ev.message?.mid || ev.postback?.mid; if (mid && !(await claimOnce(env, `dup:${mid}`))) continue;
-      if (ev.message?.text && ev.sender?.id) { let h = 0; for (const ch of ev.message.text.trim().toLowerCase()) h = (h * 31 + ch.codePointAt(0)) | 0; if (!(await claimOnce(env, `dtx:${ev.sender.id}:${h}`, 600))) { await log(env, `same DM from ${ev.sender.id} seen twice: answered once`); continue; } }
+      if (ev.message?.text && ev.sender?.id && !ev.message.quick_reply && !BTN.test(ev.message.text.trim()) && !/^yes,?\s*send it/i.test(ev.message.text.trim())) { let h = 0; for (const ch of ev.message.text.trim().toLowerCase()) h = (h * 31 + ch.codePointAt(0)) | 0; if (!(await claimOnce(env, `dtx:${ev.sender.id}:${h}`, 600))) { await log(env, `same DM from ${ev.sender.id} seen twice: answered once`); continue; } }
       if (ev.postback && !ev.message) ev.message = { text: ev.postback.title || ev.postback.payload || "" };   // button taps of other kinds
       if (ev.message && !ev.message.is_echo && (ev.message.attachments || []).some(a => a?.type === "story_mention")) { await storyMention(env, ev.sender.id); continue; }   // not a lead message
       if (!ev.message || ev.message.is_echo || !ev.message.text) continue;
