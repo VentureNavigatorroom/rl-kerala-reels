@@ -11,16 +11,16 @@ STORIES FROM REAL ENQUIRIES: bank/STORY_THEMES.md holds anonymised situations di
 companies, places, numbers or anything that could identify a person). Build scripts on those situations, always with
 invented names and changed details. Never put CRM details in the repo."""
 
-NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val", "pg", "web", "acc", "kl", "nri", "pay"]   # acc kl nri pay added 27 Nov night   # pg + web added 27 Nov   # added 19 Nov evening (val = company valuation, 19:14)
+NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val", "pg", "web", "acc", "kl", "nri", "pay", "dr"]   # dr = investor data room (28 Nov)   # acc kl nri pay added 27 Nov night   # pg + web added 27 Nov   # added 19 Nov evening (val = company valuation, 19:14)
 DIRS = {"co": "bank", "gst": "bank/gst", "inv": "bank/inv", "sui": "bank/sui", "sk": "bank/sk", "ud": "bank/ud", **{t: f"bank/{t}" for t in NEW7}}
 # share of each stock target (reels, carousels, stories, posters) kept for each topic; together <= 1 keeps the
 # GitHub Pages site under its 1 GB limit. Company registration posts the most reels a day, so it keeps the biggest backup.
-SHARE = {"co": 0.1, "gst": 0.055, "inv": 0.045, "sui": 0.05, "sk": 0.05, "ud": 0.045, "tm": 0.055, "roc": 0.05, "fssai": 0.055, "iec": 0.05, "nda": 0.045, "cfa": 0.045, "fp": 0.04, "val": 0.045, "pg": 0.045, "web": 0.045, "acc": 0.055, "kl": 0.045, "nri": 0.045, "pay": 0.035}   # same as the worker's REEL_SHARE (27 Nov: 16 topics)   # same as the worker's REEL_SHARE (26 Nov review)
+SHARE = {"co": 0.096, "gst": 0.053, "inv": 0.043, "sui": 0.048, "sk": 0.048, "ud": 0.043, "tm": 0.053, "roc": 0.048, "fssai": 0.053, "iec": 0.048, "nda": 0.043, "cfa": 0.043, "fp": 0.038, "val": 0.043, "pg": 0.043, "web": 0.043, "acc": 0.053, "kl": 0.043, "nri": 0.043, "pay": 0.034, "dr": 0.041}   # 27 Nov night: data room added, everyone scaled by 0.96; = REEL_SHARE in the worker   # same as the worker's REEL_SHARE (27 Nov: 16 topics)   # same as the worker's REEL_SHARE (26 Nov review)
 
 # general keywords (the worker's KW_TOPIC). Each post also gets its own unique keyword from build.KW_POOL.
 BASES = {"co": ["START", "NAME", "AFTER", "CHECKLIST"], "gst": ["GST", "LIMIT", "PENALTY"], "inv": ["INVEST", "TERMSHEET", "FUNDING"],
          "sui": ["DPIIT", "BENEFITS"], "sk": ["KSUM", "GRANT"], "ud": ["UDYAM", "MSME"],
-         "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"], "val": ["VALUATION", "WORTH"], "acc": ["ITR", "ACCOUNTS"], "kl": ["SHOPS", "KSMART"], "nri": ["PRAVASI", "NORKA"], "pay": ["ESIC", "PAYROLL"], "pg": ["GATEWAY", "PAYMENT"], "web": ["WEBSITE", "WEBPLAN"]}
+         "dr": ["DATAROOM", "DILIGENCE"], "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"], "val": ["VALUATION", "WORTH"], "acc": ["ITR", "ACCOUNTS"], "kl": ["SHOPS", "KSMART"], "nri": ["PRAVASI", "NORKA"], "pay": ["ESIC", "PAYROLL"], "pg": ["GATEWAY", "PAYMENT"], "web": ["WEBSITE", "WEBPLAN"]}
 ALL_BASES = {k for v in BASES.values() for k in v}
 
 # CTAs: (pill text, promise). The first word of the pill is the keyword.
@@ -46,12 +46,13 @@ CTA_COFOUNDER, CTA_VESTING = _c("COFOUNDER", "കോ-ഫൗണ്ടർ എഗ�
 CTA_PROJECTION, CTA_FORECAST = _c("PROJECTION", "ഇൻവെസ്റ്റർ നോക്കുന്നത് എന്ത്\nഎന്ന് അയച്ചുതരാം"), _c("FORECAST", "3 വർഷ ഫോർകാസ്റ്റ്\nഎങ്ങനെ എന്ന് അയച്ചുതരാം")
 CTA_VALUATION, CTA_WORTH = _c("VALUATION", "എപ്പോൾ, ഏത് രീതി എന്ന\nഗൈഡ് അയച്ചുതരാം"), _c("WORTH", "കമ്പനിയുടെ മൂല്യം എങ്ങനെ\nകണക്കാക്കുന്നു എന്ന് അയച്ചുതരാം")
 CTA_GATEWAY, CTA_PAYMENT = _c("GATEWAY", "റിജക്ട് ആകാതിരിക്കാനുള്ള\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("PAYMENT", "ഓൺലൈൻ പേയ്മെന്റിന് മുമ്പ്\nവേണ്ടത് അയച്ചുതരാം")
-CTA_WEBSITE, CTA_WEBPLAN = _c("WEBSITE", "നല്ല വെബ്സൈറ്റിന്റെ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("WEBPLAN", "മാസ തവണയായി വെബ്സൈറ്റ്:\nഎങ്ങനെ എന്ന് അയച്ചുതരാം")
+CTA_WEBSITE, CTA_WEBPLAN = _c("WEBSITE", "നല്ല വെബ്സൈറ്റിന്റെ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("WEBPLAN", "വെബ്സൈറ്റോ ആപ്പോ മാസ തവണയായി:\nഎങ്ങനെ എന്ന് അയച്ചുതരാം")
 CTA_ITR, CTA_ACCOUNTS = _c("ITR", "GST, ITR ഫയലിംഗ് മുടങ്ങാതിരിക്കാൻ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("ACCOUNTS", "മാസക്കണക്കിൽ വേണ്ടത്\nഅയച്ചുതരാം")
 CTA_SHOPS, CTA_KSMART = _c("SHOPS", "കടയ്ക്ക് വേണ്ട ലൈസൻസുകളുടെ\nലിസ്റ്റ് അയച്ചുതരാം"), _c("KSMART", "K-SMART ലൈസൻസ്\nഗൈഡ് അയച്ചുതരാം")
 CTA_PRAVASI, CTA_NORKA = _c("PRAVASI", "പ്രവാസി ബിസിനസ് ലോൺ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("NORKA", "ബാങ്ക് നോക്കുന്ന പ്രോജക്റ്റ്\nറിപ്പോർട്ട് ഗൈഡ് അയച്ചുതരാം")
 CTA_ESIC, CTA_PAYROLL = _c("ESIC", "PF, ESI എപ്പോൾ വേണം എന്ന\nലിസ്റ്റ് അയച്ചുതരാം"), _c("PAYROLL", "മാസ ശമ്പള ചെക്ക്ലിസ്റ്റ്\nഅയച്ചുതരാം")
-CTAS = {"acc": [CTA_ITR, CTA_ACCOUNTS], "kl": [CTA_SHOPS, CTA_KSMART], "nri": [CTA_PRAVASI, CTA_NORKA], "pay": [CTA_ESIC, CTA_PAYROLL], "pg": [CTA_GATEWAY, CTA_PAYMENT], "web": [CTA_WEBSITE, CTA_WEBPLAN], "val": [CTA_VALUATION, CTA_WORTH], "tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
+CTA_DATAROOM, CTA_DILIGENCE = _c("DATAROOM", "ഡാറ്റ റൂമിൽ വേണ്ടതിന്റെ\nലിസ്റ്റ് അയച്ചുതരാം"), _c("DILIGENCE", "ഇൻവെസ്റ്റർ കണ്ടെത്തുന്ന\nറെഡ് ഫ്ലാഗുകൾ അയച്ചുതരാം")
+CTAS = {"dr": [CTA_DATAROOM, CTA_DILIGENCE], "acc": [CTA_ITR, CTA_ACCOUNTS], "kl": [CTA_SHOPS, CTA_KSMART], "nri": [CTA_PRAVASI, CTA_NORKA], "pay": [CTA_ESIC, CTA_PAYROLL], "pg": [CTA_GATEWAY, CTA_PAYMENT], "web": [CTA_WEBSITE, CTA_WEBPLAN], "val": [CTA_VALUATION, CTA_WORTH], "tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
         "nda": [CTA_NDA, CTA_SECRET], "cfa": [CTA_COFOUNDER, CTA_VESTING], "fp": [CTA_PROJECTION, CTA_FORECAST], "ud": [CTA_UDYAM, CTA_MSME], "gst": [CTA_GST, CTA_LIMIT, CTA_PENALTY], "inv": [CTA_INVEST, CTA_TERMSHEET, CTA_FUNDING], "sui": [CTA_DPIIT, CTA_BENEFITS], "sk": [CTA_KSUM, CTA_GRANT]}
 
 SEGMENTS = {
@@ -94,7 +95,8 @@ SEGMENTS = {
     "cfa": ["friends_cofounders", "tech_nontech", "family_cofounders", "late_joiner", "remote_cofounder"],
     "val": ["raising_round", "esop_plan", "partner_exit", "nri_share_issue", "share_transfer"],
     "pg": ["online_seller_pg", "service_pro_pg", "proprietor_pg", "new_company_pg", "app_founder_pg"],
-    "web": ["no_website", "insta_only", "old_website", "service_business", "online_shop"],
+    "web": ["no_website", "insta_only", "old_website", "service_business", "online_shop", "app_idea", "mvp_founder", "ops_software"],
+    "dr": ["raising_first", "investor_asked", "loan_dd", "selling_business", "unregistered_dr", "messy_docs"],
     "acc": ["nil_filer", "freelancer_itr", "small_trader_acc", "new_company_acc", "notice_holder"],
     "kl": ["new_shop", "home_office", "no_staff_shop", "salaried_staff_kl", "town_business"],
     "nri": ["gulf_returnee", "nri_investing", "returnee_loan", "family_business_nri", "mudra_repeat"],
@@ -224,6 +226,15 @@ conditions (amount depends on the wage slab; employee kept 6+ months; minimum ne
 ESIC (esic.gov.in/contribution, read 27 Nov 2026, page reviewed Apr 2025): contributions 0.75% of wages (employee) and
 3.25% (employer); employees with an average daily wage up to Rs 176 pay no employee share, the employer still pays its
 share; deposit within 15 days of the end of the calendar month; two 6-month contribution periods (Apr-Sep, Oct-Mar)."""
+FACTS_DR = """Investor data room (our service, 28 Nov): a secure, organised online folder that investors, lenders or buyers review
+during due diligence. Usual contents: incorporation documents (certificate of incorporation, MOA, AOA, PAN), cap table and share
+records, shareholder / co-founder / key agreements, financial statements and bank statements, financial projections and the
+business model, tax and compliance records (GST returns, income tax, ROC filings), IP such as trademarks, key customer and vendor
+contracts, team details and ESOPs, the pitch deck. Missing or messy documents slow due diligence and raise red flags (pending
+ROC or GST filings, no signed co-founder agreement, a cap table that doesn't match share records, no projections, brand not
+protected). Our team sets up the data room AND prepares whatever is missing: company registration if not registered,
+projections, valuation, agreements, pending filings. NEVER promise funding, an investor, a valuation figure, a timeline or
+any outcome; never state a price or fee."""
 FACTS_PG = """Payment gateway (checked 27 Nov 2026 against Razorpay's public KYC docs, Master KYC from 1 Jan 2026): every online
 payment gateway in India runs KYC on the business before live payments (RBI / PMLA rules); documents depend on the business
 type: proprietor = identity + address proof, a business proof and bank details; private limited company = company PAN,
@@ -232,12 +243,14 @@ declaration for holders above 10%, signatory KYC; settlement bank account in the
 on PAN, bank and registration or activation is delayed / rejected; existing CKYC records can make activation faster,
 otherwise video KYC; website policy pages are no longer needed at onboarding at some major gateways, but website / app
 details are commonly asked. Never name a gateway's fees or promise activation; don't recommend one gateway."""
-FACTS_WEB = """Websites (OUR service, 27 Nov): we build websites for startups and small businesses; instead of one big payment
-up front, they can pay in monthly parts until the total is paid; the amount depends on the project and the team gives the
-exact quote on a call. NEVER state a price, an instalment amount or a delivery date; never promise rankings or sales.
-Good-practice facts: mobile-friendly, a domain in the business's name, clear contact details and WhatsApp button, real
-photos of what you sell, fast loading; payment gateways commonly ask for website / app details; terms, privacy and refund
-pages help customers trust an online seller. An Instagram page alone can be lost (hacked, banned); a website is yours."""
+FACTS_WEB = """Tech development (OUR service, widened 28 Nov): we build websites, mobile apps, software for a team, MVPs and
+automations for startups and businesses. Why us instead of a plain developer: we understand the business (customers, revenue,
+compliance, payments, investors) and build what moves it, not just what was asked. Clients can pay in monthly parts until the
+total is paid; the amount depends on the project and the team quotes on a call. NEVER state a price, an instalment amount, a
+timeline or a delivery date; never promise rankings, users, sales, funding or any result. Good practice: start with the
+smallest version that solves the main problem (MVP); mobile-friendly; a domain in the business's name; clear contact details;
+fast loading; payment gateways commonly ask for website / app details during KYC; terms, privacy and refund pages build trust.
+An Instagram page alone can be lost (hacked, banned); a website or app is yours."""
 FACTS_IEC = """IEC: 10-digit Import Export Code from DGFT linked to the business PAN; needed to import or export goods (customs and
 banks ask); one per PAN; never expires but must be updated online every year between April and June or it is
 deactivated; not needed for personal-use imports; service exporters need it to claim export benefits."""
