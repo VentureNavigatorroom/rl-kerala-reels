@@ -813,7 +813,7 @@ async function monitorAllowed(req, u) {
   if (req.method === "GET") return ["/ops/status", "/ops/insights", "/ops/nudge", "/ops/leads"].includes(p);
   if (req.method !== "POST") return false;
   const b = await req.clone().json().catch(() => ({}));
-  if (p === "/ops/run") return ["slots", "snapshot", "optimise", "poll", "nudge"].includes(b.what) && !b.id;
+  if (p === "/ops/run") return ["slots", "snapshot", "optimise", "poll", "nudge", "lead_links"].includes(b.what) && !b.id;
   if (p === "/ops/flag") return /^stage_hold(_[a-z]+)?$/.test(b.k) || b.k === "low_reach_mode" || b.k === "reel_cap";
   if (p === "/ops/graph") return (b.method || "GET") === "GET";
   if (p === "/ops/correct") return true;
@@ -1585,7 +1585,10 @@ export default {
         await log(env, `follow-up sent to ${id}`); return json({ ok: true, sent: true, hours_left_in_window: left / 3600e3 });
       }
       if (u.pathname === "/ops/nudge") return json(await kv(env, "nudge", {}));
-      if (u.pathname === "/ops/run" && req.method === "POST") { const { what, id, topic: tq } = await req.json(); if (what === "nudge") return json(await processNudges(env, id || null)); if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env);
+      if (u.pathname === "/ops/run" && req.method === "POST") { const { what, id, topic: tq } = await req.json(); if (what === "nudge") return json(await processNudges(env, id || null)); if (what === "lead_links") {   // re-send update links for every open lead to Discord (links never leave Discord)
+          const all = await kv(env, "leads", {}); const open = Object.entries(all).filter(([, L]) => L.phone && !["closed", "lost"].includes(L.status));
+          for (let i = 0; i < open.length; i += 8) { const part = await Promise.all(open.slice(i, i + 8).map(async ([lid, L]) => `• ${await leadLine(env, lid, L)} (${STATUS_TXT[L.status] || "new"}) → ${await leadUrl(env, lid)}`)); await discord(env, (i ? "" : `🗂 **Update links for your open leads (${open.length})**: tap one after each call. For anyone who ghosted you, tap "No answer" and the follow-ups start.\n🗂 All open leads: ${BASE}/leads/board?k=${await leadToken(env, "board")}\n`) + part.join("\n"), i === 0); }
+          return json({ ok: true, open: open.length }); } if (what === "snapshot") await snapshot(env); if (what === "optimise") await optimise(env);
         if (what === "poll") { await pollInbox(env); return json({ ok: true }); } const tp = TOPICS[tq] ? tq : "co";
         if (["reel", "story", "carousel", "poster"].includes(what)) await postKind(env, what, tp);
         if (what === "slots") { const d = IST().toISOString().slice(0, 10); const P = await planDay(env, u.searchParams.get("day") || d); return json({ ...P, slots: slotsFor(P) }); } return json({ ok: true }); }
