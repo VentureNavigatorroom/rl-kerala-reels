@@ -6,6 +6,13 @@ with 13 the same total volume is spread thinner, so per-topic numbers are lower 
 
 These rules run whether the owner is present or not. The monitor (every 3 h) and the script writer (every 4 h) read this file on every run. Two review tasks run on 22 Nov and 25 Nov.
 
+## Owner constraint (27 Nov, after the weekly review): growth comes ONLY from Instagram itself
+- No paid boosts, no collabs arranged by the owner, no WhatsApp sharing, no profile work, and the owner does not tap lead update links. Never ask for these.
+- So every lever must sit inside the automation: scripts, captions, posting schedule, formats, topic shares, and the bot's existing replies.
+- Measuring without owner outcomes: rank topics by Instagram-visible lead quality per 1,000 reach: (1) leads who gave a phone number, (2) leads who wrote back to a nudge or named a call time (status replied / meeting set by the bot), (3) all leads, (4) keyword comments. Count "closed" only if a status shows it.
+- To pass the ~1,500-view cap without boosts, reels must earn sends: every new script's last line is a quotable line written to be forwarded ("send this to the friend who..." situations), and captions carry the keyword under the hook plus a send line (live since 27 Nov).
+- Share floor: with 21 topics, 5% each is impossible, so the floor for rule 4 is now **3.5%** (topics already below it, e.g. pay 3.4%, are not cut further).
+
 ## Projection 28 Nov - 11 Dec (set at the 27 Nov weekly review from real 21-27 Nov numbers; replaces the tables below for judging)
 
 Basis (21-27 Nov, live): 638 posts, 200.7k reach, 223k views, 106 breakouts, 6.1 s watch; story reels 417-501 reach a day since
@@ -15,7 +22,7 @@ followers 320. Volume: ~84 story reels a day over 21 topics (the 7 new topics st
 val / cfa 4.6%, inv / ud / nda / pg / web / kl / nri 4.3%, dr 4.1%, fp 3.8%, pay 3.4%.
 
 ### Whole account, 28 Nov - 11 Dec (14 days)
-| | Low | Middle (best guess) | High (with owner's push) |
+| | Low | Middle (best guess) | High (if sends double) |
 |---|---|---|---|
 | Views | 400k | 550-650k | 900k+ (needs sends to break the ~1,500 cap) |
 | Breakout reels (1,000+ views) | 180 | 250-300 | 350+ |
@@ -40,8 +47,8 @@ val / cfa 4.6%, inv / ud / nda / pg / web / kl / nri 4.3%, dr 4.1%, fp 3.8%, pay
 | fp | ~45 | ~8k | 0-1 | 0-1 | weakest; at the floor |
 | pg / web / kl / nri / acc / pay / dr | 40-62 each | unknown | - | - | first posts; judge after 5 days. dr and web: count meetings and clients, not only leads |
 
-2-week targets (judge at the next weekly review): keyword comments >= 0.2 per 1,000 reach (now 0.10); 1+ lead a day; the owner
-records an outcome for every lead so meetings and clients per topic can be counted; 3D vs toon judged once toon has 7 days.
+2-week targets (judge at the next weekly review): keyword comments >= 0.2 per 1,000 reach (now 0.10); 1+ lead a day, half with a
+phone number; shares (sends) >= 3 per 1,000 reach (now 1.6); 3D vs toon judged once toon has 7 days. No owner actions assumed.
 Goal unchanged: 10 clients a month per topic. At the middle case the best topics (co, val) reach ~1-2 clients a month by mid-December;
 getting to 10 needs the funnel (keyword comments x3-5) and sends (to pass the ~1,500-view cap), not more volume.
 
@@ -155,7 +162,7 @@ Early signals to watch:
 
 ### 4. Topic performance (from 25 Nov, with at least 5 days per topic)
 - **Measure:** rank topics by leads, then keyword comments, per 1,000 reach.
-- **Reduce, never drop:** cut a weak topic's share to no less than 5%, so it keeps learning and can recover. Give the freed share to the best topics.
+- **Reduce, never drop:** cut a weak topic's share to no less than 5% (3.5% since 27 Nov, 21 topics), so it keeps learning and can recover. Give the freed share to the best topics.
 - **Changes allowed:** no more than 2 share changes a week, each no more than 10 points.
 - **Shares live in two places:** REEL_SHARE in worker/src/index.js and SHARE in factory/topics.py. Keep them identical.
 - **Owner approval:** the owner has approved this; tell the owner what changed and why.

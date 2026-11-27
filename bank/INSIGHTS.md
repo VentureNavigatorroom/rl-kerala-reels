@@ -335,3 +335,5 @@ Clients per 1,000 reach: 0 for every topic (no outcomes recorded). Direct-DM lea
 - dr / web / pg / acc / kl / nri / pay: no posts yet; first judged at the review after 5 posting days.
 
 Tested: check_bank (bank OK), node --check on the worker as an ES module, shares equal and sum 1.0, caption output checked.
+
+- Owner reply (27 Nov): can't do paid boosts, collabs, WhatsApp sharing, profile work or lead-outcome updates; growth must come only from Instagram. Plan changed: no owner asks; topics ranked by Instagram-visible lead quality (phone given, replied / call time) instead of recorded clients; sends become a script target (forwardable last line); share floor 3.5%.
