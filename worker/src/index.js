@@ -1164,7 +1164,7 @@ async function handleWebhook(env, body) {
         continue;
       }
       {   // a correction / suggestion / complaint under a post is answered for what it says, not with the keyword DM (26 Nov)
-        const fk = realWords(ch.value.text).length >= 4 ? await feedbackKind(env, ch.value.text) : null;
+        const fk = (realWords(ch.value.text).length >= 4 || CORR_SHORT.test(ch.value.text)) ? await feedbackKind(env, ch.value.text) : null;   // "this is wrong" is short but still a correction
         if (fk) {
           const fr = await feedbackReply(env, ch.value.text, fk); const u0 = ch.value.from?.username;
           try { await graph(env, `${ch.value.parent_id || ch.value.id}/replies`, { message: (ch.value.parent_id && u0 ? `@${u0} ` : "") + fr }); } catch (e) { await log(env, `feedback reply failed: ${e.message}`); }
@@ -1241,6 +1241,37 @@ function cleanReply(s) {   // sanitise AI output; "" when unusable so the caller
   if (t.length > 200) { t = t.slice(0, 200); const c = Math.max(t.lastIndexOf(". "), t.lastIndexOf("! "), t.lastIndexOf("? ")); t = c > 40 ? t.slice(0, c + 1) : t.replace(/\s+\S*$/, "") + "…"; }
   return t.length >= 2 ? t : "";
 }
+// Thanks / appreciation comments (27 Nov: "Thank u🙌" from @dev_onthe.move under his own thank-you reel thx03 got
+// "നന്ദി, ... START എന്ന് കമന്റ് ..."): a warm reply with no keyword CTA; on a thanks / correction reel, or one that names
+// the commenter (collab or @ in the caption), a personal reply.
+const THANKS_W = /\b(thanks?|thank\s*(you|u|yu|q)|thanku|thankyou|thanx|thnx|thnks|thnk\s*u|thx|tnx|tq|ty|tysm|nanni|nandi|nandri|super|superb|great|nice|awesome|excellent|helpful|useful|informative|well (done|said)|love (it|this|u)|adipoli|kidu|polichu|poli)\b|നന്ദി|താങ്ക്സ്|അടിപൊളി|കിടു|സൂപ്പർ|ഉപകാരം/i;
+const THANKS_NOT = /\b(how|what|why|when|where|which|can|could|need|want|help|price|doubt|venam|venom|engane|enthaa?|ethra|but|wrong|not)\b|എങ്ങനെ|എന്ത്|വേണം|സഹായം|എത്ര|പക്ഷേ/i;
+const CORR_SHORT = /\b(wrong|incorrect|mistake|not (correct|true|right)|outdated|thett\w*|sheriyalla|shariyalla)\b|തെറ്റ്|ശരിയല്ല/i;
+function isThanks(text) {
+  const t = normKw(text); if (/[?？]/.test(t)) return false;
+  return realWords(t).length <= 6 && THANKS_W.test(t) && !THANKS_NOT.test(t);
+}
+const CREPLY_THX = ["Thank you! 🙌", "Thanks a lot! 🙏 Glad it helped.", "Thank you so much 😊🙏", "Means a lot, thank you! 🙌"];
+const CREPLY_THX_ML = ["നന്ദി! 🙌", "വളരെ സന്തോഷം, നന്ദി! 😊🙏", "ഒരുപാട് നന്ദി! 🙏"];
+const CREPLY_THX_MG = ["Nanni! 🙌", "Orupaadu nanni 😊🙏", "Valare santhosham, nanni! 🙏"];
+function postKw(it) {   // the keyword of the reel's own topic; none on thanks / correction / news reels
+  if (!it || ["thanks", "correction", "news", "opportunity"].includes(it.theme)) return "";
+  return it.base || Object.keys(KW_TOPIC).find(k => KW_TOPIC[k] === topicOf(it)) || "";
+}
+function pickCommentReply(text, kind, it, user, thx) {   // fixed reply, or "" = ask the AI
+  const lc = (user || "").toLowerCase(), special = ["thanks", "correction"].includes(it?.theme);
+  const named = !!lc && ((it?.collab || []).some(x => String(x).replace(/^@/, "").toLowerCase() === lc) || (it?.caption || "").toLowerCase().includes("@" + lc));
+  if (thx && (named || special)) {
+    const at = user ? ` @${user}` : "";
+    if (named || it.theme === "thanks") return named ? `നന്ദി${at}! നിങ്ങളുടെ നിർദേശം കൊണ്ടാണ് ഇത് ചെയ്തത് 🙏 Thank you for the idea!`
+      : `നന്ദി${at}! 🙏 നിങ്ങളുടെ നിർദേശങ്ങളാണ് ഞങ്ങളെ മെച്ചപ്പെടുത്തുന്നത്. Thank you for watching!`;
+    return `നന്ദി${at}! 🙏 തിരുത്തൽ ശ്രദ്ധിച്ചതിന് നന്ദി. Thanks for checking the correction!`;
+  }
+  if (kind === "emoji") return pick(CREPLY_EMOJI);
+  if (kind === "question") return (!it || postKw(it)) ? pick(/[\u0D00-\u0D7F]/.test(text) ? CREPLY_Q_ML : CREPLY_Q) : CREPLY_Q[1];
+  if (thx) return pick(/[\u0D00-\u0D7F]/.test(text) ? CREPLY_THX_ML : /\b(nanni|nandi|nandri|adipoli|kidu|polichu|poli)\b/i.test(text) ? CREPLY_THX_MG : CREPLY_THX);
+  return "";
+}
 async function commentReply(env, c, item) {   // c = webhook comment value; never called for our own comments
   const kind = commentKind(c.text); if (kind === "spam") { await log(env, `comment skipped (spam): @${c.from?.username || "?"}`); return; }
   const ck = `creply:${IST().toISOString().slice(0, 10)}`; const n = +(await env.STATE.get(ck) || 0);
@@ -1248,16 +1279,20 @@ async function commentReply(env, c, item) {   // c = webhook comment value; neve
   const uk = `cru:${IST().toISOString().slice(0, 10)}:${c.from?.id || c.from?.username || "?"}`; const un = +(await env.STATE.get(uk) || 0);
   if (un >= 2) return;   // at most 2 replies per person per day, so a "thanks" exchange can't go back and forth
   const ml = /[\u0D00-\u0D7F]/.test(c.text);
-  let msg = kind === "emoji" ? pick(CREPLY_EMOJI) : kind === "question" ? pick(ml ? CREPLY_Q_ML : CREPLY_Q) : "";
-  if (!msg) {
-    let hook = "", point = "", kwBase = ""; try { const mf = await manifest(env); const it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || [])].find(i => i.id === item); hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(); point = it?.point || ""; kwBase = it?.base || ""; } catch (e0) {}
+  const u = c.from?.username;
+  const thx = kind === "emoji" ? /[🙏🙌❤♥👏👍💯🔥😍🥰🤩💐💖💕]/u.test(c.text) : kind === "text" && isThanks(c.text);
+  let it = null; if (kind === "text" || thx) { try { const mf = await manifest(env); it = [...(mf.items || []), ...(mf.carousels || []), ...(mf.posters || [])].find(i => i.id === item) || null; } catch (e0) {} }
+  let msg = pickCommentReply(c.text, kind, it, u, thx);
+  if (!msg) {   // a real comment that isn't plain thanks: AI reply about what they said and the post
+    const hook = (it?.caption || "").split("\n")[0].replace(/["“”]/g, "").trim(), point = it?.point || "", kwBase = postKw(it);
     try { const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [{ role: "system", content: CREPLY_SYS },
-      { role: "user", content: `Post hook: ${hook.slice(0, 120) || "?"}\nPost point: ${point.slice(0, 200) || "?"}\nPost keyword: ${kwBase || "START"}\nComment: ${c.text.slice(0, 300)}` }], max_tokens: 90 });
-      msg = cleanReply(r.response); } catch (e) { await log(env, `AI unavailable for comment reply: ${String(e.message).slice(0, 80)}`); }
-    if (!msg) msg = pick(ml ? CREPLY_ML : CREPLY_EN);
+      { role: "user", content: `Post hook: ${hook.slice(0, 120) || "?"}\nPost point: ${point.slice(0, 200) || "?"}\nPost keyword: ${kwBase || "none (do not mention any keyword, guide or DM)"}\nComment: ${c.text.slice(0, 300)}` }], max_tokens: 90 });
+      msg = cleanReply(r.response); if ((msg.toUpperCase().match(/[A-Z]{3,}/g) || []).some(w => KEYWORDS.includes(w) && w !== kwBase)) msg = "";   // AI named another keyword (e.g. START under an FSSAI reel)
+    } catch (e) { await log(env, `AI unavailable for comment reply: ${String(e.message).slice(0, 80)}`); }
+    if (!msg) msg = kwBase ? pick(ml ? CREPLY_ML : CREPLY_EN) : (ml ? "നന്ദി! 🙌" : "Thank you! 🙌");
   }
-  const u = c.from?.username;   // Instagram only takes replies on top-level comments: answer a thread reply under its parent, tagging them
-  const target = c.parent_id || c.id; if (c.parent_id && u) msg = `@${u} ${msg}`;
+  // Instagram only takes replies on top-level comments: answer a thread reply under its parent, tagging them
+  const target = c.parent_id || c.id; if (c.parent_id && u && !msg.includes(`@${u}`)) msg = `@${u} ${msg}`;
   try { await graph(env, `${target}/replies`, { message: msg }); await env.STATE.put(ck, String(n + 1), { expirationTtl: 172800 }); await env.STATE.put(uk, String(un + 1), { expirationTtl: 172800 }); await log(env, `comment reply: @${u || c.from?.id || "?"}`); }
   catch (e) { await log(env, `comment reply failed: ${e.message}`); }
 }
