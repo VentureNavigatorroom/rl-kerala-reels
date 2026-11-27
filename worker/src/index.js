@@ -866,7 +866,7 @@ function nudgeText(thread, meta, n) {   // check-in line + the exact step they s
   if (meta?.legal) return { text: NUDGE_LEGAL[ml ? "ml" : "en"][Math.min(n, 2)], buttons: [] };
   const topic = TOPICS[meta?.topic] ? meta.topic : "co";
   const open = (ml ? NUDGE_OPEN_ML : NUDGE_OPEN)[Math.min(n, NUDGE_OPEN.length - 1)].replace("{noun}", TOPICS[topic].noun);
-  if (meta?.pending_kw) return { text: `${open}\n\nYour guide is ready. Follow @rejectionlist.kerala, then tap the button below and we'll send it right away.`, buttons: ["I've followed ✅"] };
+  if (meta?.pending_kw && !(meta.served_kw?.[meta.pending_kw] && Date.now() - meta.served_kw[meta.pending_kw] < 7 * 864e5)) return { text: `${open}\n\nYour guide is ready. Follow @rejectionlist.kerala, then tap the button below and we'll send it right away.`, buttons: ["I've followed ✅"] };
   const qLine = lastA.split("\n").reverse().find(l => l.includes("?")) || "";               // the question(s) they were last asked, as written
   let q = (qLine.match(/[^.!?•✅📄🏠📝]*\?/gu) || []).map(x => x.trim()).filter(Boolean).join(" ");
   if (!q && /name you have in mind/i.test(lastA)) q = "Which company name do you have in mind? Send it here and we'll give it a first review.";
@@ -888,7 +888,9 @@ async function processNudges(env, force = null) {
   const nx = await kv(env, "nudge", null); if (!nx) return { none: true };
   const ops = {}, stats = [], out = []; let sent = 0, leads = null;
   const getLeads = async () => leads || (leads = await kv(env, "leads", {}));
+  const lfu = await kv(env, "lead_fu", {});
   for (const [id, e] of Object.entries(nx)) {
+    if (lfu[id]) continue;   // the lead follow-up handles this person
     if (id === "_s" || (force && force !== id)) continue;
     if (sent >= 4) break;                                                          // a few per minute is plenty
     try {
@@ -1115,7 +1117,7 @@ async function handleWebhook(env, body) {
       { const tx0 = ev.message.text.trim().toLowerCase(); if (meta.last_txt === tx0 && Date.now() - (meta.last_in || 0) < 120e3) { await log(env, `duplicate DM ignored from ${uid}`); continue; } meta.last_txt = tx0; }
       const prevIn = meta.last_in || 0;
       meta.last_in = Date.now();                                     // 24h window starts from their last message
-      try { await leadReplied(env, uid, ev.message.text); } catch (eR) { await log(env, `lead reply check: ${String(eR.message).slice(0, 60)}`); }
+      try { const rn = await leadReplied(env, uid, ev.message.text); if (rn) thread.push({ role: "assistant", content: rn }); } catch (eR) { await log(env, `lead reply check: ${String(eR.message).slice(0, 60)}`); }
       if (OPT_OUT.test(ev.message.text.replace(/^🎤\s*/u, ""))) {                           // asked us to stop: no check-ins for this person, and no further questions now
         meta.no_nudge = true; await kvPut(env, `m:${uid}`, meta); await nudgeApply(env, { [uid]: null });
         const bye = "No problem 🙏 We won't send you any more reminders. If you need us later, just message here.";
@@ -1198,6 +1200,8 @@ async function handleWebhook(env, body) {
       }
       const topic = TOPICS[meta.topic] ? meta.topic : "co";
       let reply, buttons = [];
+      if (!meta.pending_kw && /^i'?ve followed|^followed\b|^done,? followed/i.test(ev.message.text.trim())) thread.splice(thread.length - 1, 0, { role: "assistant", content: "[note: they just followed us. The guide was ALREADY sent above, never send it again. Thank them for following in one short line, then ask again the last question they did not answer yet.]" });
+      if (meta.pending_kw && meta.served_kw?.[meta.pending_kw] && Date.now() - meta.served_kw[meta.pending_kw] < 7 * 864e5) { await log(env, `guide ${meta.pending_kw} already sent to @${meta.username || uid}: not resent`); delete meta.pending_kw; meta.follow_asks = 0; }
       if (meta.pending_kw && KEYWORD_REPLY[meta.pending_kw]) {   // the team may already have pasted this guide by hand: don't send it twice
         const byHand = await sentByHand(env, uid, KEYWORD_REPLY[meta.pending_kw]);
         if (byHand) {
@@ -1296,7 +1300,7 @@ async function handleWebhook(env, body) {
           : await sendMsg(env, { comment_id: ch.value.id }, directReply(env, kw, item, hook, point, mlc));
         if (!inbound && r.recipient_id) { const tk = `t:${r.recipient_id}`; const th = await kv(env, tk, []); th.push({ role: "assistant", content: directReply(env, kw, item, hook, point, mlc) }); await kvPut(env, tk, th); }   // so the AI knows what was already sent
         if (r.recipient_id) { const mk = `m:${r.recipient_id}`; const meta = await kv(env, mk, { first: Date.now(), sources: [] });
-          if (inbound && meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); if (inbound) meta.pending_kw = kw; if (mlc && !meta.lang) meta.lang = "ml"; meta.topic = KW_TOPIC[kw] || meta.topic; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
+          if (inbound && meta.pending_kw && meta.pending_kw !== kw) meta.pending_more = [...new Set([...(meta.pending_more || []), meta.pending_kw])].filter(x => x !== kw); if (inbound && !(meta.served_kw?.[kw] && Date.now() - meta.served_kw[kw] < 7 * 864e5)) meta.pending_kw = kw; if (mlc && !meta.lang) meta.lang = "ml"; meta.topic = KW_TOPIC[kw] || meta.topic; if (!meta.sources.length) meta.sources.push({ via: "comment", keyword: kw, media: ch.value.media?.id, item, comment: ch.value.id, t: Date.now() }); await kvPut(env, mk, meta); }
         await log(env, `private reply to ${kw} comment`);
         try { const nid = r.recipient_id || `c:${ch.value.id}`; const nx = await kv(env, "nudge", {});
           if (!nx[nid]?.li) { nx[nid] = { c: ch.value.id, t: Date.now(), u: ch.value.from?.username || null, f: ch.value.from?.id || null }; await kvPut(env, "nudge", nx); } } catch (e8) {}
@@ -1747,7 +1751,7 @@ async function leadIgNudge(env, id, L, n = 0) {
   const hm = IST().getUTCHours() * 60 + IST().getUTCMinutes(); if (hm < 9 * 60 || hm > 21 * 60 + 30) return "night time (09:00-21:30 IST only)";
   const all = await kv(env, "leads", {}); const cur = all[id] || L; const ig = cur.ig || {};
   const sent = ig.win === meta.last_in ? (ig.sent || []) : [];
-  if (sent.length >= 3 || n !== sent.length) return sent.length >= 3 ? "3 messages already sent in this window" : "not due";
+  if (sent.length >= 3 || (n !== sent.length && !(n === 1 && sent.length === 0) && !(n === 2 && sent.length === 1))) return sent.length >= 3 ? "3 messages already sent in this window" : "not due";
   const [text, btn] = IGN[isML(L) ? "ml" : "en"][n];
   try { await sendDM(env, id, text, btn); } catch (e) { return "Instagram refused: " + String(e.message).slice(0, 80); }
   const th = await kv(env, `t:${id}`, []); th.push({ role: "assistant", content: text + " [sent after a missed call; whatever they answer, thank them, confirm the team will call or WhatsApp them at that time, and ask nothing else]" }); await kvPut(env, `t:${id}`, th);
@@ -1757,9 +1761,16 @@ async function leadIgNudge(env, id, L, n = 0) {
 }
 async function leadIgMore(env, id, L, e) {   // called every 10 min for leads in the no-answer sequence
   const meta = await kv(env, `m:${id}`, {}); const ig = L.ig || {};
-  if (!meta.last_in || e.start < meta.last_in) return false;            // they wrote after the owner tapped: the bot is talking, no nudges
+  if (!meta.last_in) return false;
+  if (e.start < meta.last_in) {                                           // they replied after the owner tapped: a new 24 h window
+    if (!e.paused || (e.rounds || 1) >= 3) return false;                   // at most 3 windows of nudges per lead
+    const quiet = Date.now() - meta.last_in; const sentW = L.ig?.win === meta.last_in ? (L.ig.sent || []) : [];
+    if (!sentW.length) { if (quiet < 3 * 3600e3 || quiet > 22 * 3600e3) return false;   // give them 3 h to answer the bot first
+      if ((await leadIgNudge(env, id, L, 1)) !== "sent") return false;      // round 2+: start with the softer "just checking" line
+      const fu2 = await kv(env, "lead_fu", {}); if (fu2[id]) { fu2[id].rounds = (fu2[id].rounds || 1) + 1; await kvPut(env, "lead_fu", fu2); } return true; }
+  }
   const sent = ig.win === meta.last_in ? (ig.sent || []) : [];
-  if (!sent.length) return Date.now() - meta.last_in < 22 * 3600e3 && (await leadIgNudge(env, id, L, 0)) === "sent";   // tapped at night: first one at 09:00
+  if (!sent.length) return e.start >= meta.last_in && Date.now() - meta.last_in < 22 * 3600e3 && (await leadIgNudge(env, id, L, 0)) === "sent";   // tapped at night: first one at 09:00
   if (sent.length >= 3) return false;
   const left = meta.last_in + 24 * 3600e3 - Date.now(), since = Date.now() - sent[sent.length - 1];
   const end = meta.last_in + 24 * 3600e3, d = IST().toISOString().slice(0, 10);
@@ -1768,7 +1779,8 @@ async function leadIgMore(env, id, L, e) {   // called every 10 min for leads in
   const due = sent.length === 1 ? since >= 4 * 3600e3 && lastChance - Date.now() > 2.5 * 3600e3
     : since >= 3 * 3600e3 && Date.now() >= lastChance - 2.5 * 3600e3 && Date.now() < lastChance - 20 * 60e3;
   if (!due) return false;
-  return (await leadIgNudge(env, id, L, sent.length)) === "sent";
+  const nextN = e.start < meta.last_in ? 2 : sent.length; if (e.start < meta.last_in && sent.length >= 2) return false;
+  return (await leadIgNudge(env, id, L, nextN)) === "sent";
 }
 const STATUS_TXT = { meeting: "📅 Meeting set", noanswer: "📵 No answer (follow-ups started)", later: "💬 Follow up later", closed: "🤝 Closed, client", lost: "❌ Not interested", replied: "🔁 Replied on Instagram", talked: "☎️ Talked" };
 async function leadAction(env, id, f) {
@@ -1840,6 +1852,11 @@ async function leadReminders(env) {
     if (e.kind === "ghost") {
       const step = e.step || 0; if (step >= LEADFU_DAYS.length) { delete fu[id]; changed = true; continue; }
       if (await leadIgMore(env, id, L, e).catch(() => false)) sent++;
+      if (e.paused) {   // they replied, then went quiet again: once Instagram can't be used (24 h gone), WhatsApp reminders resume on schedule
+        const mt = await kv(env, `m:${id}`, {}); if (!mt.last_in || now - mt.last_in < 24 * 3600e3) continue;
+        e.paused = false; e.start = now - LEADFU_DAYS[Math.min(e.step || 1, LEADFU_DAYS.length - 1)] * 86400e3 + 86400e3; changed = true;
+        await discord(env, `🔁 ${await leadLine(env, id, L)} went quiet again after replying. WhatsApp follow-ups resume tomorrow.\n✅ Update: ${await leadUrl(env, id)}`); sent++; continue;
+      }
       if (step === 0) { e.step = 1; changed = true; continue; }   // step 1 was shown on the update page right away
       if (now >= e.start + LEADFU_DAYS[step] * 86400e3) { await discord(env, await leadFuMessage(env, id, L, step), true); e.step = step + 1; changed = true; sent++; }
     } else if (e.kind === "meeting") {
@@ -1861,11 +1878,34 @@ async function leadStaleDigest(env) {
   await discord(env, `📋 **Leads with no update for 24 h (${stale.length})**: tap to record what happened, so follow-ups can start.\n${lines.join("\n")}\n🗂 All open leads: ${BASE}/leads/board?k=${await leadToken(env, "board")}`, true);
   return stale.length;
 }
-// the person wrote again on Instagram while we were following up: pause the sequence and tell the owner
+// the person wrote again on Instagram while we were following up (owner, 27 Nov): understand the reply, guide the bot's answer,
+// tell the owner what they want, set a call reminder when they gave a time, and keep a quiet chance to nudge again if they go silent.
+const REPLY_GUIDE = "[note for this reply: the person had missed our call and is now answering. Read what they want and answer in ONE short message in their language: if they give a time or day, repeat it back clearly (in India time, and their local time if they live abroad) and say our team will call then; if they prefer WhatsApp, say the team will message them on WhatsApp; if they say busy / later / not now, say no problem and ask when would suit them, offering this evening or tomorrow; if they ask a question, answer briefly from the facts and say the team will explain the rest on the call; if they are not interested, thank them politely and stop. Never send the guide again, never state a price or fee, never promise an outcome.]";
+async function readReply(env, text) {
+  const now = IST().toISOString().slice(0, 16);
+  try { const r = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages: [
+    { role: "system", content: `Now in India it is ${now} (IST). A business lead who missed our call wrote the message below. Output JSON only: {"kind":"call_time|whatsapp|later|question|not_interested|other","when_ist":"YYYY-MM-DDTHH:MM in IST if they named a time or day+time, converting from their country if they said one, else empty","summary":"max 12 words in English"}` },
+    { role: "user", content: String(text).slice(0, 500) }], max_tokens: 120 });
+    const j = typeof r.response === "object" && r.response ? r.response : JSON.parse(String(r.response || "").match(/\{[\s\S]*\}/)[0]); return j;
+  } catch { return { kind: "other", when_ist: "", summary: "" }; }
+}
 async function leadReplied(env, id, text) {
-  const fu = await kv(env, "lead_fu", {}); if (fu[id]?.kind !== "ghost") return;
-  delete fu[id]; await kvPut(env, "lead_fu", fu);
-  const all = await kv(env, "leads", {}); const L = all[id]; if (!L) return;
-  L.status = "replied"; L.notes = [...(L.notes || []), { t: IST().toISOString().slice(0, 16), note: "Replied on Instagram: " + String(text).slice(0, 200) }].slice(-20); await kvPut(env, "leads", all);
-  await discord(env, `🔁 **They replied!** ${await leadLine(env, id, L)}\n💬 "${String(text).slice(0, 300)}"\nFollow-ups paused. Call or WhatsApp them now.\n✅ Update: ${await leadUrl(env, id)}`, true);
+  const fu = await kv(env, "lead_fu", {}); const e = fu[id]; if (e?.kind !== "ghost") return null;
+  const all = await kv(env, "leads", {}); const L = all[id]; if (!L) return null;
+  const R = await readReply(env, text); const at = IST().toISOString().slice(0, 16);
+  const t = R.when_ist && /^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(R.when_ist) ? Date.parse(R.when_ist + ":00+05:30") : 0;
+  let extra = "";
+  if (R.kind === "call_time" && t > Date.now() && t < Date.now() + 14 * 86400e3) {
+    fu[id] = { kind: "meeting", at: t, sent: {}, from: "reply" }; L.status = "meeting"; L.meeting = R.when_ist;
+    extra = `📅 Call reminder set automatically for **${R.when_ist.replace("T", " ")} IST** (you'll get the usual reminders). Wrong time? Change it on the update page.`;
+  } else if (R.kind === "not_interested") {
+    delete fu[id]; L.status = "replied"; extra = "They seem not interested. Follow-ups stopped; tap ❌ Not interested if that's right.";
+  } else {
+    e.paused = true; e.rounds = (e.rounds || 1); e.replied = Date.now(); fu[id] = e; L.status = "replied";   // WhatsApp steps pause; if they go quiet again the bot can nudge in the new window
+    extra = R.kind === "whatsapp" ? "They prefer WhatsApp: message them there now." : R.kind === "later" ? "They said later: the bot asked when suits them. If they go quiet, it will check in again (max 3 times, daytime)." : "The bot answered them. Call or WhatsApp them now.";
+  }
+  L.notes = [...(L.notes || []), { t: at, note: `Replied on Instagram (${R.kind}): ` + String(text).slice(0, 200) }].slice(-20);
+  await kvPut(env, "lead_fu", fu); await kvPut(env, "leads", all);
+  await discord(env, `🔁 **They replied!** ${await leadLine(env, id, L)}\n💬 "${String(text).slice(0, 300)}"\n🧠 ${R.summary || R.kind}\n${extra}\n✅ Update: ${await leadUrl(env, id)}`, true);
+  return REPLY_GUIDE;
 }
