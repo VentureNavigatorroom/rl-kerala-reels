@@ -169,3 +169,5 @@ C25. A founder asked for a small amount "for phase 1, 3-year ROI" with no pitch 
 C26. A company did projects before registering, so its valuation came out low.
 C27. A founder asked for mentorship on "valuation and projections" before raising.
 C28. A family-run proprietorship expanding into a new venture didn't know what its existing business was worth.
+
+C29. (28 Nov call, anonymised) A professional switching careers because of AI planned a marketplace for occasion-based, custom products. Advice: validate one niche through real orders handled by hand before building tech or incorporating; track cost to win a customer vs earnings per order and repeat buyers; start as a proprietorship with Udyam, move to a private limited company when investors come in; early valuation from projections, refreshed as the business grows.

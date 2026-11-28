@@ -11,16 +11,16 @@ STORIES FROM REAL ENQUIRIES: bank/STORY_THEMES.md holds anonymised situations di
 companies, places, numbers or anything that could identify a person). Build scripts on those situations, always with
 invented names and changed details. Never put CRM details in the repo."""
 
-NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val", "pg", "web", "acc", "kl", "nri", "pay", "dr"]   # dr = investor data room (28 Nov)   # acc kl nri pay added 27 Nov night   # pg + web added 27 Nov   # added 19 Nov evening (val = company valuation, 19:14)
+NEW7 = ["tm", "roc", "fssai", "iec", "nda", "cfa", "fp", "val", "pg", "web", "acc", "kl", "nri", "pay", "dr", "idea"]   # dr = investor data room (28 Nov)   # acc kl nri pay added 27 Nov night   # pg + web added 27 Nov   # added 19 Nov evening (val = company valuation, 19:14)
 DIRS = {"co": "bank", "gst": "bank/gst", "inv": "bank/inv", "sui": "bank/sui", "sk": "bank/sk", "ud": "bank/ud", **{t: f"bank/{t}" for t in NEW7}}
 # share of each stock target (reels, carousels, stories, posters) kept for each topic; together <= 1 keeps the
 # GitHub Pages site under its 1 GB limit. Company registration posts the most reels a day, so it keeps the biggest backup.
-SHARE = {"co": 0.096, "gst": 0.05, "inv": 0.043, "sui": 0.048, "sk": 0.048, "ud": 0.043, "tm": 0.05, "roc": 0.048, "fssai": 0.053, "iec": 0.048, "nda": 0.043, "cfa": 0.046, "fp": 0.038, "val": 0.046, "pg": 0.043, "web": 0.043, "acc": 0.053, "kl": 0.043, "nri": 0.043, "pay": 0.034, "dr": 0.041}   # 27 Nov weekly review: gst, tm -0.3 pt; val, cfa +0.3 pt. 27 Nov night: data room added, everyone scaled by 0.96; = REEL_SHARE in the worker   # same as the worker's REEL_SHARE (27 Nov: 16 topics)   # same as the worker's REEL_SHARE (26 Nov review)
+SHARE = {"co": 0.092, "gst": 0.048, "inv": 0.041, "sui": 0.046, "sk": 0.046, "ud": 0.041, "tm": 0.048, "roc": 0.046, "fssai": 0.051, "iec": 0.046, "nda": 0.041, "cfa": 0.044, "fp": 0.036, "val": 0.044, "pg": 0.041, "web": 0.041, "acc": 0.051, "kl": 0.041, "nri": 0.041, "pay": 0.033, "dr": 0.039, "idea": 0.043}   # 27 Nov weekly review: gst, tm -0.3 pt; val, cfa +0.3 pt. 27 Nov night: data room added, everyone scaled by 0.96; = REEL_SHARE in the worker   # same as the worker's REEL_SHARE (27 Nov: 16 topics)   # same as the worker's REEL_SHARE (26 Nov review)
 
 # general keywords (the worker's KW_TOPIC). Each post also gets its own unique keyword from build.KW_POOL.
 BASES = {"co": ["START", "NAME", "AFTER", "CHECKLIST"], "gst": ["GST", "LIMIT", "PENALTY"], "inv": ["INVEST", "TERMSHEET", "FUNDING"],
          "sui": ["DPIIT", "BENEFITS"], "sk": ["KSUM", "GRANT"], "ud": ["UDYAM", "MSME"],
-         "dr": ["DATAROOM", "DILIGENCE"], "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"], "val": ["VALUATION", "WORTH"], "acc": ["ITR", "ACCOUNTS"], "kl": ["SHOPS", "KSMART"], "nri": ["PRAVASI", "NORKA"], "pay": ["ESIC", "PAYROLL"], "pg": ["GATEWAY", "PAYMENT"], "web": ["WEBSITE", "WEBPLAN"]}
+         "dr": ["DATAROOM", "DILIGENCE"], "idea": ["VALIDATE", "IDEA"], "tm": ["TRADEMARK", "BRAND"], "roc": ["ROC", "FILING"], "fssai": ["FSSAI", "FOOD"], "iec": ["IEC", "EXPORT"], "nda": ["NDA", "SECRET"], "cfa": ["COFOUNDER", "VESTING"], "fp": ["PROJECTION", "FORECAST"], "val": ["VALUATION", "WORTH"], "acc": ["ITR", "ACCOUNTS"], "kl": ["SHOPS", "KSMART"], "nri": ["PRAVASI", "NORKA"], "pay": ["ESIC", "PAYROLL"], "pg": ["GATEWAY", "PAYMENT"], "web": ["WEBSITE", "WEBPLAN"]}
 ALL_BASES = {k for v in BASES.values() for k in v}
 
 # CTAs: (pill text, promise). The first word of the pill is the keyword.
@@ -52,7 +52,8 @@ CTA_SHOPS, CTA_KSMART = _c("SHOPS", "കടയ്ക്ക് വേണ്ട �
 CTA_PRAVASI, CTA_NORKA = _c("PRAVASI", "പ്രവാസി ബിസിനസ് ലോൺ\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("NORKA", "ബാങ്ക് നോക്കുന്ന പ്രോജക്റ്റ്\nറിപ്പോർട്ട് ഗൈഡ് അയച്ചുതരാം")
 CTA_ESIC, CTA_PAYROLL = _c("ESIC", "PF, ESI എപ്പോൾ വേണം എന്ന\nലിസ്റ്റ് അയച്ചുതരാം"), _c("PAYROLL", "മാസ ശമ്പള ചെക്ക്ലിസ്റ്റ്\nഅയച്ചുതരാം")
 CTA_DATAROOM, CTA_DILIGENCE = _c("DATAROOM", "ഡാറ്റ റൂമിൽ വേണ്ടതിന്റെ\nലിസ്റ്റ് അയച്ചുതരാം"), _c("DILIGENCE", "ഇൻവെസ്റ്റർ കണ്ടെത്തുന്ന\nറെഡ് ഫ്ലാഗുകൾ അയച്ചുതരാം")
-CTAS = {"dr": [CTA_DATAROOM, CTA_DILIGENCE], "acc": [CTA_ITR, CTA_ACCOUNTS], "kl": [CTA_SHOPS, CTA_KSMART], "nri": [CTA_PRAVASI, CTA_NORKA], "pay": [CTA_ESIC, CTA_PAYROLL], "pg": [CTA_GATEWAY, CTA_PAYMENT], "web": [CTA_WEBSITE, CTA_WEBPLAN], "val": [CTA_VALUATION, CTA_WORTH], "tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
+CTA_VALIDATE, CTA_IDEA = _c("VALIDATE", "ഐഡിയ ടെസ്റ്റ് ചെയ്യാനുള്ള\nചെക്ക്ലിസ്റ്റ് അയച്ചുതരാം"), _c("IDEA", "പുതിയ ഐഡിയയ്ക്ക് ആദ്യം\nഎന്ത്, പിന്നെ എന്ത്: അയച്ചുതരാം")
+CTAS = {"idea": [CTA_VALIDATE, CTA_IDEA], "dr": [CTA_DATAROOM, CTA_DILIGENCE], "acc": [CTA_ITR, CTA_ACCOUNTS], "kl": [CTA_SHOPS, CTA_KSMART], "nri": [CTA_PRAVASI, CTA_NORKA], "pay": [CTA_ESIC, CTA_PAYROLL], "pg": [CTA_GATEWAY, CTA_PAYMENT], "web": [CTA_WEBSITE, CTA_WEBPLAN], "val": [CTA_VALUATION, CTA_WORTH], "tm": [CTA_TRADEMARK, CTA_BRAND], "roc": [CTA_ROC, CTA_FILING], "fssai": [CTA_FSSAI, CTA_FOOD], "iec": [CTA_IEC, CTA_EXPORT],
         "nda": [CTA_NDA, CTA_SECRET], "cfa": [CTA_COFOUNDER, CTA_VESTING], "fp": [CTA_PROJECTION, CTA_FORECAST], "ud": [CTA_UDYAM, CTA_MSME], "gst": [CTA_GST, CTA_LIMIT, CTA_PENALTY], "inv": [CTA_INVEST, CTA_TERMSHEET, CTA_FUNDING], "sui": [CTA_DPIIT, CTA_BENEFITS], "sk": [CTA_KSUM, CTA_GRANT]}
 
 SEGMENTS = {
@@ -96,6 +97,7 @@ SEGMENTS = {
     "val": ["raising_round", "esop_plan", "partner_exit", "nri_share_issue", "share_transfer"],
     "pg": ["online_seller_pg", "service_pro_pg", "proprietor_pg", "new_company_pg", "app_founder_pg"],
     "web": ["no_website", "insta_only", "old_website", "service_business", "online_shop", "app_idea", "mvp_founder", "ops_software"],
+    "idea": ["career_switch", "marketplace_idea", "side_project", "build_first", "occasion_products"],
     "dr": ["raising_first", "investor_asked", "loan_dd", "selling_business", "unregistered_dr", "messy_docs"],
     "acc": ["nil_filer", "freelancer_itr", "small_trader_acc", "new_company_acc", "notice_holder"],
     "kl": ["new_shop", "home_office", "no_staff_shop", "salaried_staff_kl", "town_business"],
@@ -226,6 +228,17 @@ conditions (amount depends on the wage slab; employee kept 6+ months; minimum ne
 ESIC (esic.gov.in/contribution, read 27 Nov 2026, page reviewed Apr 2025): contributions 0.75% of wages (employee) and
 3.25% (employer); employees with an average daily wage up to Rs 176 pay no employee share, the employer still pays its
 share; deposit within 15 days of the end of the calendar month; two 6-month contribution periods (Apr-Sep, Oct-Mar)."""
+FACTS_IDEA = """Idea validation (our advisory; topic added 28 Nov from an anonymised call): validate before you build. Pick ONE
+niche; test demand with real customers on Instagram / social media; handle the first orders by hand (connect buyer and seller
+yourself) before building an app or website; track the cost to win each customer against what each order earns (commission or
+margin) and repeat purchases; find out whether customers or reliable suppliers are the harder side; let real orders decide
+whether to continue, change direction or stop. Occasion-based products (gifts, custom work) need repeat buyers checked early.
+Structure in stages: a sole proprietorship with free Udyam registration (official government portal, Aadhaar and PAN) is enough
+to test, but it has no separate legal identity, so personal and business liability are linked; a private limited company gives
+limited liability and can issue shares when investors come in. Early valuation without revenue rests on projections, market and
+business model; a CA's valuation can support early investor talks, formal share issues may need a registered valuer or
+merchant banker depending on the case; a valuation is for one purpose and date and usually needs updating after a few months or
+as the business changes. NEVER promise demand, sales, funding or results; never a price or fee."""
 FACTS_DR = """Investor data room (our service, 28 Nov): a secure, organised online folder that investors, lenders or buyers review
 during due diligence. Usual contents: incorporation documents (certificate of incorporation, MOA, AOA, PAN), cap table and share
 records, shareholder / co-founder / key agreements, financial statements and bank statements, financial projections and the
@@ -305,4 +318,7 @@ FACTS_VAL = """company valuation: needed when raising investment, issuing ESOPs,
 buy-backs, mergers, and for NRI/foreign investment (shares not below fair value by an accepted method, certified by a CA,
 SEBI-registered merchant banker or cost accountant); preferential allotment of shares needs a registered valuer's report;
 methods: discounted cash flow, comparable companies/deals, net asset value; early startups lean on comparables and
-projections; a valuation is for a specific purpose and date. NEVER state a value or our fee."""
+projections; a valuation is for a specific purpose and date. Early-stage (no revenue): based on projections, market potential and
+business model; a CA's valuation can support early investor discussions and pitching, while formal share issues may need a
+registered valuer or SEBI-registered merchant banker depending on the case; a report is usually treated as current only for a few
+months and needs updating as the business progresses (depends on purpose). NEVER state a value or our fee."""

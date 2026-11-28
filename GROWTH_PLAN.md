@@ -195,3 +195,6 @@ Every topic, including gst, inv, sui, sk and ud, always keeps 2-3 days of built 
 - Data room starts with no history: judge it from its first 5 days like the other new topics (same goal, 10 clients a month). Expect fewer but larger leads, often carrying other services (registration, projections, valuation, agreements, filings); count those in its outcomes.
 - Web now covers websites, apps, software and MVPs for clients who can pay for a proper build in monthly parts; track meetings and closed clients, not just leads.
 - Weekly review: compare dr and web on clients per 1,000 reach before changing their share.
+
+## 28 Nov: topic 22 idea validation
+Added from an anonymised client call. Seed stock: toon ivx01-04, reels ivd001-006, tips ivt001-003, plus valuation reel qv054. 22 topics, shares sum to 1.0. The refill writer treats idea as a newest topic.

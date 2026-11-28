@@ -64,7 +64,7 @@ for s in banks["reels"]:
 import importlib.util
 _b1 = importlib.util.spec_from_file_location("b1", f"{ROOT}/bank/batch01.py"); _m = importlib.util.module_from_spec(_b1); _b1.loader.exec_module(_m)
 ctas = {"co": {_m.CTA_START, _m.CTA_NAME, _m.CTA_AFTER, _m.CTA_DOCS}, **{t: set(v) for t, v in topics.CTAS.items()}}
-PREFIX = {"gst": "g", "inv": "v", "sui": "u", "sk": "m", "ud": "y", "tm": "tm", "roc": "rc", "fssai": "fs", "iec": "ie", "nda": "nd", "cfa": "cf", "fp": "fp", "val": "qv", "pg": "pg", "web": "wb", "acc": "ac", "kl": "lc", "nri": "pv", "pay": "py", "dr": "dr"}
+PREFIX = {"gst": "g", "inv": "v", "sui": "u", "sk": "m", "ud": "y", "tm": "tm", "roc": "rc", "fssai": "fs", "iec": "ie", "nda": "nd", "cfa": "cf", "fp": "fp", "val": "qv", "pg": "pg", "web": "wb", "acc": "ac", "kl": "lc", "nri": "pv", "pay": "py", "dr": "dr", "idea": "iv"}
 for name in ("reels", "carousels", "posters", "stories"):
     for x in banks[name]:
         t = x.get("topic") or "co"

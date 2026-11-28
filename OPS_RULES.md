@@ -155,3 +155,9 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - 05:30 IST 28 Nov: `content_publishing_limit` returned quota_total **50** (was 100 on 14 Nov), quota_usage 97. The worker skips any post when fewer than 2 are left, so today's frozen 84-reel plan will post only as yesterday's posts age out (~50 today, mostly afternoon/evening).
 - Monitor set KV `reel_cap` = 21 so plans from 29 Nov are ~31 reels + ~11 tips + 4 news + shout-out = ~47 posts. Raise it again only if quota_total goes back to 100 (check with ops/graph `me/content_publishing_limit`). With fewer reels a day, each topic's runway is ~2.7x longer; writers favour quality over volume.
 - Cloudflare KV free plan (1,000 puts/day) ran out just before 00:00 UTC on 28 Nov (ops/flag put returned 1101). The 5-min "inbox poll sees" line is now logged only when it changes (commit 0821fc8). If KV puts fail again earlier in the day, the owner needs the Workers Paid plan.
+
+## Topic 22: idea validation (28 Nov)
+- Keywords VALIDATE / IDEA. For people with a business idea who have not yet tested demand.
+- Content comes from the essence of a real client call, anonymised (STORY_THEMES C29). Never use real names, places, products or figures from calls.
+- Points: test demand before building an app, start with one niche, track the cost to win a customer, earnings per order and repeat buyers, start as a proprietorship with free Udyam and move to a private limited company when investors come in, and the CA vs registered valuer route for valuation (reports need refreshing after a few months).
+- Never promise demand, sales, funding or results. No prices.
