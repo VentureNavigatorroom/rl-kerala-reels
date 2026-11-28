@@ -150,3 +150,8 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - Shares: everyone scaled by 0.96 to make room for dr (dr 0.041); SHARE = REEL_SHARE, sum 1.0. The weekly review may rebalance by results.
 - Topic detection: a short answer to the bot's own question never switches topic (fixed 27 Nov: "pvt ltd, 2 years" turned a Udyam lead into company registration).
 - Daily volume (27 Nov night): normal reels are capped so reels + tips + 4 news slots + the shout-out post + 1 spare stay under Instagram's 100 posts / 24 h (21 topics pushed the plan to 105 and a reel was skipped). With 21 topics that is about 84 reels a day.
+
+## 28 Nov monitor: Instagram cut the API posting limit to 50 / 24 h
+- 05:30 IST 28 Nov: `content_publishing_limit` returned quota_total **50** (was 100 on 14 Nov), quota_usage 97. The worker skips any post when fewer than 2 are left, so today's frozen 84-reel plan will post only as yesterday's posts age out (~50 today, mostly afternoon/evening).
+- Monitor set KV `reel_cap` = 21 so plans from 29 Nov are ~31 reels + ~11 tips + 4 news + shout-out = ~47 posts. Raise it again only if quota_total goes back to 100 (check with ops/graph `me/content_publishing_limit`). With fewer reels a day, each topic's runway is ~2.7x longer; writers favour quality over volume.
+- Cloudflare KV free plan (1,000 puts/day) ran out just before 00:00 UTC on 28 Nov (ops/flag put returned 1101). The 5-min "inbox poll sees" line is now logged only when it changes (commit 0821fc8). If KV puts fail again earlier in the day, the owner needs the Workers Paid plan.
