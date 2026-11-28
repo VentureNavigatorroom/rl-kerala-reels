@@ -337,3 +337,11 @@ Clients per 1,000 reach: 0 for every topic (no outcomes recorded). Direct-DM lea
 Tested: check_bank (bank OK), node --check on the worker as an ES module, shares equal and sum 1.0, caption output checked.
 
 - Owner reply (27 Nov): can't do paid boosts, collabs, WhatsApp sharing, profile work or lead-outcome updates; growth must come only from Instagram. Plan changed: no owner asks; topics ranked by Instagram-visible lead quality (phone given, replied / call time) instead of recorded clients; sends become a script target (forwardable last line); share floor 3.5%.
+
+## Run 28 Nov 2026 night (writer, the one daily run; 6 parallel writers)
+- content_requests: empty. Workflows before push: check-bank 140, deploy-autopilot 106, reel-factory 65-67 green (68 running).
+- All 6 writers hit the usage limit part-way; their passing files were checked, fixed (1 broken string, 5 long lines, 2 "രൂപീകരിച്ചു" rupee false positives, 6 toons missing captions) and pushed. 144 scripts (normal / toon / tips):
+  dr 13/4/4 (ep 5-8), web 14/0/0 (team software, MVPs, automations), gst 12/3/3 (REG-03/04/05 fix-its), roc 13/3/2 (late fee per day), nri 8/0/0, ud 7/0/0 (45-day / Samadhaan),
+  tm 7/0/0 (objection reply), fssai 6/2/2, cfa 6/3/2, sui 5/3/3, acc 4/2/1, kl 2/1/2, iec 3/3/1. Not reached: pg, pay, sk, inv, nda, fp, val, co.
+- Instagram API limit is now 50 / 24 h (reel_cap 21, ~31 reels a day), so runway is long: lowest sk 5.6 d, idea 7.5, inv 7.9; most topics 10-24 d.
+  Next run: sk, inv, idea, pg, pay, nda, fp first (incl. toon episodes for topics with 0 unposted toon: inv, sk, ud, tm, fp).
