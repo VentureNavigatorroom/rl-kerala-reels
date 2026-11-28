@@ -989,15 +989,23 @@ async function sentByHand(env, uid, guide) {
   return null;
 }
 
+// KV free plan = 1,000 puts/day and every log() line is one put: the poll's health line and a repeating poll error are
+// written only when they change (kept in isolate memory, so after an isolate restart a line may be logged once more).
+let pollSeenSig = null, pollErr = { msg: null, t: 0 };
 async function pollInbox(env) {
   const since = Date.now() - 15 * 60e3;   // look-back window; dup: keys stop double handling
   let j;   // the publisher app's token can read the inbox
   try { j = await graph(env, `${env.IG_USER_ID}/conversations`, { platform: "instagram", limit: "10", fields: "updated_time,messages.limit(4){id,message,from,created_time}" }, "GET"); }
-  catch (e) { await log(env, `ERROR inbox poll: ${e.message}`); return; }
+  catch (e) { if (e.message !== pollErr.msg || Date.now() - pollErr.t > 30 * 60e3) { await log(env, `ERROR inbox poll: ${e.message}`); pollErr = { msg: e.message, t: Date.now() }; } return; }   // same error again: at most once per 30 min
+  pollErr = { msg: null, t: 0 };
   const evs = [];
-  if (new Date().getUTCMinutes() % 5 === 0 && new Date().getUTCSeconds() < 10) {   // health line every 5 min: what the poll can see
+  if (new Date().getUTCMinutes() % 5 === 0 && new Date().getUTCSeconds() < 10) {   // health line every 5 min: what the poll can see (only when the newest message changed)
     const top = (j.data || [])[0]; const m0 = top?.messages?.data?.[0];
-    await log(env, `inbox poll sees ${(j.data || []).length} chats; newest ${top?.updated_time || "-"} from @${m0?.from?.username || "?"}: ${String(m0?.message || "").slice(0, 30)}`);
+    const sig = `${top?.updated_time || "-"}|${m0?.from?.id || m0?.from?.username || "?"}`;
+    if (sig !== pollSeenSig) {
+      await log(env, `inbox poll sees ${(j.data || []).length} chats; newest ${top?.updated_time || "-"} from @${m0?.from?.username || "?"}: ${String(m0?.message || "").slice(0, 30)}`);
+      pollSeenSig = sig;   // set after the put, so a failed write is retried at the next 5-min check
+    }
   }
   for (const c of j.data || []) {
     if (Date.parse(c.updated_time) < since - 120e3) continue;
