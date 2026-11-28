@@ -198,3 +198,6 @@ Every topic, including gst, inv, sui, sk and ud, always keeps 2-3 days of built 
 
 ## 28 Nov: topic 22 idea validation
 Added from an anonymised client call. Seed stock: toon ivx01-04, reels ivd001-006, tips ivt001-003, plus valuation reel qv054. 22 topics, shares sum to 1.0. The refill writer treats idea as a newest topic.
+
+## 28 Nov night: topics 23-27 (data room pieces)
+Project report, pitch deck, cap table, ESOP, business contracts. Seed stock 3 reels + 1 tip each; toon series start in the nightly refill. They post from 29 Nov.

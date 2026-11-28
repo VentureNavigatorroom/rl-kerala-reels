@@ -161,3 +161,12 @@ If earlier runs were skipped (for example, Claude usage ran out), never assume t
 - Content comes from the essence of a real client call, anonymised (STORY_THEMES C29). Never use real names, places, products or figures from calls.
 - Points: test demand before building an app, start with one niche, track the cost to win a customer, earnings per order and repeat buyers, start as a proprietorship with free Udyam and move to a private limited company when investors come in, and the CA vs registered valuer route for valuation (reports need refreshing after a few months).
 - Never promise demand, sales, funding or results. No prices.
+
+## Topics 23-27: data room pieces (28 Nov night)
+Every piece of the data room now has its own topic. Already covered: registration (co), projections (fp), valuation (val), co-founder (cfa) and investor agreements (inv), GST / ITR / ROC (gst, acc, roc), trademark (tm). New:
+- dpr PROJECT REPORT (PROJECTREPORT / DPR, ids dp): bank loan and scheme project reports (PMEGP, Mudra, term loans, working capital). Never promise a loan, sanction, subsidy or timeline.
+- deck PITCH DECK (PITCHDECK / DECK, ids dk): investor, demo day, grant / incubator, bank, sales decks and one-pagers. Never promise funding, selection or a grant.
+- cap CAP TABLE & SHARES (CAPTABLE / SHARES, ids ct): cap table vs register of members, PAS-3, demat (Rule 9B; small companies exempt), promised shares in writing, dilution. Never a company value.
+- esop ESOP (ESOP / OPTIONS, ids es): Section 62(1)(b) + Rule 12, special resolution, at least 1 year to vesting, DPIIT founder exception for 10 years, taxed at exercise and at sale, deferral only with the IMB (80-IAC) certificate. Never promise option value or tax savings.
+- contract BUSINESS CONTRACTS (CONTRACT / VENDOR, ids kc): client, vendor, service, employment agreements; Kerala Stamp Act (unstamped agreements may be refused as evidence until duty and penalty are paid). Never promise a dispute outcome; no stamp duty amounts unless from the official schedule.
+Shares: each 0.04; all other topics scaled by 0.8; total 1.0 (27 topics).
